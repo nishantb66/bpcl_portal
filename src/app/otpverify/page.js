@@ -1,0 +1,83 @@
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+export default function OTPVerify() {
+  const [otp, setOtp] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const email =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("email")
+      : null;
+
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("/api/forgotpass", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "verify-otp", email, otp }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success(
+          "OTP verified successfully! Redirecting to password reset..."
+        );
+        setTimeout(() => router.push(`/reset-password?email=${email}`), 2000);
+      } else {
+        toast.error(data.message || "Invalid OTP. Please try again.");
+      }
+    } catch (error) {
+      toast.error("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
+      <ToastContainer />
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-lg shadow-xl p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-blue-900">Verify OTP</h1>
+            <p className="text-gray-600 mt-2">Enter the OTP sent to {email}</p>
+          </div>
+
+          <form onSubmit={handleVerify} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                OTP
+              </label>
+              <input
+                type="text"
+                placeholder="Enter OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-colors"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`w-full bg-blue-900 text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 ${
+                isLoading
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-blue-800"
+              }`}
+            >
+              {isLoading ? "Verifying..." : "Verify OTP"}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}

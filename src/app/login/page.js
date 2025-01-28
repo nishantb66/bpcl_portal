@@ -45,69 +45,97 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <ToastContainer />
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-xl p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-blue-900">Welcome Back</h1>
-            <p className="text-gray-600 mt-2">Please sign in to continue</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <h1 className="text-4xl font-extrabold text-gray-900">
+            Welcome Back
+          </h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Please sign in to your account
+          </p>
+        </div>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <input type="hidden" name="remember" defaultValue="true" />
+          <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address
+              <label htmlFor="email-address" className="sr-only">
+                Email address
               </label>
               <input
+                id="email-address"
+                name="email"
                 type="email"
-                placeholder="Enter your email"
+                autoComplete="email"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Email address"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-colors"
               />
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="sr-only">
                 Password
               </label>
               <input
+                id="password"
+                name="password"
                 type="password"
-                placeholder="Enter your password"
+                autoComplete="current-password"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-colors"
               />
             </div>
+          </div>
 
+          <div className="flex items-center justify-between">
+
+            <div className="text-sm">
+              <Link
+                href="/forgot-password"
+                className="font-medium text-blue-600 hover:text-blue-500"
+              >
+                Forgot your password?
+              </Link>
+            </div>
+          </div>
+
+          <div>
             <button
               type="submit"
               disabled={loading}
-              className={`w-full bg-blue-900 text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 ${
-                loading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-800"
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                loading ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Signing in..." : "Sign in"}
             </button>
-          </form>
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
-              <Link
-                href="/signup"
-                className="text-blue-900 hover:text-blue-800 font-medium"
-              >
-                Register Now
-              </Link>
-            </p>
+          </div>
+        </form>
+
+        <div className="text-center">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{" "}
+            <Link
+              href="/signup"
+              className="font-medium text-blue-600 hover:text-blue-500"
+            >
+              Register Now
+            </Link>
+          </p>
+          <p className="mt-2 text-sm text-gray-600">
             <Link
               href="/admin"
-              className="text-blue-900 hover:text-blue-800 font-medium"
+              className="font-medium text-blue-600 hover:text-blue-500"
             >
               Login as Administrator
             </Link>
-          </div>
+          </p>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { hash, compare } from "bcrypt";
 import { connectToDB } from "../middleware";
 import { sign, verify } from "jsonwebtoken";
+import nodemailer from "nodemailer";
 
 // Input validation helpers
 const isValidEmail = (email) => {
@@ -19,6 +20,7 @@ const isValidUsername = (name) => {
   const usernameRegex = /^[a-zA-Z0-9_-]{3,30}$/;
   return usernameRegex.test(name);
 };
+
 
 export async function POST(req) {
   const { type, name, email, password } = await req.json();
