@@ -10,6 +10,7 @@
     "init-admin": "node scripts/init-admin.js"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.7",

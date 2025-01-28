@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import {
+  UserCircleIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/solid";
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -208,8 +212,6 @@ export default function Admin() {
                 {showEmployeeDetails ? "Hide Employees" : "Employee Details"}
               </button>
 
-
-
               <button
                 onClick={() => {
                   localStorage.removeItem("adminToken");
@@ -228,15 +230,15 @@ export default function Admin() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
           <div className="text-center py-12">
-            <div className="h-12 w-12 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading data...</p>
           </div>
         ) : error ? (
-          <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+          <div className="bg-red-50 p-4 rounded-lg border border-red-200">
             <p className="text-red-600">{error}</p>
           </div>
         ) : showEmployeeDetails ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
             {/* Mobile View */}
             <div className="sm:hidden space-y-4 p-4">
               {users.map((user) => (
@@ -277,24 +279,19 @@ export default function Admin() {
             <table className="hidden sm:table w-full">
               <thead className="bg-blue-50">
                 <tr>
-                  <th className="p-4 text-left text-sm font-medium text-blue-900">
-                    Name
-                  </th>
-                  <th className="p-4 text-left text-sm font-medium text-blue-900">
-                    Email
-                  </th>
-                  <th className="p-4 text-left text-sm font-medium text-blue-900">
-                    Designation
-                  </th>
-                  <th className="p-4 text-left text-sm font-medium text-blue-900">
-                    City
-                  </th>
-                  <th className="p-4 text-left text-sm font-medium text-blue-900">
-                    Actions
-                  </th>
+                  {["Name", "Email", "Designation", "City", "Actions"].map(
+                    (header) => (
+                      <th
+                        key={header}
+                        className="p-4 text-left text-sm font-medium text-blue-900"
+                      >
+                        {header}
+                      </th>
+                    )
+                  )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-200">
                 {users.map((user) => (
                   <tr key={user.email} className="hover:bg-gray-50">
                     <td className="p-4 text-gray-800">{user.profile?.name}</td>
@@ -327,44 +324,36 @@ export default function Admin() {
         ) : (
           <div className="space-y-8">
             {/* Customer Details Section */}
-            <section className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-              <h2 className="text-xl font-semibold text-blue-900 mb-6">
-                Customer Details
-              </h2>
+            <section className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                  <UserCircleIcon className="h-6 w-6 text-blue-600 mr-2" />
+                  Customer Details
+                </h2>
+              </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-blue-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Contact
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Email
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Vehicle
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Fuel Type
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Quantity
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Total Amount
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Payment Mode
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Loyalty Points
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Membership Status
-                      </th>
+                      {[
+                        "Customer",
+                        "Contact",
+                        "Email",
+                        "Vehicle",
+                        "Fuel Type",
+                        "Quantity",
+                        "Total Amount",
+                        "Payment Mode",
+                        "Loyalty Points",
+                        "Membership Status",
+                      ].map((header) => (
+                        <th
+                          key={header}
+                          className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider"
+                        >
+                          {header}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -398,7 +387,17 @@ export default function Admin() {
                           {customer.loyaltyPoints}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
-                          {customer.membershipStatus}
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              customer.membershipStatus === "Yes"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {customer.membershipStatus === "Yes"
+                              ? "Member"
+                              : "Non-Member"}
+                          </span>
                         </td>
                       </tr>
                     ))}
@@ -408,32 +407,32 @@ export default function Admin() {
             </section>
 
             {/* Complaints Section */}
-            <section className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-              <h2 className="text-xl font-semibold text-blue-900 mb-6">
-                Complaints
-              </h2>
+            <section className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                  <ExclamationTriangleIcon className="h-6 w-6 text-red-600 mr-2" />
+                  Complaints
+                </h2>
+              </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-blue-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Customer Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Complaint Details
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Type
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Urgency
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
-                        Created At
-                      </th>
+                      {[
+                        "Customer Name",
+                        "Complaint Details",
+                        "Type",
+                        "Urgency",
+                        "Status",
+                        "Created At",
+                      ].map((header) => (
+                        <th
+                          key={header}
+                          className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider"
+                        >
+                          {header}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -449,10 +448,27 @@ export default function Admin() {
                           {complaint.type}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
+                          <span
+                            className={`inline-block h-3 w-3 rounded-full mr-2 ${
+                              complaint.urgency === "High"
+                                ? "bg-red-500"
+                                : complaint.urgency === "Medium"
+                                ? "bg-yellow-500"
+                                : "bg-gray-400"
+                            }`}
+                          ></span>
                           {complaint.urgency}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
-                          {complaint.status}
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              complaint.status === "Resolved"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-blue-100 text-blue-800"
+                            }`}
+                          >
+                            {complaint.status}
+                          </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {new Date(complaint.createdAt).toLocaleDateString()}
