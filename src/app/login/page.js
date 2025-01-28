@@ -27,6 +27,10 @@ export default function Login() {
         toast.success("Logged in successfully!");
         localStorage.setItem("token", data.token);
         localStorage.setItem("name", data.name);
+
+        // Console log the saved token
+        console.log("Saved Token:", localStorage.getItem("token"));
+
         setTimeout(() => {
           router.push("/");
         }, 1500);
