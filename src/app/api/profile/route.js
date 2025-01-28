@@ -14,7 +14,7 @@ const validateToken = (req) => {
     const decoded = verify(token, process.env.JWT_SECRET);
     return decoded.email;
   } catch (err) {
-    throw new Error("Invalid token");
+    throw new Error("Session expired, please Re-login");
   }
 };
 
