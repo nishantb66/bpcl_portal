@@ -115,37 +115,21 @@ export default function Profile() {
   };
 
   const formFields = [
-    { key: "name", type: "text", required: true, colSpan: "col-span-1" },
-    { key: "surname", type: "text", required: true, colSpan: "col-span-1" },
-    {
-      key: "email",
-      type: "email",
-      required: true,
-      colSpan: "col-span-2",
-      readOnly: true,
-    },
-    { key: "city", type: "text", required: true, colSpan: "col-span-1" },
-    { key: "localArea", type: "text", required: true, colSpan: "col-span-1" },
-    { key: "previousCompany", type: "text", colSpan: "col-span-2" },
-    {
-      key: "addressLine1",
-      type: "text",
-      required: true,
-      colSpan: "col-span-2",
-    },
-    { key: "addressLine2", type: "text", colSpan: "col-span-2" },
-    { key: "designation", type: "text", required: true, colSpan: "col-span-1" },
-    {
-      key: "shiftTimings",
-      type: "text",
-      required: true,
-      colSpan: "col-span-1",
-    },
+    { key: "name", type: "text", required: true },
+    { key: "surname", type: "text", required: true },
+    { key: "email", type: "email", required: true, readOnly: true },
+    { key: "city", type: "text", required: true },
+    { key: "localArea", type: "text", required: true },
+    { key: "previousCompany", type: "text" },
+    { key: "addressLine1", type: "text", required: true },
+    { key: "addressLine2", type: "text" },
+    { key: "designation", type: "text", required: true },
+    { key: "shiftTimings", type: "text", required: true },
   ];
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
           {/* Header Section */}
           <div className="bg-gray-800 px-6 py-6">
@@ -168,9 +152,9 @@ export default function Profile() {
 
           {/* Form Section */}
           <form onSubmit={handleSave} className="px-6 py-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {formFields.map(({ key, type, required, colSpan, readOnly }) => (
-                <div key={key} className={`${colSpan}`}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {formFields.map(({ key, type, required, readOnly }) => (
+                <div key={key} className="w-full">
                   <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
                     {key.replace(/([A-Z])/g, " $1")}
                     {required && <span className="text-red-500 ml-1">*</span>}
