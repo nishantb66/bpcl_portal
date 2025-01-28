@@ -5,18 +5,22 @@ import { useRouter } from "next/navigation";
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showEmployeeDetails, setShowEmployeeDetails] = useState(false);
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [customerDetails, setCustomerDetails] = useState([]);
+  const [complaints, setComplaints] = useState([]);
   const router = useRouter();
 
-  // Fetch users data after authentication
   useEffect(() => {
     if (isAuthenticated) {
       fetchUsers();
+      fetchCustomerDetails();
+      fetchComplaints();
     }
   }, [isAuthenticated]);
 
@@ -86,10 +90,52 @@ export default function Admin() {
     }
   };
 
+  const fetchCustomerDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/customerDetails", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setCustomerDetails(data);
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      setError("Failed to fetch customer details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchComplaints = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/complaints", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setComplaints(data);
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      setError("Failed to fetch complaints");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md bg-white rounded-lg shadow-md p-8">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md bg-white rounded-lg shadow-sm p-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-blue-900">
               Admin Login
@@ -114,7 +160,7 @@ export default function Admin() {
                 type="text"
                 value={form.username}
                 onChange={(e) => setForm({ ...form, username: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900"
                 required
               />
             </div>
@@ -127,7 +173,7 @@ export default function Admin() {
                 type="password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900"
                 required
               />
             </div>
@@ -139,160 +185,346 @@ export default function Admin() {
               Sign In
             </button>
           </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Protected administrative area
-            </p>
-          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto bg-white/20 backdrop-blur-xl rounded-xl shadow-2xl p-4 sm:p-6 lg:p-8">
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
-            Admin Dashboard
-          </h1>
-          <button
-            onClick={() => {
-              localStorage.removeItem("adminToken");
-              setIsAuthenticated(false);
-            }}
-            className="px-6 py-2.5 bg-yellow-500 text-blue-900 font-semibold rounded-lg hover:bg-yellow-400 transition-colors"
-          >
-            Logout
-          </button>
-        </div>
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="sticky top-0 bg-white shadow-sm z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 py-4">
+            <h1 className="text-xl sm:text-2xl font-bold text-blue-900">
+              Admin Dashboard
+            </h1>
 
-        {/* Content Section */}
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowEmployeeDetails(!showEmployeeDetails)}
+                className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800"
+              >
+                {showEmployeeDetails ? "Hide Employees" : "Employee Details"}
+              </button>
+
+
+
+              <button
+                onClick={() => {
+                  localStorage.removeItem("adminToken");
+                  setIsAuthenticated(false);
+                }}
+                className="px-4 py-2 bg-yellow-500 text-blue-900 rounded-md hover:bg-yellow-400"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
           <div className="text-center py-12">
-            <div className="h-12 w-12 border-4 border-yellow-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-white">Loading users data...</p>
+            <div className="h-12 w-12 border-4 border-blue-900 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading data...</p>
           </div>
         ) : error ? (
-          <div className="bg-red-500/10 text-red-100 p-4 rounded-lg border border-red-500/20">
-            {error}
+          <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+            <p className="text-red-600">{error}</p>
+          </div>
+        ) : showEmployeeDetails ? (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+            {/* Mobile View */}
+            <div className="sm:hidden space-y-4 p-4">
+              {users.map((user) => (
+                <div key={user.email} className="bg-gray-50 rounded-lg p-4">
+                  <div className="space-y-2">
+                    <p className="font-medium text-blue-900">
+                      {user.profile?.name}
+                    </p>
+                    <p className="text-sm text-gray-600">{user.email}</p>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">
+                        {user.profile?.designation}
+                      </span>
+                      <span className="text-gray-500">
+                        {user.profile?.city}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={() => setSelectedUser(user)}
+                        className="text-sm px-3 py-1.5 bg-blue-900 text-white rounded-md hover:bg-blue-800"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() => setUserToDelete(user)}
+                        className="text-sm px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-500"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop View */}
+            <table className="hidden sm:table w-full">
+              <thead className="bg-blue-50">
+                <tr>
+                  <th className="p-4 text-left text-sm font-medium text-blue-900">
+                    Name
+                  </th>
+                  <th className="p-4 text-left text-sm font-medium text-blue-900">
+                    Email
+                  </th>
+                  <th className="p-4 text-left text-sm font-medium text-blue-900">
+                    Designation
+                  </th>
+                  <th className="p-4 text-left text-sm font-medium text-blue-900">
+                    City
+                  </th>
+                  <th className="p-4 text-left text-sm font-medium text-blue-900">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {users.map((user) => (
+                  <tr key={user.email} className="hover:bg-gray-50">
+                    <td className="p-4 text-gray-800">{user.profile?.name}</td>
+                    <td className="p-4 text-gray-600 text-sm">{user.email}</td>
+                    <td className="p-4 text-gray-600 text-sm">
+                      {user.profile?.designation}
+                    </td>
+                    <td className="p-4 text-gray-600 text-sm">
+                      {user.profile?.city}
+                    </td>
+                    <td className="p-4 space-x-2">
+                      <button
+                        onClick={() => setSelectedUser(user)}
+                        className="px-3 py-1.5 bg-blue-900 text-white text-sm rounded-md hover:bg-blue-800"
+                      >
+                        View Details
+                      </button>
+                      <button
+                        onClick={() => setUserToDelete(user)}
+                        className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-md hover:bg-red-500"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
-          <div className="bg-white/10 rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-blue-950/50">
-                  <tr>
-                    <th className="p-4 text-left text-white font-semibold">
-                      Name
-                    </th>
-                    <th className="p-4 text-left text-white font-semibold">
-                      Email
-                    </th>
-                    <th className="p-4 text-left text-white font-semibold">
-                      Designation
-                    </th>
-                    <th className="p-4 text-left text-white font-semibold">
-                      City
-                    </th>
-                    <th className="p-4 text-left text-white font-semibold">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/10">
-                  {users.map((user) => (
-                    <tr key={user.email} className="hover:bg-white/5">
-                      <td className="p-4 text-white">
-                        {user.profile?.name} {user.profile?.surname}
-                      </td>
-                      <td className="p-4 text-white">{user.email}</td>
-                      <td className="p-4 text-white">
-                        {user.profile?.designation}
-                      </td>
-                      <td className="p-4 text-white">{user.profile?.city}</td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => setSelectedUser(user)}
-                          className="px-4 py-2 bg-yellow-500 text-blue-900 font-medium rounded-lg hover:bg-yellow-400 transition-colors"
-                        >
-                          View Details
-                        </button>
-                        <button
-                          onClick={() => setUserToDelete(user)}
-                          className="px-4 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                      {/* Delete Confirmation Modal */}
-                      {userToDelete && (
-                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                          <div className="bg-blue-900 rounded-xl p-6 max-w-md w-full">
-                            <h2 className="text-2xl font-bold text-white mb-4">
-                              Confirm Delete
-                            </h2>
-                            <p className="text-white mb-6">
-                              Are you sure you want to delete{" "}
-                              {userToDelete.email}? This action cannot be
-                              undone.
-                            </p>
-                            <div className="flex justify-end gap-4">
-                              <button
-                                onClick={() => setUserToDelete(null)}
-                                className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                onClick={() => handleDelete(userToDelete.email)}
-                                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+          <div className="space-y-8">
+            {/* Customer Details Section */}
+            <section className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+              <h2 className="text-xl font-semibold text-blue-900 mb-6">
+                Customer Details
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-blue-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Contact
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Vehicle
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Fuel Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Quantity
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Total Amount
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Payment Mode
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Loyalty Points
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Membership Status
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {customerDetails.map((customer) => (
+                      <tr key={customer._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 text-sm text-gray-800">
+                          {customer.customerName}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {customer.contactNumber}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {customer.email}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {customer.vehicleNumber} ({customer.vehicleType})
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {customer.fuelType}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {customer.quantity}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          ₹{customer.totalAmount}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {customer.paymentMode}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {customer.loyaltyPoints}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {customer.membershipStatus}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
 
-        {/* Modal */}
-        {selectedUser && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-blue-900 rounded-xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">User Details</h2>
-                <button
-                  onClick={() => setSelectedUser(null)}
-                  className="text-white hover:text-yellow-500 transition-colors"
-                >
-                  ✕
-                </button>
+            {/* Complaints Section */}
+            <section className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+              <h2 className="text-xl font-semibold text-blue-900 mb-6">
+                Complaints
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-blue-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Customer Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Complaint Details
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Urgency
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                        Created At
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {complaints.map((complaint) => (
+                      <tr key={complaint._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 text-sm text-gray-800">
+                          {complaint.customerName}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {complaint.complaintDetails}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {complaint.type}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {complaint.urgency}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {complaint.status}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {new Date(complaint.createdAt).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Object.entries(selectedUser.profile || {}).map(
-                  ([key, value]) => (
-                    <div key={key} className="bg-white/10 rounded-lg p-4">
-                      <p className="text-yellow-500/90 text-sm capitalize mb-1">
-                        {key.replace(/([A-Z])/g, " $1")}
-                      </p>
-                      <p className="text-white font-medium">{value || "N/A"}</p>
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
+            </section>
           </div>
         )}
-      </div>
+      </main>
+
+      {/* Modals */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+              <h2 className="text-xl font-semibold text-blue-900">
+                Employee Details
+              </h2>
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Object.entries(selectedUser.profile || {}).map(
+                ([key, value]) => (
+                  <div key={key} className="space-y-1">
+                    <p className="text-sm font-medium text-gray-500 capitalize">
+                      {key.replace(/([A-Z])/g, " $1")}
+                    </p>
+                    <p className="text-gray-900">{value || "-"}</p>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {userToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full">
+            <h2 className="text-xl font-semibold text-blue-900 mb-4">
+              Confirm Delete
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete {userToDelete.email}? This action
+              cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setUserToDelete(null)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(userToDelete.email)}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

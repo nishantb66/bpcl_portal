@@ -97,6 +97,12 @@ export default function Login() {
                 Register Now
               </Link>
             </p>
+            <Link
+              href="/admin"
+              className="text-blue-900 hover:text-blue-800 font-medium"
+            >
+              Login as Administrator
+            </Link>
           </div>
         </div>
       </div>
