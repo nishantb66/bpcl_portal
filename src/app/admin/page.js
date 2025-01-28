@@ -18,6 +18,7 @@ export default function Admin() {
   const [userToDelete, setUserToDelete] = useState(null);
   const [customerDetails, setCustomerDetails] = useState([]);
   const [complaints, setComplaints] = useState([]);
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -133,6 +134,29 @@ export default function Admin() {
       setError("Failed to fetch complaints");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateComplaintStatus = async (complaintId, newStatus) => {
+    try {
+      const response = await fetch(`/api/complaints`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+        body: JSON.stringify({
+          id: complaintId,
+          status: newStatus,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update status");
+
+      // Refresh complaints after update
+      fetchComplaints();
+    } catch (error) {
+      setError(error.message);
     }
   };
 
@@ -420,6 +444,7 @@ export default function Admin() {
                     <tr>
                       {[
                         "Customer Name",
+                        "Petrol Pump Location", // New header
                         "Complaint Details",
                         "Type",
                         "Urgency",
@@ -438,8 +463,37 @@ export default function Admin() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {complaints.map((complaint) => (
                       <tr key={complaint._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm text-gray-800">
-                          {complaint.customerName}
+                        <td
+                          className="px-6 py-4 text-sm text-gray-800 cursor-pointer hover:bg-blue-50 group"
+                          onClick={() => setSelectedComplaint(complaint)}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <span className="border-b border-dashed border-gray-400 group-hover:border-blue-500">
+                              {complaint.customerName}
+                            </span>
+                            <svg
+                              className="w-4 h-4 text-gray-400 group-hover:text-blue-500"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                              />
+                            </svg>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {complaint.petrolPumpLocation || "N/A"}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {complaint.complaintDetails}
@@ -460,15 +514,29 @@ export default function Admin() {
                           {complaint.urgency}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
-                          <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          <select
+                            value={complaint.status}
+                            onChange={(e) =>
+                              updateComplaintStatus(
+                                complaint._id,
+                                e.target.value
+                              )
+                            }
+                            className={`px-2 py-1 text-xs font-medium rounded-full cursor-pointer ${
                               complaint.status === "Resolved"
                                 ? "bg-green-100 text-green-800"
+                                : complaint.status === "In Progress"
+                                ? "bg-orange-100 text-orange-800"
+                                : complaint.status === "Ignored"
+                                ? "bg-red-100 text-red-800"
                                 : "bg-blue-100 text-blue-800"
                             }`}
                           >
-                            {complaint.status}
-                          </span>
+                            <option value="Open">Open</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Resolved">Resolved</option>
+                            <option value="Ignored">Ignored</option>
+                          </select>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {new Date(complaint.createdAt).toLocaleDateString()}
@@ -479,6 +547,94 @@ export default function Admin() {
                 </table>
               </div>
             </section>
+            {selectedComplaint && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-xl max-w-2xl w-full p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">
+                      Complaint Resolution Details
+                    </h3>
+                    <button
+                      onClick={() => setSelectedComplaint(null)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      try {
+                        const response = await fetch(`/api/complaints`, {
+                          method: "PUT",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${localStorage.getItem(
+                              "adminToken"
+                            )}`,
+                          },
+                          body: JSON.stringify({
+                            id: selectedComplaint._id,
+                            status: selectedComplaint.status,
+                            action: selectedComplaint.action,
+                            message: selectedComplaint.message,
+                          }),
+                        });
+
+                        if (response.ok) {
+                          fetchComplaints();
+                          setSelectedComplaint(null);
+                        }
+                      } catch (error) {
+                        console.error("Update failed:", error);
+                      }
+                    }}
+                  >
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Action Taken
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedComplaint.action}
+                          onChange={(e) =>
+                            setSelectedComplaint((prev) => ({
+                              ...prev,
+                              action: e.target.value,
+                            }))
+                          }
+                          className="w-full p-2 border rounded-md"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Resolution Message
+                        </label>
+                        <textarea
+                          value={selectedComplaint.message}
+                          onChange={(e) =>
+                            setSelectedComplaint((prev) => ({
+                              ...prev,
+                              message: e.target.value,
+                            }))
+                          }
+                          className="w-full p-2 border rounded-md h-32"
+                          required
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="w-full bg-blue-900 text-white py-2 rounded-md hover:bg-blue-800"
+                      >
+                        Save Changes
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>

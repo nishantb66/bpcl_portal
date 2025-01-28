@@ -9,6 +9,7 @@ export default function Complaints() {
   const [formData, setFormData] = useState({
     customerName: "",
     contactNumber: "",
+    petrolPumpLocation: "", 
     complaintDetails: "",
     type: "General",
     urgency: "Medium",
@@ -86,6 +87,25 @@ export default function Complaints() {
                 }
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 pattern="[0-9]{10}"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Petrol Pump Location <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.petrolPumpLocation}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    petrolPumpLocation: e.target.value,
+                  })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter petrol pump location"
               />
             </div>
 

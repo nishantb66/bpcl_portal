@@ -3,6 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  FiUser,
+  FiLogOut,
+  FiPlusCircle,
+  FiUsers,
+  FiAlertTriangle,
+} from "react-icons/fi";
 
 export default function Home() {
   const [userName, setUserName] = useState(null);
@@ -22,91 +29,115 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      {/* Navigation */}
-      <header className="sticky top-0 z-50 bg-white shadow-md">
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      {/* Navigation Header */}
+      <header className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-lg sm:text-2xl font-bold text-blue-900">
+            {/* Logo */}
+            <Link href="/" className="flex items-center">
+              <h1 className="text-xl sm:text-2xl font-bold text-blue-800">
                 Petrol Pump Portal
               </h1>
-            </div>
+            </Link>
 
-            <nav>
-              {userName ? (
-                <div className="flex items-center gap-2 sm:gap-4">
-                  <div className="hidden sm:block text-sm text-blue-900">
-                    Welcome, {userName}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => router.push("/profile")}
-                      className="px-3 py-2 bg-blue-900 text-white text-sm rounded hover:bg-blue-800"
-                    >
-                      Profile
-                    </button>
-                    <button
-                      onClick={handleLogout}
-                      className="px-3 py-2 bg-yellow-500 text-blue-900 text-sm rounded hover:bg-yellow-400"
-                    >
-                      Logout
-                    </button>
-                  </div>
+            {/* User Controls */}
+            {userName ? (
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <FiUser className="hidden sm:block" />
+                  <span className="sm:ml-1">Welcome, {userName}</span>
                 </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Link href="/admin" className="hidden sm:block">
-                    <button className="px-3 py-2 bg-blue-800 text-white text-sm rounded hover:bg-blue-700">
-                      Admin
-                    </button>
-                  </Link>
-                  <Link href="/login">
-                    <button className="px-3 py-2 bg-blue-900 text-white text-sm rounded hover:bg-blue-800">
-                      Login
-                    </button>
-                  </Link>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => router.push("/profile")}
+                    className="p-2 sm:px-4 sm:py-2 flex items-center gap-1 bg-blue-800 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <FiUser className="sm:hidden" />
+                    <span className="hidden sm:block">Profile</span>
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="p-2 sm:px-4 sm:py-2 flex items-center gap-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                  >
+                    <FiLogOut className="sm:hidden" />
+                    <span className="hidden sm:block">Logout</span>
+                  </button>
                 </div>
-              )}
-            </nav>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link href="/admin">
+                  <button className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    Admin
+                  </button>
+                </Link>
+                <Link href="/login">
+                  <button className="px-4 py-2 bg-blue-800 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    Login
+                  </button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Main Content - Mobile Optimized */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8">
-        <div className="w-full text-center space-y-4 sm:space-y-6">
-          <div className="mb-4 sm:mb-6">
-            <h1 className="text-4xl sm:text-5xl font-bold text-blue-900 leading-tight mb-2">
-              Petrol Pump
-            </h1>
-            <h2 className="text-2xl sm:text-3xl text-blue-900 font-semibold">
-              Management Portal
-            </h2>
-          </div>
+      {/* Main Content */}
+      <main className="flex-1">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {userName ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Customers and Complaints Card */}
+              <Link
+                href="/customer-details"
+                className="group bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-200 hover:border-blue-200"
+              >
+                <div className="flex flex-col items-center justify-center h-full">
+                  <div className="mb-4 text-blue-800 group-hover:text-blue-600 transition-colors">
+                    <FiUsers className="w-12 h-12" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Customers & Complaints
+                  </h3>
+                  <p className="text-gray-600 text-center text-sm">
+                    Manage customer records and resolve complaints
+                  </p>
+                </div>
+              </Link>
 
-          <div className="space-y-4">
-            {/* Add Customer Details Button */}
-            {userName && (
-              <div className="mt-6">
-                <Link href="/customer-details">
-                  <button className="w-full sm:w-auto px-8 py-4 bg-transparent border-2 border-blue-900 text-blue-900 rounded-lg hover:bg-blue-50 text-lg font-semibold transition-colors">
-                    Customer Details
-                  </button>
-                </Link>
+              {/* Additional Feature Cards (Placeholders) */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 opacity-50 cursor-not-allowed">
+                <div className="flex flex-col items-center justify-center h-full">
+                  <FiPlusCircle className="w-12 h-12 text-gray-400 mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-400 mb-2">
+                    New Feature
+                  </h3>
+                  <p className="text-gray-400 text-center text-sm">
+                    Coming soon
+                  </p>
+                </div>
               </div>
-            )}
-
-            {!userName && (
-              <div className="mt-6">
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="max-w-md mx-auto">
+                <FiAlertTriangle className="w-16 h-16 text-blue-800 mx-auto mb-6" />
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  Access Your Account
+                </h2>
+                <p className="text-gray-600 mb-8">
+                  Sign in to manage your petrol pump operations and customer
+                  relations
+                </p>
                 <Link href="/login">
-                  <button className="w-full sm:w-auto px-8 py-3 bg-blue-900 text-white rounded-lg hover:bg-blue-800 text-base font-medium">
+                  <button className="px-8 py-3 bg-blue-800 text-white rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium">
                     Get Started
                   </button>
                 </Link>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
