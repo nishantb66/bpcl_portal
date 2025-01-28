@@ -1,6 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import {
+  FiUser,
+  FiMail,
+  FiMapPin,
+  FiBriefcase,
+  FiClock,
+  FiHome,
+  FiLock,
+} from "react-icons/fi";
 
 export default function Profile() {
   const [profile, setProfile] = useState({
@@ -89,38 +98,34 @@ export default function Profile() {
       </div>
     );
 
+  const getIcon = (key) => {
+    const icons = {
+      name: <FiUser className="text-blue-600" />,
+      surname: <FiUser className="text-blue-600" />,
+      email: <FiMail className="text-blue-600" />,
+      city: <FiMapPin className="text-blue-600" />,
+      localArea: <FiMapPin className="text-blue-600" />,
+      previousCompany: <FiBriefcase className="text-blue-600" />,
+      addressLine1: <FiHome className="text-blue-600" />,
+      addressLine2: <FiHome className="text-blue-600" />,
+      designation: <FiBriefcase className="text-blue-600" />,
+      shiftTimings: <FiClock className="text-blue-600" />,
+    };
+    return icons[key] || null;
+  };
+
   const formFields = [
-    {
-      key: "name",
-      type: "text",
-      required: true,
-      colSpan: "col-span-1 md:col-span-1",
-    },
-    {
-      key: "surname",
-      type: "text",
-      required: true,
-      colSpan: "col-span-1 md:col-span-1",
-    },
+    { key: "name", type: "text", required: true, colSpan: "col-span-1" },
+    { key: "surname", type: "text", required: true, colSpan: "col-span-1" },
     {
       key: "email",
       type: "email",
       required: true,
       colSpan: "col-span-2",
-      readOnly: true, // Add this property
+      readOnly: true,
     },
-    {
-      key: "city",
-      type: "text",
-      required: true,
-      colSpan: "col-span-1 md:col-span-1",
-    },
-    {
-      key: "localArea",
-      type: "text",
-      required: true,
-      colSpan: "col-span-1 md:col-span-1",
-    },
+    { key: "city", type: "text", required: true, colSpan: "col-span-1" },
+    { key: "localArea", type: "text", required: true, colSpan: "col-span-1" },
     { key: "previousCompany", type: "text", colSpan: "col-span-2" },
     {
       key: "addressLine1",
@@ -129,80 +134,85 @@ export default function Profile() {
       colSpan: "col-span-2",
     },
     { key: "addressLine2", type: "text", colSpan: "col-span-2" },
-    {
-      key: "designation",
-      type: "text",
-      required: true,
-      colSpan: "col-span-1 md:col-span-1",
-    },
+    { key: "designation", type: "text", required: true, colSpan: "col-span-1" },
     {
       key: "shiftTimings",
       type: "text",
       required: true,
-      colSpan: "col-span-1 md:col-span-1",
+      colSpan: "col-span-1",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
           {/* Header Section */}
-          <div className="bg-blue-900 px-6 py-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-white">
+          <div className="bg-gray-800 px-6 py-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+              <div className="mb-4 sm:mb-0">
+                <h1 className="text-2xl font-semibold text-white">
                   {profile.name} {profile.surname}
                 </h1>
-                <p className="text-blue-200 mt-1">{profile.designation}</p>
+                <p className="text-gray-300 mt-1 text-sm">
+                  {profile.designation}
+                </p>
               </div>
-              <div className="bg-yellow-400 px-4 py-2 rounded-lg">
-                <p className="text-blue-900 font-semibold text-sm">
-                  Joined: {profile.joiningDate}
+              <div className="bg-blue-100 px-3 py-2 rounded-md">
+                <p className="text-gray-800 text-sm font-medium">
+                  Member since: {profile.joiningDate}
                 </p>
               </div>
             </div>
           </div>
 
           {/* Form Section */}
-          <form onSubmit={handleSave} className="px-6 py-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <form onSubmit={handleSave} className="px-6 py-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {formFields.map(({ key, type, required, colSpan, readOnly }) => (
                 <div key={key} className={`${colSpan}`}>
-                  <label className="block text-sm font-medium text-blue-900 mb-2 capitalize">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
                     {key.replace(/([A-Z])/g, " $1")}
                     {required && <span className="text-red-500 ml-1">*</span>}
                   </label>
-                  <input
-                    type={type}
-                    value={profile[key]}
-                    onChange={(e) => {
-                      if (!readOnly) {
-                        // Only update if not read-only
-                        setProfile({ ...profile, [key]: e.target.value });
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      {getIcon(key)}
+                    </div>
+                    <input
+                      type={type}
+                      value={profile[key]}
+                      onChange={(e) =>
+                        !readOnly &&
+                        setProfile({ ...profile, [key]: e.target.value })
                       }
-                    }}
-                    required={required}
-                    readOnly={readOnly} // Add readOnly attribute
-                    className={`w-full px-4 py-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all ${
-                      readOnly
-                        ? "bg-gray-100 cursor-not-allowed text-gray-500"
-                        : ""
-                    }`}
-                    placeholder={`Enter ${key
-                      .replace(/([A-Z])/g, " $1")
-                      .toLowerCase()}`}
-                  />
+                      required={required}
+                      readOnly={readOnly}
+                      className={`w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        readOnly
+                          ? "bg-gray-50 text-gray-500 cursor-not-allowed"
+                          : "hover:border-gray-300"
+                      }`}
+                      placeholder={`Enter ${key
+                        .replace(/([A-Z])/g, " $1")
+                        .toLowerCase()}`}
+                    />
+                    {key === "email" && (
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <FiLock className="text-gray-400" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-8 border-t border-blue-100 pt-6">
+            <div className="mt-8 border-t border-gray-100 pt-6">
               <button
                 type="submit"
-                className="w-full bg-yellow-400 text-blue-900 px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400"
+                className="w-full sm:w-auto px-8 py-2.5 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800 transition-colors"
               >
-                Update Profile
+                Save Changes
               </button>
             </div>
           </form>
