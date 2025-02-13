@@ -11,6 +11,7 @@ import {
   FiAlertTriangle,
   FiCalendar,
   FiLoader,
+  FiClipboard,
 } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -182,6 +183,29 @@ export default function Home() {
                   </p>
                 </div>
                 {loadingCard === "/leave" && (
+                  <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center">
+                    <FiLoader className="w-10 h-10 animate-spin text-blue-900" />
+                  </div>
+                )}
+              </button>
+
+              {/* Take a Quick Survey Card */}
+              <button
+                onClick={() => handleNavigation("/survey")}
+                className="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow border border-gray-200 hover:border-blue-300 relative"
+              >
+                <div className="flex flex-col items-center justify-center h-full">
+                  <div className="mb-6 text-blue-900 group-hover:text-blue-700 transition-colors">
+                    <FiClipboard className="w-14 h-14" />
+                  </div>
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-3">
+                    Take a Quick Survey
+                  </h3>
+                  <p className="text-gray-600 text-center text-base">
+                    Share your feedback on employee working conditions
+                  </p>
+                </div>
+                {loadingCard === "/survey" && (
                   <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center">
                     <FiLoader className="w-10 h-10 animate-spin text-blue-900" />
                   </div>
