@@ -2,6 +2,9 @@ import { hash, compare } from "bcrypt";
 import { connectToDB } from "../middleware";
 import { sign, verify } from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+dotenv.config();
+
 
 // Input validation helpers
 const isValidEmail = (email) => {

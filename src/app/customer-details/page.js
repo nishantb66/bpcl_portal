@@ -22,23 +22,23 @@ export default function CustomerDetails() {
     }
   }, [router]);
 
-    const fetchComplaints = async () => {
-      try {
-        const response = await fetch("/api/complaints");
-        if (!response.ok) throw new Error("Failed to fetch complaints");
-        const data = await response.json();
-        setComplaints(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchComplaints = async () => {
+    try {
+      const response = await fetch("/api/complaints");
+      if (!response.ok) throw new Error("Failed to fetch complaints");
+      const data = await response.json();
+      setComplaints(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center mb-6">
+        <div className="flex items-center mb-8">
           <Link
             href="/"
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-900 bg-white rounded-lg border border-blue-900 hover:bg-blue-50 transition-colors"
@@ -63,9 +63,9 @@ export default function CustomerDetails() {
           Customer Management
         </h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           <Link href="/customer-details/fill-info">
-            <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+            <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200">
               <h2 className="text-xl font-semibold text-blue-900 mb-2">
                 Customer Details Form
               </h2>
@@ -76,7 +76,7 @@ export default function CustomerDetails() {
           </Link>
 
           <Link href="/customer-details/complaints">
-            <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+            <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200">
               <h2 className="text-xl font-semibold text-blue-900 mb-2">
                 Customer Complaints
               </h2>
@@ -86,13 +86,14 @@ export default function CustomerDetails() {
             </div>
           </Link>
         </div>
+
         <div className="mt-12">
-          <h2 className="text-2xl font-bold text-blue-900 mb-1 flex items-center">
+          <h2 className="text-2xl font-bold text-blue-900 mb-4 flex items-center">
             <ExclamationTriangleIcon className="h-6 w-6 text-red-600 mr-2" />
             Customer Complaints
           </h2>
-          <p className="text-gray-600">
-            (click the eye icon to view the message from administration)
+          <p className="text-gray-600 mb-6">
+            (Click the eye icon to view the message from administration)
           </p>
 
           {loading ? (
@@ -210,6 +211,7 @@ export default function CustomerDetails() {
           )}
         </div>
       </div>
+
       {selectedComplaint && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-2xl w-full p-6">

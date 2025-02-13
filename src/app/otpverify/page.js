@@ -8,6 +8,7 @@ export default function OTPVerify() {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const purpose = new URLSearchParams(window.location.search).get("purpose");
 
   const email =
     typeof window !== "undefined"
@@ -18,24 +19,36 @@ export default function OTPVerify() {
     e.preventDefault();
     setIsLoading(true);
 
+    const apiUrl = purpose === "signup" ? "/api/auth" : "/api/forgotpass";
+    const bodyData =
+      purpose === "signup"
+        ? { type: "verify-signup-otp", email, otp }
+        : { type: "verify-otp", email, otp };
+
     try {
-      const res = await fetch("/api/forgotpass", {
+      const res = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "verify-otp", email, otp }),
+        body: JSON.stringify(bodyData),
       });
-      const data = await res.json();
 
       if (res.ok) {
-        toast.success(
-          "OTP verified successfully! Redirecting to password reset..."
-        );
-        setTimeout(() => router.push(`/reset-password?email=${email}`), 2000);
+        const message =
+          purpose === "signup"
+            ? "Account created! Redirecting to login..."
+            : "OTP verified! Redirecting to reset password...";
+        toast.success(message);
+        setTimeout(() => {
+          router.push(
+            purpose === "signup" ? "/login" : `/reset-password?email=${email}`
+          );
+        }, 2000);
       } else {
-        toast.error(data.message || "Invalid OTP. Please try again.");
+        const data = await res.json();
+        toast.error(data.message);
       }
     } catch (error) {
-      toast.error("An error occurred. Please try again.");
+      toast.error("An error occurred");
     } finally {
       setIsLoading(false);
     }

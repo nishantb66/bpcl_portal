@@ -1,6 +1,9 @@
 import { connectToDB } from "../middleware";
 import { hash, compare } from "bcrypt";
 import { sign } from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
+
 
 // Initialize admin credentials in DB
 async function initializeAdmin() {

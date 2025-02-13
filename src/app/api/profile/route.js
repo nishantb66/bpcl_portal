@@ -1,5 +1,8 @@
 import { connectToDB } from "../middleware";
 import { verify } from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
+
 
 // Token validation helper
 const validateToken = (req) => {
