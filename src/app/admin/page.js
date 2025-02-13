@@ -76,6 +76,29 @@ export default function Admin() {
     }
   };
 
+  const updateLeaveStatus = async (leaveId, newStatus) => {
+    try {
+      const response = await fetch(`/api/admin/leaves`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+        body: JSON.stringify({
+          id: leaveId,
+          status: newStatus,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update status");
+
+      // Refresh leaves after update
+      fetchLeaves();
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -400,6 +423,23 @@ export default function Admin() {
                     </div>
                     <p className="text-sm text-gray-600">{leave.reason}</p>
                     <div className="flex gap-2 mt-2">
+                      <select
+                        value={leave.status}
+                        onChange={(e) =>
+                          updateLeaveStatus(leave._id, e.target.value)
+                        }
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          leave.status === "Approved"
+                            ? "bg-green-100 text-green-800"
+                            : leave.status === "Pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                      </select>
                       <button
                         onClick={() => setLeaveToDelete(leave)}
                         className="text-sm px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-500"
@@ -451,7 +491,11 @@ export default function Admin() {
                       {leave.reason}
                     </td>
                     <td className="p-4 text-gray-600 text-sm">
-                      <span
+                      <select
+                        value={leave.status}
+                        onChange={(e) =>
+                          updateLeaveStatus(leave._id, e.target.value)
+                        }
                         className={`px-2 py-1 text-xs rounded-full ${
                           leave.status === "Approved"
                             ? "bg-green-100 text-green-800"
@@ -460,8 +504,10 @@ export default function Admin() {
                             : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {leave.status}
-                      </span>
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                      </select>
                     </td>
                     <td className="p-4">
                       <button

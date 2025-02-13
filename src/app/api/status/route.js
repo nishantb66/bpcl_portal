@@ -14,19 +14,22 @@ export async function GET(req) {
 
     const token = authHeader.split(" ")[1];
     const decoded = verify(token, process.env.JWT_SECRET);
+    const userEmail = decoded.email;
 
-    const existingLeave = await db.collection("leaves").findOne({
-      userEmail: decoded.email,
+    const leaveApplication = await db.collection("leaves").findOne({
+      userEmail,
       status: "Pending",
     });
 
-    if (existingLeave) {
-      return new Response(JSON.stringify({ pending: true }), { status: 200 });
-    } else {
-      return new Response(JSON.stringify({ pending: false }), { status: 200 });
-    }
+    return new Response(
+      JSON.stringify({
+        pending: !!leaveApplication,
+        application: leaveApplication,
+      }),
+      { status: 200 }
+    );
   } catch (error) {
-    console.error("Leave status check error:", error);
+    console.error("Error checking leave status:", error);
     return new Response(JSON.stringify({ message: "Internal server error" }), {
       status: 500,
     });

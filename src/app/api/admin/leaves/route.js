@@ -35,3 +35,29 @@ export async function DELETE(req) {
     return Response.json({ message: "Error deleting leave" }, { status: 500 });
   }
 }
+
+export async function PUT(req) {
+  try {
+    const db = await connectToDB();
+    const { id, status } = await req.json();
+
+    if (!ObjectId.isValid(id)) {
+      return Response.json({ message: "Invalid ID" }, { status: 400 });
+    }
+
+    const result = await db
+      .collection("leaves")
+      .updateOne({ _id: new ObjectId(id) }, { $set: { status } });
+
+    if (result.matchedCount === 0) {
+      return Response.json({ message: "Leave not found" }, { status: 404 });
+    }
+
+    return Response.json({ message: "Leave status updated successfully" });
+  } catch (error) {
+    return Response.json(
+      { message: "Error updating leave status" },
+      { status: 500 }
+    );
+  }
+}
