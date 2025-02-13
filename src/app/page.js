@@ -14,17 +14,43 @@ import {
 } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import jwt from "jsonwebtoken"; // Import jwt to decode the token
 
 export default function Home() {
   const [userName, setUserName] = useState(null);
   const [loadingCard, setLoadingCard] = useState(null); // Track which card is loading
   const router = useRouter();
 
+  const checkTokenExpiration = (token) => {
+    try {
+      const decodedToken = jwt.decode(token);
+      if (decodedToken && decodedToken.exp) {
+        const currentTime = Date.now() / 1000;
+        return decodedToken.exp < currentTime;
+      }
+      return true; // If token is invalid or doesn't have an expiration, consider it expired
+    } catch (error) {
+      return true; // If there's an error decoding the token, consider it expired
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const name = localStorage.getItem("name");
-    if (token && name) setUserName(name);
-  }, []);
+
+    if (token && name) {
+      if (checkTokenExpiration(token)) {
+        toast.info("Your session has expired. Please log in again.");
+        setTimeout(() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("name");
+          router.push("/login");
+        }, 2000);
+      } else {
+        setUserName(name);
+      }
+    }
+  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
