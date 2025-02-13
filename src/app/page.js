@@ -10,13 +10,14 @@ import {
   FiUsers,
   FiAlertTriangle,
   FiCalendar,
+  FiLoader,
 } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-
 export default function Home() {
   const [userName, setUserName] = useState(null);
+  const [loadingCard, setLoadingCard] = useState(null); // Track which card is loading
   const router = useRouter();
 
   useEffect(() => {
@@ -33,41 +34,41 @@ export default function Home() {
     router.push("/login");
   };
 
-  const handleApplyLeave = async () => {
+  const handleNavigation = async (path, api = null) => {
+    setLoadingCard(path);
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/status", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-
-      if (data.pending) {
-        toast.info(
-          "You have already applied for leave and it is under review."
-        );
-      } else {
-        router.push("/leave");
+      if (api) {
+        const token = localStorage.getItem("token");
+        const response = await fetch(api, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+        if (data.pending) {
+          toast.info(
+            "You have already applied for leave and it is under review."
+          );
+          return;
+        }
       }
+      router.push(path);
     } catch (error) {
-      toast.error("Failed to check leave status.");
+      toast.error("An error occurred while navigating.");
+    } finally {
+      setLoadingCard(null);
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <ToastContainer />
-      {/* Navigation Header */}
       <header className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Logo */}
             <Link href="/" className="flex items-center">
               <h1 className="text-xl sm:text-2xl font-bold text-blue-800">
                 Petrol Pump Portal
               </h1>
             </Link>
-
-            {/* User Controls */}
             {userName ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -109,15 +110,14 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {userName ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Customers and Complaints Card */}
-              <Link
-                href="/customer-details"
-                className="group bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-200 hover:border-blue-200"
+              {/* Customers & Complaints Card */}
+              <button
+                onClick={() => handleNavigation("/customer-details")}
+                className="group bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-200 hover:border-blue-200 relative"
               >
                 <div className="flex flex-col items-center justify-center h-full">
                   <div className="mb-4 text-blue-800 group-hover:text-blue-600 transition-colors">
@@ -130,12 +130,17 @@ export default function Home() {
                     Manage customer records and resolve complaints
                   </p>
                 </div>
-              </Link>
+                {loadingCard === "/customer-details" && (
+                  <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center">
+                    <FiLoader className="w-8 h-8 animate-spin text-blue-800" />
+                  </div>
+                )}
+              </button>
 
-              <Link
-                href="#"
-                onClick={handleApplyLeave}
-                className="group bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-200 hover:border-blue-200"
+              {/* Apply for Leave Card */}
+              <button
+                onClick={() => handleNavigation("/leave", "/api/status")}
+                className="group bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-200 hover:border-blue-200 relative"
               >
                 <div className="flex flex-col items-center justify-center h-full">
                   <div className="mb-4 text-blue-800 group-hover:text-blue-600 transition-colors">
@@ -148,9 +153,14 @@ export default function Home() {
                     Submit and manage your leave applications
                   </p>
                 </div>
-              </Link>
+                {loadingCard === "/leave" && (
+                  <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center">
+                    <FiLoader className="w-8 h-8 animate-spin text-blue-800" />
+                  </div>
+                )}
+              </button>
 
-              {/* Additional Feature Cards (Placeholders) */}
+              {/* Placeholder for New Feature */}
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 opacity-50 cursor-not-allowed">
                 <div className="flex flex-col items-center justify-center h-full">
                   <FiPlusCircle className="w-12 h-12 text-gray-400 mb-4" />
