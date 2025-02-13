@@ -19,6 +19,9 @@ export default function Admin() {
   const [customerDetails, setCustomerDetails] = useState([]);
   const [complaints, setComplaints] = useState([]);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [showLeaveDetails, setShowLeaveDetails] = useState(false);
+  const [leaves, setLeaves] = useState([]);
+  const [leaveToDelete, setLeaveToDelete] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -26,6 +29,7 @@ export default function Admin() {
       fetchUsers();
       fetchCustomerDetails();
       fetchComplaints();
+      fetchLeaves();
     }
   }, [isAuthenticated]);
 
@@ -45,6 +49,28 @@ export default function Admin() {
       }
     } catch (err) {
       setError("Failed to fetch users data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add this function
+  const fetchLeaves = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/admin/leaves", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setLeaves(data.leaves);
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      setError("Failed to fetch leaves");
     } finally {
       setLoading(false);
     }
@@ -238,6 +264,16 @@ export default function Admin() {
 
               <button
                 onClick={() => {
+                  setShowLeaveDetails(!showLeaveDetails);
+                  setShowEmployeeDetails(false);
+                }}
+                className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800"
+              >
+                {showLeaveDetails ? "Hide Leaves" : "View Leave Applications"}
+              </button>
+
+              <button
+                onClick={() => {
                   localStorage.removeItem("adminToken");
                   setIsAuthenticated(false);
                 }}
@@ -335,6 +371,101 @@ export default function Admin() {
                       </button>
                       <button
                         onClick={() => setUserToDelete(user)}
+                        className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-md hover:bg-red-500"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : showLeaveDetails ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            {/* Mobile View */}
+            <div className="sm:hidden space-y-4 p-4">
+              {leaves.map((leave) => (
+                <div key={leave._id} className="bg-gray-50 rounded-lg p-4">
+                  <div className="space-y-2">
+                    <p className="font-medium text-blue-900">{leave.name}</p>
+                    <p className="text-sm text-gray-600">{leave.userEmail}</p>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">
+                        {new Date(leave.fromDate).toLocaleDateString()}
+                      </span>
+                      <span className="text-gray-500">
+                        {new Date(leave.toDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600">{leave.reason}</p>
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={() => setLeaveToDelete(leave)}
+                        className="text-sm px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-500"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop View */}
+            <table className="hidden sm:table w-full">
+              <thead className="bg-blue-50">
+                <tr>
+                  {[
+                    "Name",
+                    "Email",
+                    "From Date",
+                    "To Date",
+                    "Reason",
+                    "Status",
+                    "Actions",
+                  ].map((header) => (
+                    <th
+                      key={header}
+                      className="p-4 text-left text-sm font-medium text-blue-900"
+                    >
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {leaves.map((leave) => (
+                  <tr key={leave._id} className="hover:bg-gray-50">
+                    <td className="p-4 text-gray-800">{leave.name}</td>
+                    <td className="p-4 text-gray-600 text-sm">
+                      {leave.userEmail}
+                    </td>
+                    <td className="p-4 text-gray-600 text-sm">
+                      {new Date(leave.fromDate).toLocaleDateString()}
+                    </td>
+                    <td className="p-4 text-gray-600 text-sm">
+                      {new Date(leave.toDate).toLocaleDateString()}
+                    </td>
+                    <td className="p-4 text-gray-600 text-sm">
+                      {leave.reason}
+                    </td>
+                    <td className="p-4 text-gray-600 text-sm">
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          leave.status === "Approved"
+                            ? "bg-green-100 text-green-800"
+                            : leave.status === "Pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {leave.status}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <button
+                        onClick={() => setLeaveToDelete(leave)}
                         className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-md hover:bg-red-500"
                       >
                         Delete
@@ -689,6 +820,56 @@ export default function Admin() {
               </button>
               <button
                 onClick={() => handleDelete(userToDelete.email)}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {leaveToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full">
+            <h2 className="text-xl font-semibold text-blue-900 mb-4">
+              Confirm Delete
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete {leaveToDelete.name}'s leave
+              application?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setLeaveToDelete(null)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch(
+                      `/api/admin/leaves?id=${leaveToDelete._id}`,
+                      {
+                        method: "DELETE",
+                        headers: {
+                          Authorization: `Bearer ${localStorage.getItem(
+                            "adminToken"
+                          )}`,
+                        },
+                      }
+                    );
+
+                    if (response.ok) {
+                      setLeaves(
+                        leaves.filter((l) => l._id !== leaveToDelete._id)
+                      );
+                      setLeaveToDelete(null);
+                    }
+                  } catch (error) {
+                    setError("Failed to delete leave");
+                  }
+                }}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500"
               >
                 Delete
