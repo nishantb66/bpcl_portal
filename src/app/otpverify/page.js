@@ -8,12 +8,16 @@ export default function OTPVerify() {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const purpose = new URLSearchParams(window.location.search).get("purpose");
+  const [purpose, setPurpose] = useState("");
+  const [email, setEmail] = useState("");
 
-  const email =
-    typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("email")
-      : null;
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setPurpose(params.get("purpose"));
+      setEmail(params.get("email"));
+    }
+  }, []);
 
   const handleVerify = async (e) => {
     e.preventDefault();
