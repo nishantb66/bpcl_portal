@@ -166,6 +166,37 @@ export default function Admin() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [loadingComplaints, setLoadingComplaints] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [cooldown, setCooldown] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    let inactivityTimer;
+
+    const resetInactivityTimer = () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        localStorage.removeItem("adminToken");
+        setIsAuthenticated(false);
+        router.push("/admin");
+      }, 300000); // 5 minutes
+    };
+
+    // Initial setup
+    resetInactivityTimer();
+
+    // Event listeners for user activity
+    window.addEventListener("mousemove", resetInactivityTimer);
+    window.addEventListener("keypress", resetInactivityTimer);
+
+    // Cleanup
+    return () => {
+      clearTimeout(inactivityTimer);
+      window.removeEventListener("mousemove", resetInactivityTimer);
+      window.removeEventListener("keypress", resetInactivityTimer);
+    };
+  }, [isAuthenticated, router]);
+
   const LoadingIndicator = () => (
     <div className="flex justify-center items-center space-x-2">
       <div className="w-4 h-4 bg-blue-900 rounded-full animate-bounce"></div>
@@ -173,7 +204,6 @@ export default function Admin() {
       <div className="w-4 h-4 bg-blue-900 rounded-full animate-bounce delay-200"></div>
     </div>
   );
-  const router = useRouter();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -261,6 +291,13 @@ export default function Admin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (cooldown) {
+      setError("Please wait 5 minutes before trying again.");
+      return;
+    }
+
+    setLoading(true);
     try {
       const response = await fetch("/api/admin", {
         method: "POST",
@@ -273,11 +310,20 @@ export default function Admin() {
         localStorage.setItem("adminToken", data.token);
         setIsAuthenticated(true);
         setError("");
+        setLoginAttempts(0); // Reset login attempts on successful login
       } else {
         setError(data.message);
+        setLoginAttempts((prev) => prev + 1);
+
+        if (loginAttempts + 1 >= 3) {
+          setCooldown(true);
+          setTimeout(() => setCooldown(false), 300000); // 5 minutes cooldown
+        }
       }
     } catch (err) {
       setError("Failed to authenticate");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -369,57 +415,135 @@ export default function Admin() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md bg-white rounded-lg shadow-sm p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-blue-900">
-              Admin Login
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Please enter your credentials
-            </p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-xl p-8 space-y-8">
+            {/* Error Alert */}
+            {error && (
+              <div className="animate-fade-in bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <svg
+                    className="w-5 h-5 text-red-500 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Username
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="h-5 w-5 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      value={form.username}
+                      onChange={(e) =>
+                        setForm({ ...form, username: e.target.value })
+                      }
+                      className="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 text-gray-900 placeholder-gray-400"
+                      placeholder="Enter your username"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="h-5 w-5 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                        />
+                      </svg>
+                    </div>
+                    <input
+                      type="password"
+                      value={form.password}
+                      onChange={(e) =>
+                        setForm({ ...form, password: e.target.value })
+                      }
+                      className="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 text-gray-900 placeholder-gray-400"
+                      placeholder="Enter your password"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || cooldown}
+                className="w-full flex items-center justify-center py-3 px-4 rounded-xl text-white font-medium bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <div className="flex items-center space-x-2">
+                    <svg
+                      className="animate-spin h-5 w-5 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    <span>Authenticating...</span>
+                  </div>
+                ) : (
+                  <span>Sign In</span>
+                )}
+              </button>
+            </form>
           </div>
-
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-md">
-              <p className="text-sm text-red-600">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Admin Username
-              </label>
-              <input
-                type="text"
-                value={form.username}
-                onChange={(e) => setForm({ ...form, username: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 px-4 bg-blue-900 text-white font-medium rounded-md hover:bg-blue-800"
-            >
-              Sign In
-            </button>
-          </form>
         </div>
       </div>
     );

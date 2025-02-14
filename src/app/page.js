@@ -118,7 +118,7 @@ export default function Home() {
                 />
               </svg>
               <h1 className="text-2xl sm:text-3xl font-bold text-blue-900">
-                Enterprise Portal
+                Portal
               </h1>
             </Link>
 
