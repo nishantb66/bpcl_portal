@@ -5,7 +5,145 @@ import { useRouter } from "next/navigation";
 import {
   UserCircleIcon,
   ExclamationTriangleIcon,
+  ChartBarIcon,
 } from "@heroicons/react/24/solid";
+import { SurveyChart } from "../components/SurveyChart";
+
+const questions = [
+  {
+    id: 1,
+    question: "How satisfied are you with your current working conditions?",
+    options: ["Very Satisfied", "Satisfied", "Neutral", "I don't know"],
+  },
+  {
+    id: 2,
+    question: "Do you feel that your work is recognized and appreciated?",
+    options: ["Always", "Sometimes", "Rarely", "Prefer not to say"],
+  },
+  {
+    id: 3,
+    question: "How would you rate the work-life balance in your current role?",
+    options: ["Excellent", "Good", "Fair", "I don't know"],
+  },
+  {
+    id: 4,
+    question:
+      "Do you have access to the necessary tools and resources to perform your job effectively?",
+    options: ["Always", "Most of the time", "Rarely", "Not applicable"],
+  },
+  {
+    id: 5,
+    question:
+      "How comfortable are you with the level of communication within your team?",
+    options: ["Very Comfortable", "Comfortable", "Neutral", "I don't know"],
+  },
+  {
+    id: 6,
+    question:
+      "Do you feel that your opinions and suggestions are valued by your superiors?",
+    options: ["Always", "Sometimes", "Rarely", "Prefer not to say"],
+  },
+  {
+    id: 7,
+    question:
+      "How would you rate the cleanliness and maintenance of your workplace?",
+    options: ["Excellent", "Good", "Fair", "I don't know"],
+  },
+  {
+    id: 8,
+    question:
+      "Do you feel that your job provides opportunities for growth and development?",
+    options: ["Yes, definitely", "Somewhat", "Not really", "Not applicable"],
+  },
+  {
+    id: 9,
+    question:
+      "How satisfied are you with the health and safety measures at your workplace?",
+    options: ["Very Satisfied", "Satisfied", "Neutral", "I don't know"],
+  },
+  {
+    id: 10,
+    question: "Do you feel that your workload is manageable?",
+    options: ["Always", "Most of the time", "Rarely", "Prefer not to say"],
+  },
+  {
+    id: 11,
+    question:
+      "How would you rate the quality of leadership in your organization?",
+    options: ["Excellent", "Good", "Fair", "I don't know"],
+  },
+  {
+    id: 12,
+    question: "Do you feel that your compensation is fair for the work you do?",
+    options: ["Yes, definitely", "Somewhat", "Not really", "Prefer not to say"],
+  },
+  {
+    id: 13,
+    question:
+      "How satisfied are you with the training and development programs offered?",
+    options: ["Very Satisfied", "Satisfied", "Neutral", "Not applicable"],
+  },
+  {
+    id: 14,
+    question:
+      "Do you feel that your workplace promotes diversity and inclusion?",
+    options: ["Yes, definitely", "Somewhat", "Not really", "I don't know"],
+  },
+  {
+    id: 15,
+    question:
+      "How would you rate the level of teamwork and collaboration in your organization?",
+    options: ["Excellent", "Good", "Fair", "I don't know"],
+  },
+  {
+    id: 16,
+    question:
+      "Do you feel that your workplace is free from harassment and discrimination?",
+    options: ["Yes, definitely", "Somewhat", "Not really", "Prefer not to say"],
+  },
+  {
+    id: 17,
+    question:
+      "How satisfied are you with the benefits provided by your employer?",
+    options: ["Very Satisfied", "Satisfied", "Neutral", "Not applicable"],
+  },
+  {
+    id: 18,
+    question:
+      "Do you feel that your workplace fosters innovation and creativity?",
+    options: ["Yes, definitely", "Somewhat", "Not really", "I don't know"],
+  },
+  {
+    id: 19,
+    question:
+      "How would you rate the overall morale and motivation of your team?",
+    options: ["Excellent", "Good", "Fair", "I don't know"],
+  },
+  {
+    id: 20,
+    question: "Do you feel that your workplace is environmentally conscious?",
+    options: ["Yes, definitely", "Somewhat", "Not really", "Not applicable"],
+  },
+];
+
+//function to fetch survey data
+const fetchSurveys = async () => {
+  try {
+    const response = await fetch("/api/survey", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+      },
+    });
+    const data = await response.json();
+    if (response.ok) {
+      return data;
+    } else {
+      throw new Error(data.message);
+    }
+  } catch (err) {
+    throw new Error("Failed to fetch survey data");
+  }
+};
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -22,6 +160,8 @@ export default function Admin() {
   const [showLeaveDetails, setShowLeaveDetails] = useState(false);
   const [leaves, setLeaves] = useState([]);
   const [leaveToDelete, setLeaveToDelete] = useState(null);
+  const [surveys, setSurveys] = useState([]);
+  const [showSurveyDetails, setShowSurveyDetails] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -30,6 +170,15 @@ export default function Admin() {
       fetchCustomerDetails();
       fetchComplaints();
       fetchLeaves();
+    }
+  }, [isAuthenticated]);
+
+  // useEffect to fetch survey data
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchSurveys()
+        .then((data) => setSurveys(data))
+        .catch((err) => setError(err.message));
     }
   }, [isAuthenticated]);
 
@@ -54,7 +203,7 @@ export default function Admin() {
     }
   };
 
-  // Add this function
+  // function to fetch leave data
   const fetchLeaves = async () => {
     try {
       setLoading(true);
@@ -296,6 +445,13 @@ export default function Admin() {
               </button>
 
               <button
+                onClick={() => setShowSurveyDetails(!showSurveyDetails)}
+                className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800"
+              >
+                {showSurveyDetails ? "Hide Surveys" : "View Survey Responses"}
+              </button>
+
+              <button
                 onClick={() => {
                   localStorage.removeItem("adminToken");
                   setIsAuthenticated(false);
@@ -311,6 +467,55 @@ export default function Admin() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {showSurveyDetails && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <ChartBarIcon className="h-6 w-6 text-blue-600 mr-2" />
+                Survey Responses
+              </h2>
+            </div>
+            <div className="p-6">
+              <SurveyChart surveys={surveys} questions={questions} />
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-blue-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
+                      User
+                    </th>
+                    {questions.map((question) => (
+                      <th
+                        key={question.id}
+                        className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider"
+                      >
+                        {question.question}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {surveys.map((survey) => (
+                    <tr key={survey._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 text-sm text-gray-800">
+                        {survey.user}
+                      </td>
+                      {questions.map((question) => (
+                        <td
+                          key={question.id}
+                          className="px-6 py-4 text-sm text-gray-600"
+                        >
+                          {survey.answers?.[question.id] ?? "N/A"}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
         {loading ? (
           <div className="text-center py-12">
             <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
