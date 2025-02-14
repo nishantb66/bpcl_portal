@@ -8,6 +8,7 @@ import {
   ChartBarIcon,
 } from "@heroicons/react/24/solid";
 import { SurveyChart } from "../components/SurveyChart";
+import { MenuIcon, XIcon } from "lucide-react";
 
 const questions = [
   {
@@ -162,6 +163,7 @@ export default function Admin() {
   const [leaveToDelete, setLeaveToDelete] = useState(null);
   const [surveys, setSurveys] = useState([]);
   const [showSurveyDetails, setShowSurveyDetails] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -419,50 +421,92 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="sticky top-0 bg-white shadow-sm z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 py-4">
-            <h1 className="text-xl sm:text-2xl font-bold text-blue-900">
-              Admin Dashboard
-            </h1>
+      <header className="sticky top-0 bg-white shadow-md z-50 w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-4">
+          <h1 className="text-xl sm:text-2xl font-bold text-blue-900">
+            Admin Dashboard
+          </h1>
 
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setShowEmployeeDetails(!showEmployeeDetails)}
-                className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800"
-              >
-                {showEmployeeDetails ? "Hide Employees" : "Employee Details"}
-              </button>
+          <div className="hidden sm:flex items-center gap-4">
+            <button
+              onClick={() => setShowEmployeeDetails(!showEmployeeDetails)}
+              className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition"
+            >
+              {showEmployeeDetails ? "Hide Employees" : "Employee Details"}
+            </button>
 
-              <button
-                onClick={() => {
-                  setShowLeaveDetails(!showLeaveDetails);
-                  setShowEmployeeDetails(false);
-                }}
-                className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800"
-              >
-                {showLeaveDetails ? "Hide Leaves" : "View Leave Applications"}
-              </button>
+            <button
+              onClick={() => {
+                setShowLeaveDetails(!showLeaveDetails);
+                setShowEmployeeDetails(false);
+              }}
+              className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition"
+            >
+              {showLeaveDetails ? "Hide Leaves" : "View Leave Applications"}
+            </button>
 
-              <button
-                onClick={() => setShowSurveyDetails(!showSurveyDetails)}
-                className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800"
-              >
-                {showSurveyDetails ? "Hide Surveys" : "View Survey Responses"}
-              </button>
+            <button
+              onClick={() => setShowSurveyDetails(!showSurveyDetails)}
+              className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition"
+            >
+              {showSurveyDetails ? "Hide Surveys" : "View Survey Responses"}
+            </button>
 
-              <button
-                onClick={() => {
-                  localStorage.removeItem("adminToken");
-                  setIsAuthenticated(false);
-                }}
-                className="px-4 py-2 bg-yellow-500 text-blue-900 rounded-md hover:bg-yellow-400"
-              >
-                Logout
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                localStorage.removeItem("adminToken");
+                setIsAuthenticated(false);
+              }}
+              className="px-4 py-2 bg-yellow-500 text-blue-900 rounded-lg hover:bg-yellow-400 transition"
+            >
+              Logout
+            </button>
+          </div>
+
+          <div className="sm:hidden">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="text-blue-900 focus:outline-none"
+            >
+              {mobileMenuOpen ? <XIcon size={24} /> : <MenuIcon size={24} />}
+            </button>
           </div>
         </div>
+
+        {mobileMenuOpen && (
+          <div className="sm:hidden bg-white border-t border-gray-200 flex flex-col items-start p-4 space-y-2 shadow-md">
+            <button
+              onClick={() => setShowEmployeeDetails(!showEmployeeDetails)}
+              className="w-full text-left text-blue-900 font-medium hover:text-blue-700 transition"
+            >
+              {showEmployeeDetails ? "Hide Employees" : "Employee Details"}
+            </button>
+            <button
+              onClick={() => {
+                setShowLeaveDetails(!showLeaveDetails);
+                setShowEmployeeDetails(false);
+              }}
+              className="w-full text-left text-blue-900 font-medium hover:text-blue-700 transition"
+            >
+              {showLeaveDetails ? "Hide Leaves" : "View Leave Applications"}
+            </button>
+            <button
+              onClick={() => setShowSurveyDetails(!showSurveyDetails)}
+              className="w-full text-left text-blue-900 font-medium hover:text-blue-700 transition"
+            >
+              {showSurveyDetails ? "Hide Surveys" : "View Survey Responses"}
+            </button>
+            <button
+              onClick={() => {
+                localStorage.removeItem("adminToken");
+                setIsAuthenticated(false);
+              }}
+              className="w-full text-left text-red-600 font-medium hover:text-red-400 transition"
+            >
+              Logout
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Main Content */}
@@ -479,7 +523,8 @@ export default function Admin() {
               <SurveyChart surveys={surveys} questions={questions} />
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              {/* Desktop View */}
+              <table className="hidden sm:table min-w-full divide-y divide-gray-200">
                 <thead className="bg-blue-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider">
@@ -513,6 +558,28 @@ export default function Admin() {
                   ))}
                 </tbody>
               </table>
+
+              {/* Mobile View */}
+              <div className="sm:hidden space-y-4 p-4">
+                {surveys.map((survey) => (
+                  <div key={survey._id} className="bg-gray-50 rounded-lg p-4">
+                    <div className="space-y-2">
+                      <p className="font-medium text-blue-900">{survey.user}</p>
+                      {questions.map((question) => (
+                        <div
+                          key={question.id}
+                          className="text-sm text-gray-600"
+                        >
+                          <p className="font-medium text-gray-500">
+                            {question.question}
+                          </p>
+                          <p>{survey.answers?.[question.id] ?? "N/A"}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
