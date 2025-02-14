@@ -133,7 +133,7 @@ export default function Survey() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
   const [user, setUser] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -158,11 +158,20 @@ export default function Survey() {
 
   const handleSubmit = async () => {
     if (!user) {
-      toast.error("You must be logged in to submit the survey.");
+      toast.error("You must be logged in to submit the survey.", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
       return;
     }
 
-    setIsSubmitting(true); // Start loading
+    setIsSubmitting(true);
 
     try {
       const response = await fetch("/api/survey", {
@@ -177,30 +186,79 @@ export default function Survey() {
       });
 
       if (response.ok) {
-        // Simulate a delay for a smoother UX
         setTimeout(() => {
           setIsSubmitting(false);
-          toast.success("Survey submitted successfully!");
-          router.push("/");
-        }, 1500); // 1.5 seconds delay
+          toast.success(
+            <div className="flex items-center gap-2">
+              <FiCheckCircle className="w-6 h-6" />
+              <span>
+                Survey submitted successfully! Redirecting in 3 seconds...
+              </span>
+            </div>,
+            {
+              position: "top-center",
+              autoClose: 3000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+              theme: "colored",
+              className: "bg-green-500 text-white",
+            }
+          );
+
+          // Redirect after 3 seconds
+          setTimeout(() => {
+            router.push("/");
+          }, 3000);
+        }, 1500); // Simulate a delay for a smoother UX
       } else {
         setIsSubmitting(false);
-        toast.error("Failed to submit survey.");
+        toast.error("Failed to submit survey.", {
+          position: "top-center",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
       }
     } catch (error) {
       setIsSubmitting(false);
-      toast.error("An error occurred while submitting the survey.");
+      toast.error("An error occurred while submitting the survey.", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100">
-      <ToastContainer />
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="bg-white p-8 rounded-2xl shadow-lg">
             {isSubmitting ? (
-              // Loading state UI
               <div className="flex flex-col items-center justify-center">
                 <FiLoader className="w-12 h-12 animate-spin text-blue-900 mb-4" />
                 <h3 className="text-2xl font-semibold text-gray-900 mb-2">
@@ -211,7 +269,6 @@ export default function Survey() {
                 </p>
               </div>
             ) : (
-              // Survey questions UI
               <div className="flex flex-col items-center justify-center">
                 <h3 className="text-2xl font-semibold text-gray-900 mb-6">
                   {questions[currentQuestion].question}
