@@ -134,6 +134,7 @@ export default function Survey() {
   const [answers, setAnswers] = useState({});
   const [user, setUser] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPopup, setShowPopup] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -242,7 +243,7 @@ export default function Survey() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100 relative">
       <ToastContainer
         position="top-center"
         autoClose={3000}
@@ -255,6 +256,29 @@ export default function Survey() {
         pauseOnHover
         theme="colored"
       />
+
+      {/* Popup Modal */}
+      {showPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Survey Information
+            </h2>
+            <p className="text-gray-700 mb-6">
+              Please fill out the survey form freely and accurately. Your
+              responses are completely anonymous, ensuring your identity remains
+              protected.
+            </p>
+            <button
+              onClick={() => setShowPopup(false)}
+              className="bg-blue-900 text-white px-4 py-2 rounded hover:bg-blue-800 transition-colors"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="bg-white p-8 rounded-2xl shadow-lg">
