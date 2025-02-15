@@ -14,6 +14,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
 import jwt from "jsonwebtoken";
+
 export default function TasksPage() {
   const [activeTab, setActiveTab] = useState("my"); // "my" or "assigned"
   const [myTasks, setMyTasks] = useState([]);
@@ -305,144 +306,163 @@ export default function TasksPage() {
         </div>
 
         {/* Tasks List */}
-        <div className="grid gap-6">
-          {(activeTab === "my" ? myTasks : assignedTasks).map((task) => (
-            <div
-              key={task._id}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <svg
+              className="animate-spin h-8 w-8 text-indigo-600"
+              viewBox="0 0 24 24"
             >
-              {editingTask?._id === task._id ? (
-                <form onSubmit={handleUpdateTask} className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <input
-                      type="text"
-                      value={editingTask.title}
-                      onChange={(e) =>
-                        setEditingTask({
-                          ...editingTask,
-                          title: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                    />
-                    <select
-                      value={editingTask.status}
-                      onChange={(e) =>
-                        setEditingTask({
-                          ...editingTask,
-                          status: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                    >
-                      <option value="Pending">Pending</option>
-                      <option value="In progress">In Progress</option>
-                      <option value="Done">Completed</option>
-                    </select>
-                  </div>
-                  <textarea
-                    value={editingTask.description}
-                    onChange={(e) =>
-                      setEditingTask({
-                        ...editingTask,
-                        description: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                    rows="3"
-                  />
-                  <div className="flex gap-3 justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setEditingTask(null)}
-                      className="px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                    >
-                      Save Changes
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`px-2 py-1 rounded-full text-sm ${
-                          task.status === "Done"
-                            ? "bg-green-100 text-green-800"
-                            : task.status === "In progress"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-orange-100 text-orange-800"
-                        }`}
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8H4z"
+              ></path>
+            </svg>
+          </div>
+        ) : (activeTab === "my" ? myTasks : assignedTasks).length > 0 ? (
+          <div className="grid gap-6">
+            {(activeTab === "my" ? myTasks : assignedTasks).map((task) => (
+              <div
+                key={task._id}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+              >
+                {editingTask?._id === task._id ? (
+                  <form onSubmit={handleUpdateTask} className="space-y-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <input
+                        type="text"
+                        value={editingTask.title}
+                        onChange={(e) =>
+                          setEditingTask({
+                            ...editingTask,
+                            title: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      />
+                      <select
+                        value={editingTask.status}
+                        onChange={(e) =>
+                          setEditingTask({
+                            ...editingTask,
+                            status: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                       >
-                        {task.status}
-                      </span>
-                      {task.deadline && (
-                        <div className="flex items-center gap-1 text-gray-500 text-sm">
-                          <FiCalendar />{" "}
-                          {new Date(task.deadline).toLocaleDateString()}
+                        <option value="Pending">Pending</option>
+                        <option value="In progress">In Progress</option>
+                        <option value="Done">Completed</option>
+                      </select>
+                    </div>
+                    <textarea
+                      value={editingTask.description}
+                      onChange={(e) =>
+                        setEditingTask({
+                          ...editingTask,
+                          description: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      rows="3"
+                    />
+                    <div className="flex gap-3 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setEditingTask(null)}
+                        className="px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                      >
+                        Save Changes
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2 py-1 rounded-full text-sm ${
+                            task.status === "Done"
+                              ? "bg-green-100 text-green-800"
+                              : task.status === "In progress"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-orange-100 text-orange-800"
+                          }`}
+                        >
+                          {task.status}
+                        </span>
+                        {task.deadline && (
+                          <div className="flex items-center gap-1 text-gray-500 text-sm">
+                            <FiCalendar />{" "}
+                            {new Date(task.deadline).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEditTask(task)}
+                          className="p-2 hover:bg-gray-100 rounded-lg text-gray-600"
+                          title="Edit"
+                        >
+                          <FiEdit />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTask(task._id)}
+                          className="p-2 hover:bg-gray-100 rounded-lg text-red-600"
+                          title="Delete"
+                        >
+                          <FiTrash />
+                        </button>
+                      </div>
+                    </div>
+
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {task.title}
+                    </h3>
+                    <p className="text-gray-600">{task.description}</p>
+
+                    <div className="border-t pt-4 mt-4 flex items-center gap-4 text-sm text-gray-500">
+                      {task.assignedTo && (
+                        <div className="flex items-center gap-1">
+                          <FiUser /> Assigned to {task.assignedTo.name}
+                        </div>
+                      )}
+                      {task.createdBy && (
+                        <div className="flex items-center gap-1">
+                          <FiUser /> Created by {task.createdBy.name}
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEditTask(task)}
-                        className="p-2 hover:bg-gray-100 rounded-lg text-gray-600"
-                        title="Edit"
-                      >
-                        <FiEdit />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteTask(task._id)}
-                        className="p-2 hover:bg-gray-100 rounded-lg text-red-600"
-                        title="Delete"
-                      >
-                        <FiTrash />
-                      </button>
-                    </div>
                   </div>
-
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {task.title}
-                  </h3>
-                  <p className="text-gray-600">{task.description}</p>
-
-                  <div className="border-t pt-4 mt-4 flex items-center gap-4 text-sm text-gray-500">
-                    {task.assignedTo && (
-                      <div className="flex items-center gap-1">
-                        <FiUser /> Assigned to {task.assignedTo.name}
-                      </div>
-                    )}
-                    {task.createdBy && (
-                      <div className="flex items-center gap-1">
-                        <FiUser /> Created by {task.createdBy.name}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {!loading &&
-          (activeTab === "my" ? myTasks : assignedTasks).length === 0 && (
-            <div className="text-center py-12">
-              <div className="mb-4 text-gray-400 text-3xl">
-                <FiCheckSquare />
+                )}
               </div>
-              <p className="text-gray-600">No tasks found</p>
-              <p className="text-sm text-gray-500">
-                Get started by creating a new task
-              </p>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="mb-4 text-gray-400 text-3xl">
+              <FiCheckSquare />
             </div>
-          )}
+            <p className="text-gray-600">No tasks found</p>
+            <p className="text-sm text-gray-500">
+              Get started by creating a new task
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

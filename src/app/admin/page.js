@@ -127,6 +127,7 @@ const questions = [
   },
 ];
 
+
 //function to fetch survey data
 const fetchSurveys = async () => {
   try {
@@ -170,6 +171,14 @@ export default function Admin() {
   const [cooldown, setCooldown] = useState(false);
   const router = useRouter();
 
+  // === REIMBURSEMENT CHANGES START ===
+  const [showReimbursementDetails, setShowReimbursementDetails] =
+    useState(false);
+  const [reimbursements, setReimbursements] = useState([]);
+  const [selectedReimbursement, setSelectedReimbursement] = useState(null);
+  const [reimbursementToDelete, setReimbursementToDelete] = useState(null);
+  // === REIMBURSEMENT CHANGES END ===
+
   useEffect(() => {
     let inactivityTimer;
 
@@ -211,6 +220,9 @@ export default function Admin() {
       fetchCustomerDetails();
       fetchComplaints();
       fetchLeaves();
+      // === REIMBURSEMENT CHANGES START ===
+      fetchAllReimbursements();
+      // === REIMBURSEMENT CHANGES END ===
     }
   }, [isAuthenticated]);
 
@@ -349,6 +361,7 @@ export default function Admin() {
       setError("Failed to delete user");
     }
   };
+
   const fetchCustomerDetails = async () => {
     try {
       setLoadingCustomers(true);
@@ -369,6 +382,7 @@ export default function Admin() {
       setLoadingCustomers(false);
     }
   };
+
   const fetchComplaints = async () => {
     try {
       setLoadingComplaints(true);
@@ -412,6 +426,54 @@ export default function Admin() {
       setError(error.message);
     }
   };
+
+  // === REIMBURSEMENT CHANGES START ===
+  // 1. Fetch all reimbursements
+  const fetchAllReimbursements = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/admin/reimbursements", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setReimbursements(data.reimbursements || []);
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      setError("Failed to fetch reimbursements");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 2. Update reimbursement (status + adminMessage)
+  const updateReimbursement = async (id, status, adminMessage) => {
+    try {
+      const response = await fetch("/api/admin/reimbursements", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+        body: JSON.stringify({
+          id,
+          status,
+          adminMessage,
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to update reimbursement");
+
+      // Refresh reimbursements after update
+      fetchAllReimbursements();
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+  // === REIMBURSEMENT CHANGES END ===
 
   if (!isAuthenticated) {
     return (
@@ -573,6 +635,7 @@ export default function Admin() {
               onClick={() => {
                 setShowLeaveDetails(!showLeaveDetails);
                 setShowEmployeeDetails(false);
+                setShowReimbursementDetails(false);
               }}
               className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition"
             >
@@ -585,6 +648,22 @@ export default function Admin() {
             >
               {showSurveyDetails ? "Hide Surveys" : "View Survey Responses"}
             </button>
+
+            {/* === REIMBURSEMENT CHANGES START === */}
+            <button
+              onClick={() => {
+                setShowReimbursementDetails(!showReimbursementDetails);
+                setShowLeaveDetails(false);
+                setShowEmployeeDetails(false);
+                setShowSurveyDetails(false);
+              }}
+              className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition"
+            >
+              {showReimbursementDetails
+                ? "Hide Reimbursements"
+                : "View Reimbursements"}
+            </button>
+            {/* === REIMBURSEMENT CHANGES END === */}
 
             <button
               onClick={() => {
@@ -619,6 +698,7 @@ export default function Admin() {
               onClick={() => {
                 setShowLeaveDetails(!showLeaveDetails);
                 setShowEmployeeDetails(false);
+                setShowReimbursementDetails(false);
               }}
               className="w-full text-left text-blue-900 font-medium hover:text-blue-700 transition"
             >
@@ -630,6 +710,23 @@ export default function Admin() {
             >
               {showSurveyDetails ? "Hide Surveys" : "View Survey Responses"}
             </button>
+
+            {/* === REIMBURSEMENT CHANGES START === */}
+            <button
+              onClick={() => {
+                setShowReimbursementDetails(!showReimbursementDetails);
+                setShowLeaveDetails(false);
+                setShowEmployeeDetails(false);
+                setShowSurveyDetails(false);
+              }}
+              className="w-full text-left text-blue-900 font-medium hover:text-blue-700 transition"
+            >
+              {showReimbursementDetails
+                ? "Hide Reimbursements"
+                : "View Reimbursements"}
+            </button>
+            {/* === REIMBURSEMENT CHANGES END === */}
+
             <button
               onClick={() => {
                 localStorage.removeItem("adminToken");
@@ -928,7 +1025,116 @@ export default function Admin() {
               </tbody>
             </table>
           </div>
+        ) : showReimbursementDetails ? (
+          // === REIMBURSEMENT CHANGES START ===
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">
+                All Reimbursements
+              </h2>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-blue-50">
+                  <tr>
+                    {[
+                      "User Email",
+                      "Cost",
+                      "Reason",
+                      "File",
+                      "Status",
+                      "Admin Message",
+                      "Created At",
+                      "Actions",
+                    ].map((header) => (
+                      <th
+                        key={header}
+                        className="px-6 py-3 text-left text-xs font-medium text-blue-900 uppercase tracking-wider"
+                      >
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {reimbursements.map((item) => (
+                    <tr key={item._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 text-sm text-gray-800">
+                        {item.email}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {item.cost}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {item.reason}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-blue-600 underline">
+                        {item.fileData ? (
+                          <a
+                            href={`data:${item.fileType};base64,${item.fileData}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            View File
+                          </a>
+                        ) : (
+                          "N/A"
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        <select
+                          value={item.status || "pending"}
+                          onChange={(e) =>
+                            updateReimbursement(
+                              item._id,
+                              e.target.value,
+                              item.adminMessage || ""
+                            )
+                          }
+                          className={`px-2 py-1 text-xs rounded-full ${
+                            item.status === "Approved"
+                              ? "bg-green-100 text-green-800"
+                              : item.status === "Rejected"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="Approved">Approved</option>
+                          <option value="Rejected">Rejected</option>
+                        </select>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {item.adminMessage || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {item.createdAt
+                          ? new Date(item.createdAt).toLocaleString()
+                          : "N/A"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() =>
+                            setSelectedReimbursement({
+                              ...item,
+                              // fallback if not defined
+                              adminMessage: item.adminMessage || "",
+                            })
+                          }
+                          className="px-3 py-1.5 bg-blue-900 text-white text-sm rounded-md hover:bg-blue-800"
+                        >
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         ) : (
+          // === REIMBURSEMENT CHANGES END ===
           <div className="space-y-8">
             {/* Customer Details Section */}
             <section className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -1342,6 +1548,84 @@ export default function Admin() {
           </div>
         </div>
       )}
+
+      {/* === REIMBURSEMENT CHANGES START === */}
+      {selectedReimbursement && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">
+                Edit Reimbursement (User: {selectedReimbursement.email})
+              </h3>
+              <button
+                onClick={() => setSelectedReimbursement(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  await updateReimbursement(
+                    selectedReimbursement._id,
+                    selectedReimbursement.status,
+                    selectedReimbursement.adminMessage
+                  );
+                  setSelectedReimbursement(null);
+                } catch (error) {
+                  console.error("Update failed:", error);
+                }
+              }}
+            >
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Reimbursement Status
+                  </label>
+                  <select
+                    value={selectedReimbursement.status || "pending"}
+                    onChange={(e) =>
+                      setSelectedReimbursement((prev) => ({
+                        ...prev,
+                        status: e.target.value,
+                      }))
+                    }
+                    className="block w-full p-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Admin Message / Instructions
+                  </label>
+                  <textarea
+                    value={selectedReimbursement.adminMessage}
+                    onChange={(e) =>
+                      setSelectedReimbursement((prev) => ({
+                        ...prev,
+                        adminMessage: e.target.value,
+                      }))
+                    }
+                    className="w-full p-2 border rounded-md h-24"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-blue-900 text-white py-2 rounded-md hover:bg-blue-800"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* === REIMBURSEMENT CHANGES END === */}
     </div>
   );
 }

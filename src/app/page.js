@@ -17,6 +17,7 @@ import {
   FiMenu,
   FiX,
   FiCheckSquare,
+  FiDollarSign,
 } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -264,6 +265,12 @@ export default function Home() {
                     "Create, track, edit your tasks and assign tasks to others",
                 },
                 {
+                  path: "/reimbursement",
+                  icon: <FiDollarSign className="w-6 h-6" />,
+                  title: "Reimbursement",
+                  description: "Submit your cost details for reimbursement",
+                },
+                {
                   href: "https://accident-profiling-frontend.vercel.app",
                   icon: <FiAlertTriangle className="w-6 h-6" />,
                   title: "Accident Profiling",
@@ -334,8 +341,7 @@ export default function Home() {
                   Employee Portal Access
                 </h2>
                 <p className="text-gray-600 mb-8">
-                  Sign in to access your personalized management
-                  tools
+                  Sign in to access your personalized management tools
                 </p>
                 <Link
                   href="/login"
