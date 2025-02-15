@@ -174,28 +174,34 @@ export default function TasksPage() {
     <div className="min-h-screen bg-gray-50">
       <ToastContainer position="top-center" autoClose={3000} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6 mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Task Management</h1>
-          <div className="flex gap-2 bg-white p-1 rounded-full shadow-sm border border-gray-200">
+
+          <div className="flex w-full sm:w-auto bg-white p-1 rounded-full shadow-sm border border-gray-200">
             <button
-              className={`px-6 py-2 text-sm font-medium rounded-full transition-colors ${
+              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 text-sm font-medium rounded-full transition-colors ${
                 activeTab === "my"
                   ? "bg-indigo-600 text-white"
                   : "text-gray-600 hover:bg-gray-100"
               }`}
               onClick={() => setActiveTab("my")}
             >
-              My Tasks
+              <span className="block sm:inline">My Tasks</span>
+              <span className="hidden sm:inline"> ({myTasks.length})</span>
             </button>
             <button
-              className={`px-6 py-2 text-sm font-medium rounded-full transition-colors ${
+              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 text-sm font-medium rounded-full transition-colors ${
                 activeTab === "assigned"
                   ? "bg-indigo-600 text-white"
                   : "text-gray-600 hover:bg-gray-100"
               }`}
               onClick={() => setActiveTab("assigned")}
             >
-              Assigned Tasks
+              <span className="block sm:inline">Assigned</span>
+              <span className="hidden sm:inline">
+                {" "}
+                Tasks ({assignedTasks.length})
+              </span>
             </button>
           </div>
         </div>
