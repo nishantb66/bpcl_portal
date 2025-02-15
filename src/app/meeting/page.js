@@ -1,0 +1,408 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+// Helper to format a JavaScript date into Google Calendar's required format (UTC-based)
+function formatGoogleDateTime(date) {
+  // Google Calendar wants YYYYMMDDTHHmmssZ in UTC
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const hours = String(date.getUTCHours()).padStart(2, "0");
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+  const seconds = String(date.getUTCSeconds()).padStart(2, "0");
+  return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+}
+
+export default function MeetingRooms() {
+  const [rooms, setRooms] = useState([]);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [formData, setFormData] = useState({
+    meetingTime: "",
+    topic: "",
+    department: "",
+    duration: "",
+    numEmployees: "",
+    hostDesignation: "",
+  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const router = useRouter();
+
+  // Get the current logged-in user's name from localStorage
+  const currentUserName =
+    typeof window !== "undefined" ? localStorage.getItem("name") : "";
+
+  // Check for token & fetch rooms on mount
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.info("Please log in to access the Meeting Rooms.");
+      router.push("/login");
+      return;
+    }
+    fetchRooms();
+  }, [router]);
+
+  // Fetch the meeting room data
+  const fetchRooms = async () => {
+    try {
+      const res = await fetch("/api/meeting");
+      const data = await res.json();
+      setRooms(data);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to fetch rooms.");
+    }
+  };
+
+  // Clicking on a room
+  const handleRoomClick = (roomId) => {
+    const room = rooms.find((r) => r.roomId === roomId);
+    // If booked, do nothing (tooltip shows info)
+    if (room?.booked) return;
+
+    // Otherwise, open the modal for booking
+    setSelectedRoom(roomId);
+    setIsModalOpen(true);
+  };
+
+  // Close modal & reset form
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedRoom(null);
+    setFormData({
+      meetingTime: "",
+      topic: "",
+      department: "",
+      duration: "",
+      numEmployees: "",
+      hostDesignation: "",
+    });
+  };
+
+  // Book a room
+  const handleBookRoom = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("No token found. Please log in again.");
+      return;
+    }
+
+    // Enforce maximum capacity of 20
+    if (Number(formData.numEmployees) > 20) {
+      toast.error("A single room can’t exceed 20 participants.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/meeting", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          roomId: selectedRoom,
+          ...formData,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.message || "Failed to book room.");
+        return;
+      }
+
+      toast.success("Room booked successfully!");
+      handleCloseModal();
+      fetchRooms();
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred while booking.");
+    }
+  };
+
+  // Create an array of 25 room items (if not seeded in DB)
+  const gridItems = [];
+  for (let i = 1; i <= 25; i++) {
+    const roomId = `R${i}`;
+    const found = rooms.find((r) => r.roomId === roomId);
+
+    gridItems.push(
+      <div
+        key={roomId}
+        className={`
+    group relative 
+    flex items-center justify-center
+    p-4 rounded-lg border
+    transition-all ease-in-out duration-300
+    ${
+      found?.booked
+        ? "bg-gray-100 border-gray-200 cursor-not-allowed"
+        : "bg-white border-gray-200 cursor-pointer hover:shadow-md hover:border-indigo-300 hover:scale-105"
+    }
+  `}
+      >
+        <span className="font-semibold text-gray-800">{roomId}</span>
+
+        {/* Show tooltip ONLY if the room is booked */}
+        {found?.booked && (
+          <div
+            className="
+
+      absolute top-full left-1/2 mt-2 pointer-events-none
+        w-60 p-3 bg-white border border-gray-200 text-gray-700 text-sm 
+        rounded-md shadow-lg transform -translate-x-1/2 
+        opacity-0 group-hover:opacity-100 transition-opacity 
+        z-50
+      "
+          >
+            <p className="font-bold text-gray-900 mb-1">
+              Booked by: {found.bookingDetails?.hostName}
+            </p>
+            <p className="mb-0.5">
+              <span className="font-medium">Topic:</span>{" "}
+              {found.bookingDetails?.topic}
+            </p>
+            <p className="mb-0.5">
+              <span className="font-medium">Dept:</span>{" "}
+              {found.bookingDetails?.department}
+            </p>
+            <p className="mb-0.5">
+              <span className="font-medium">Duration:</span>{" "}
+              {found.bookingDetails?.duration} hr(s)
+            </p>
+            <p className="mb-0">
+              <span className="font-medium">Time:</span>{" "}
+              {found.bookingDetails?.meetingTime}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white">
+      <ToastContainer />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Heading */}
+        <h1 className="text-3xl font-extrabold text-gray-900 mb-4">
+          Meeting Room Booking
+        </h1>
+        <p className="text-gray-700 mb-8">
+          Select an available meeting room to schedule your next discussion.
+          Each room accommodates up to{" "}
+          <span className="font-semibold">20 participants</span>.
+        </p>
+
+        {/* Grid of Rooms */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {gridItems}
+        </div>
+      </div>
+
+      {/* Booking Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white w-full max-w-md mx-4 rounded-lg shadow-lg p-6 relative">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              Book {selectedRoom} Meeting Room
+            </h2>
+            <form onSubmit={handleBookRoom} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* Meeting Time */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Meeting Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="w-full px-3 py-2 rounded-md border border-gray-300 
+                               text-gray-700 placeholder-gray-400 focus:outline-none 
+                               focus:ring-2 focus:ring-indigo-500 focus:border-transparent 
+                               transition-colors duration-200 ease-in-out shadow-sm"
+                    placeholder="Select date & time"
+                    value={formData.meetingTime}
+                    onChange={(e) =>
+                      setFormData({ ...formData, meetingTime: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+
+                {/* Discussion Topic */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Discussion Topic
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 rounded-md border border-gray-300 
+                               text-gray-700 placeholder-gray-400 focus:outline-none 
+                               focus:ring-2 focus:ring-indigo-500 focus:border-transparent 
+                               transition-colors duration-200 ease-in-out shadow-sm"
+                    placeholder="Enter the topic"
+                    value={formData.topic}
+                    onChange={(e) =>
+                      setFormData({ ...formData, topic: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+
+                {/* Department */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Department
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 rounded-md border border-gray-300 
+                               text-gray-700 placeholder-gray-400 focus:outline-none 
+                               focus:ring-2 focus:ring-indigo-500 focus:border-transparent 
+                               transition-colors duration-200 ease-in-out shadow-sm"
+                    placeholder="e.g., HR, Finance"
+                    value={formData.department}
+                    onChange={(e) =>
+                      setFormData({ ...formData, department: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+
+                {/* Duration (hours) */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Duration (hours)
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full px-3 py-2 rounded-md border border-gray-300 
+                               text-gray-700 placeholder-gray-400 focus:outline-none 
+                               focus:ring-2 focus:ring-indigo-500 focus:border-transparent 
+                               transition-colors duration-200 ease-in-out shadow-sm"
+                    placeholder="e.g., 2"
+                    value={formData.duration}
+                    onChange={(e) =>
+                      setFormData({ ...formData, duration: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+
+                {/* Number of Employees */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Number of Employees
+                  </label>
+                  <input
+                    type="number"
+                    max={20}
+                    className="w-full px-3 py-2 rounded-md border border-gray-300 
+                               text-gray-700 placeholder-gray-400 focus:outline-none 
+                               focus:ring-2 focus:ring-indigo-500 focus:border-transparent 
+                               transition-colors duration-200 ease-in-out shadow-sm"
+                    placeholder="Up to 20"
+                    value={formData.numEmployees}
+                    onChange={(e) =>
+                      setFormData({ ...formData, numEmployees: e.target.value })
+                    }
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    (Maximum 20 participants)
+                  </p>
+                </div>
+
+                {/* Host's Designation */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Host&apos;s Designation
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 rounded-md border border-gray-300 
+                               text-gray-700 placeholder-gray-400 focus:outline-none 
+                               focus:ring-2 focus:ring-indigo-500 focus:border-transparent 
+                               transition-colors duration-200 ease-in-out shadow-sm"
+                    placeholder="e.g., Manager"
+                    value={formData.hostDesignation}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        hostDesignation: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex justify-end space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="px-4 py-2 border rounded-md text-gray-600 
+                             hover:bg-gray-100 transition-colors duration-200 
+                             ease-in-out"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-md 
+                             hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 
+                             focus:outline-none transition-colors duration-200 
+                             ease-in-out"
+                >
+                  Book Room
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A component that creates a Google Calendar link using booking details.
+ * This link appears in the hover tooltip if the current user is the host.
+ */
+function AddToCalendarLink({ bookingDetails }) {
+  const startDate = new Date(bookingDetails.meetingTime);
+  const durationHours = Number(bookingDetails.duration) || 1;
+  const endDate = new Date(
+    startDate.getTime() + durationHours * 60 * 60 * 1000
+  );
+  const startStr = formatGoogleDateTime(startDate);
+  const endStr = formatGoogleDateTime(endDate);
+  const text = encodeURIComponent(bookingDetails.topic || "Meeting");
+  const details = encodeURIComponent(
+    `Department: ${bookingDetails.department}\nHost Designation: ${bookingDetails.hostDesignation}\nExpected Participants: ${bookingDetails.numEmployees}`
+  );
+  // Adjust the location as needed
+  const location = encodeURIComponent("Company Office");
+  const gcalLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${startStr}/${endStr}&location=${location}&details=${details}`;
+
+  return (
+    <a
+      href={gcalLink}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline text-indigo-600 hover:text-indigo-800 block mt-2 text-center"
+    >
+      Add to Google Calendar
+    </a>
+  );
+}

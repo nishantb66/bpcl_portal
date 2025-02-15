@@ -278,6 +278,12 @@ export default function Home() {
                     "AI-powered accident analysis system (Tank Lorry)",
                   external: true,
                 },
+                {
+                  path: "/meeting",
+                  icon: <FiCalendar className="w-6 h-6" />,
+                  title: "Book Meeting Room",
+                  description: "Check availability and reserve meeting rooms",
+                },
               ].map((item, index) => (
                 <div
                   key={index}
