@@ -443,12 +443,13 @@ export default function Admin() {
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
+                {/* Username Field */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Username
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                       <svg
                         className="h-5 w-5 text-gray-400"
                         fill="none"
@@ -469,19 +470,20 @@ export default function Admin() {
                       onChange={(e) =>
                         setForm({ ...form, username: e.target.value })
                       }
-                      className="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 text-gray-900 placeholder-gray-400"
+                      className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 text-gray-900 placeholder-gray-400"
                       placeholder="Enter your username"
                       required
                     />
                   </div>
                 </div>
 
+                {/* Password Field */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Password
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                       <svg
                         className="h-5 w-5 text-gray-400"
                         fill="none"
@@ -502,7 +504,7 @@ export default function Admin() {
                       onChange={(e) =>
                         setForm({ ...form, password: e.target.value })
                       }
-                      className="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 text-gray-900 placeholder-gray-400"
+                      className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 text-gray-900 placeholder-gray-400"
                       placeholder="Enter your password"
                       required
                     />
@@ -510,10 +512,11 @@ export default function Admin() {
                 </div>
               </div>
 
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={loading || cooldown}
-                className="w-full flex items-center justify-center py-3 px-4 rounded-xl text-white font-medium bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center py-3 px-4 rounded-xl text-white font-semibold bg-indigo-700 hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <div className="flex items-center space-x-2">
@@ -529,12 +532,12 @@ export default function Admin() {
                         r="10"
                         stroke="currentColor"
                         strokeWidth="4"
-                      />
+                      ></circle>
                       <path
                         className="opacity-75"
                         fill="currentColor"
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
+                      ></path>
                     </svg>
                     <span>Authenticating...</span>
                   </div>
