@@ -16,6 +16,7 @@ import {
   FiGithub,
   FiMenu,
   FiX,
+  FiCheckSquare,
 } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -253,6 +254,14 @@ export default function Home() {
                   icon: <FiClipboard className="w-6 h-6" />,
                   title: "Quick Survey",
                   description: "Share feedback on working conditions",
+                },
+                {
+                  // New card for tasks feature:
+                  path: "/tasks",
+                  icon: <FiCheckSquare className="w-6 h-6" />,
+                  title: "Task Manager",
+                  description:
+                    "Create, track, edit your tasks and assign tasks to others",
                 },
                 {
                   href: "https://accident-profiling-frontend.vercel.app",

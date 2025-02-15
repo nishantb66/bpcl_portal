@@ -85,13 +85,14 @@ export default function CustomerForm() {
           <button
             key={step}
             onClick={() => setCurrentStep(step)}
-            className={`w-8 h-8 rounded-full ${
-              step === currentStep
-                ? "bg-blue-900 text-white"
-                : step < currentStep
-                ? "bg-green-500 text-white"
-                : "bg-gray-200"
-            }`}
+            className={`w-8 h-8 rounded-full font-semibold transition-colors 
+              ${
+                step === currentStep
+                  ? "bg-indigo-700 text-white"
+                  : step < currentStep
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-200 text-gray-700"
+              }`}
           >
             {step}
           </button>
@@ -99,8 +100,10 @@ export default function CustomerForm() {
       </div>
       <div className="h-2 bg-gray-200 rounded-full">
         <div
-          className="h-full bg-blue-900 rounded-full transition-all duration-300"
-          style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
+          className="h-full bg-indigo-700 rounded-full transition-all duration-300"
+          style={{
+            width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%`,
+          }}
         ></div>
       </div>
     </div>
@@ -111,7 +114,7 @@ export default function CustomerForm() {
       case 1:
         return (
           <div className="bg-gray-50 p-6 rounded-lg">
-            <h2 className="text-lg font-semibold text-blue-900 mb-4">
+            <h2 className="text-lg font-semibold text-indigo-700 mb-4">
               Basic Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -125,7 +128,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, customerName: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                   placeholder="Full Name"
                 />
               </div>
@@ -139,7 +142,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, contactNumber: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                   placeholder="Mobile Number"
                   pattern="[0-9]{10}"
                 />
@@ -152,7 +155,7 @@ export default function CustomerForm() {
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                   placeholder="Optional"
                 />
               </div>
@@ -166,7 +169,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, vehicleNumber: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                   placeholder="License Plate"
                 />
               </div>
@@ -179,7 +182,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, vehicleType: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">Select Type</option>
                   <option value="Car">Car</option>
@@ -191,11 +194,10 @@ export default function CustomerForm() {
             </div>
           </div>
         );
-
       case 2:
         return (
           <div className="bg-gray-50 p-6 rounded-lg">
-            <h2 className="text-lg font-semibold text-blue-900 mb-4">
+            <h2 className="text-lg font-semibold text-indigo-700 mb-4">
               Fuel Purchase Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -208,7 +210,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, fuelType: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">Select Type</option>
                   <option value="Petrol">Petrol</option>
@@ -227,7 +229,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, quantity: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                   placeholder="Liters/Kilograms"
                   min="0"
                   step="0.01"
@@ -243,7 +245,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, totalAmount: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                   placeholder="INR"
                   min="0"
                   step="0.01"
@@ -258,7 +260,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, paymentMode: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">Select Mode</option>
                   <option value="Cash">Cash</option>
@@ -277,7 +279,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, invoiceNumber: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                   placeholder="Invoice Number"
                 />
               </div>
@@ -291,7 +293,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, loyaltyPoints: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                   placeholder="Points"
                   min="0"
                 />
@@ -299,11 +301,10 @@ export default function CustomerForm() {
             </div>
           </div>
         );
-
       case 3:
         return (
           <div className="bg-gray-50 p-6 rounded-lg">
-            <h2 className="text-lg font-semibold text-blue-900 mb-4">
+            <h2 className="text-lg font-semibold text-indigo-700 mb-4">
               Customer Preferences & Feedback
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -316,7 +317,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, preferredFuel: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">Select Fuel</option>
                   <option value="Petrol">Petrol</option>
@@ -334,7 +335,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, membershipStatus: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">Select Status</option>
                   <option value="Yes">Yes</option>
@@ -350,7 +351,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, feedback: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                   rows="3"
                   placeholder="Customer feedback or complaints"
                 ></textarea>
@@ -364,7 +365,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, serviceRating: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">Select Rating</option>
                   <option value="5">5 Stars (Excellent)</option>
@@ -377,11 +378,10 @@ export default function CustomerForm() {
             </div>
           </div>
         );
-
       case 4:
         return (
           <div className="bg-gray-50 p-6 rounded-lg">
-            <h2 className="text-lg font-semibold text-blue-900 mb-4">
+            <h2 className="text-lg font-semibold text-indigo-700 mb-4">
               Additional Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -395,7 +395,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, visitDateTime: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               <div>
@@ -408,7 +408,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, employeeName: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                   placeholder="Employee Name"
                 />
               </div>
@@ -421,7 +421,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, specialRequests: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                   rows="2"
                   placeholder="Any special requests or services"
                 ></textarea>
@@ -435,7 +435,7 @@ export default function CustomerForm() {
                   onChange={(e) =>
                     setForm({ ...form, recurringCustomer: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">Select</option>
                   <option value="Yes">Yes</option>
@@ -453,8 +453,8 @@ export default function CustomerForm() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-2xl font-bold text-blue-900 mb-6">
+      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
+        <h1 className="text-2xl font-bold text-indigo-700 mb-6">
           Customer Information Form
         </h1>
 
@@ -468,26 +468,26 @@ export default function CustomerForm() {
               <button
                 type="button"
                 onClick={prevStep}
-                className="px-4 py-2 text-blue-900 border border-blue-900 rounded-md hover:bg-blue-50"
+                className="px-4 py-2 text-indigo-700 border border-indigo-700 rounded-md hover:bg-indigo-50 transition-colors"
               >
                 Previous
               </button>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 ml-auto">
               {currentStep < totalSteps && (
                 <>
                   <button
                     type="button"
                     onClick={skipStep}
-                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                   >
                     Skip
                   </button>
                   <button
                     type="button"
                     onClick={nextStep}
-                    className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800"
+                    className="px-4 py-2 bg-indigo-700 text-white rounded-md hover:bg-indigo-800 transition-colors"
                   >
                     Next
                   </button>
@@ -498,7 +498,7 @@ export default function CustomerForm() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                  className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
                 >
                   {loading ? "Saving..." : "Save and Send Details"}
                 </button>

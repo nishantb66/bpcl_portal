@@ -1,4 +1,3 @@
-// src/app/survey/page.js
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,6 +11,9 @@ import {
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+/**
+ * Non-UI data & logic (kept intact)
+ */
 const questions = [
   {
     id: 1,
@@ -242,8 +244,32 @@ export default function Survey() {
     }
   };
 
+  /**
+   * UI layout & styling
+   */
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100 relative">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col">
+      {/* Top Navigation */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-indigo-700">Portal</h1>
+          <nav className="flex items-center space-x-4">
+            <button
+              onClick={() => router.push("/")}
+              className="text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Home
+            </button>
+            <button
+              onClick={() => router.push("/profile")}
+              className="text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Profile
+            </button>
+          </nav>
+        </div>
+      </header>
+
       <ToastContainer
         position="top-center"
         autoClose={3000}
@@ -259,8 +285,8 @@ export default function Survey() {
 
       {/* Popup Modal */}
       {showPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
               Survey Information
             </h2>
@@ -271,7 +297,7 @@ export default function Survey() {
             </p>
             <button
               onClick={() => setShowPopup(false)}
-              className="bg-blue-900 text-white px-4 py-2 rounded hover:bg-blue-800 transition-colors"
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
               Got it
             </button>
@@ -279,12 +305,12 @@ export default function Survey() {
         </div>
       )}
 
-      <main className="flex-1">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="bg-white p-8 rounded-2xl shadow-lg">
+      <main className="flex-grow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg">
             {isSubmitting ? (
               <div className="flex flex-col items-center justify-center">
-                <FiLoader className="w-12 h-12 animate-spin text-blue-900 mb-4" />
+                <FiLoader className="w-12 h-12 animate-spin text-indigo-700 mb-4" />
                 <h3 className="text-2xl font-semibold text-gray-900 mb-2">
                   Submitting your survey...
                 </h3>
@@ -293,11 +319,11 @@ export default function Survey() {
                 </p>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center">
-                <h3 className="text-2xl font-semibold text-gray-900 mb-6">
+              <div className="flex flex-col items-center">
+                <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-center">
                   {questions[currentQuestion].question}
                 </h3>
-                <div className="w-full max-w-md">
+                <div className="w-full max-w-xl">
                   {questions[currentQuestion].options.map((option, index) => (
                     <button
                       key={index}
@@ -307,9 +333,9 @@ export default function Survey() {
                           [questions[currentQuestion].id]: option,
                         })
                       }
-                      className={`w-full p-4 mb-4 text-left rounded-lg ${
+                      className={`block w-full p-4 mb-4 text-left rounded-lg transition-colors ${
                         answers[questions[currentQuestion].id] === option
-                          ? "bg-blue-900 text-white"
+                          ? "bg-indigo-600 text-white"
                           : "bg-gray-100 text-gray-900 hover:bg-gray-200"
                       }`}
                     >
@@ -317,11 +343,13 @@ export default function Survey() {
                     </button>
                   ))}
                 </div>
-                <div className="w-full max-w-md flex justify-between mt-6">
+
+                {/* Navigation Buttons */}
+                <div className="w-full max-w-xl flex justify-between mt-6">
                   <button
                     onClick={handlePrevious}
                     disabled={currentQuestion === 0}
-                    className="p-2 flex items-center gap-1 bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                    className="p-2 flex items-center gap-1 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
                   >
                     <FiArrowLeft />
                     Previous
@@ -329,7 +357,7 @@ export default function Survey() {
                   {currentQuestion < questions.length - 1 ? (
                     <button
                       onClick={handleNext}
-                      className="p-2 flex items-center gap-1 bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition-colors"
+                      className="p-2 flex items-center gap-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
                     >
                       Next
                       <FiArrowRight />
@@ -337,16 +365,18 @@ export default function Survey() {
                   ) : (
                     <button
                       onClick={handleSubmit}
-                      className="p-2 flex items-center gap-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                      className="p-2 flex items-center gap-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                     >
                       Submit
                     </button>
                   )}
                 </div>
-                <div className="w-full max-w-md mt-6">
+
+                {/* Progress Bar */}
+                <div className="w-full max-w-xl mt-6">
                   <div className="bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-blue-900 rounded-full h-2"
+                      className="bg-indigo-600 rounded-full h-2 transition-all"
                       style={{
                         width: `${
                           ((currentQuestion + 1) / questions.length) * 100
@@ -354,6 +384,9 @@ export default function Survey() {
                       }}
                     ></div>
                   </div>
+                  <p className="text-sm text-gray-500 mt-2 text-center">
+                    Question {currentQuestion + 1} of {questions.length}
+                  </p>
                 </div>
               </div>
             )}
