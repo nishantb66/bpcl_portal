@@ -334,7 +334,7 @@ export default function Home() {
                   Employee Portal Access
                 </h2>
                 <p className="text-gray-600 mb-8">
-                  Sign in to access your personalized dashboard and management
+                  Sign in to access your personalized management
                   tools
                 </p>
                 <Link
