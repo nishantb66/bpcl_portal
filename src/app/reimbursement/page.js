@@ -20,6 +20,7 @@ export default function ReimbursementPage() {
   const [reimbursements, setReimbursements] = useState([]);
   const [selectedReimbursement, setSelectedReimbursement] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showInfoPopup, setShowInfoPopup] = useState(true);
 
   const router = useRouter();
 
@@ -131,12 +132,34 @@ export default function ReimbursementPage() {
     }
   };
 
-  // Close modal
+  // Close modal for reimbursement details
   const closeModal = () => setSelectedReimbursement(null);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <ToastContainer position="top-center" />
+
+      {/* Informational Popup on Page Load */}
+      {showInfoPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
+          <div className="bg-white rounded-lg shadow-md p-6 max-w-md w-full">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              Important Notice
+            </h2>
+            <p className="text-gray-700 mb-6">
+              For optimal processing, please ensure that all information is
+              accurate and that you attach valid supporting documents. PDF
+              format is preferred for clarity and ease of review.
+            </p>
+            <button
+              onClick={() => setShowInfoPopup(false)}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Enhanced Header */}
       <header className="bg-white shadow-sm sticky top-0 z-10">
@@ -311,7 +334,7 @@ export default function ReimbursementPage() {
         </div>
       </main>
 
-      {/* Enhanced Modal */}
+      {/* Enhanced Modal for Reimbursement Details */}
       {selectedReimbursement && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">

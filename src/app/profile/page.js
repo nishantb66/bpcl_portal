@@ -9,6 +9,7 @@ import {
   FiClock,
   FiHome,
   FiLock,
+  FiCheck,
 } from "react-icons/fi";
 
 export default function Profile() {
@@ -27,6 +28,17 @@ export default function Profile() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notification, setNotification] = useState(null);
+
+  // Auto-dismiss notification after 2 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -73,26 +85,33 @@ export default function Profile() {
 
       const data = await response.json();
       if (response.ok) {
-        alert("Profile updated successfully!");
+        // Set notification to success type
+        setNotification({
+          type: "success",
+          message: "Profile updated successfully!",
+        });
       } else {
         throw new Error(data.message);
       }
     } catch (err) {
-      alert(err.message || "Failed to save profile");
+      setNotification({
+        type: "error",
+        message: err.message || "Failed to save profile",
+      });
     }
   };
 
   if (loading)
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+        <p className="text-gray-500 text-lg">Loading...</p>
       </div>
     );
 
   if (error)
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg max-w-md">
+        <div className="bg-red-50 border border-red-400 text-red-700 px-6 py-4 rounded-md max-w-md">
           {error}
         </div>
       </div>
@@ -100,16 +119,16 @@ export default function Profile() {
 
   const getIcon = (key) => {
     const icons = {
-      name: <FiUser className="text-blue-600" />,
-      surname: <FiUser className="text-blue-600" />,
-      email: <FiMail className="text-blue-600" />,
-      city: <FiMapPin className="text-blue-600" />,
-      localArea: <FiMapPin className="text-blue-600" />,
-      previousCompany: <FiBriefcase className="text-blue-600" />,
-      addressLine1: <FiHome className="text-blue-600" />,
-      addressLine2: <FiHome className="text-blue-600" />,
-      designation: <FiBriefcase className="text-blue-600" />,
-      shiftTimings: <FiClock className="text-blue-600" />,
+      name: <FiUser className="text-indigo-500" />,
+      surname: <FiUser className="text-indigo-500" />,
+      email: <FiMail className="text-indigo-500" />,
+      city: <FiMapPin className="text-indigo-500" />,
+      localArea: <FiMapPin className="text-indigo-500" />,
+      previousCompany: <FiBriefcase className="text-indigo-500" />,
+      addressLine1: <FiHome className="text-indigo-500" />,
+      addressLine2: <FiHome className="text-indigo-500" />,
+      designation: <FiBriefcase className="text-indigo-500" />,
+      shiftTimings: <FiClock className="text-indigo-500" />,
     };
     return icons[key] || null;
   };
@@ -129,21 +148,36 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+      <div className="max-w-3xl mx-auto relative">
+        {/* Popup Notification for Successful Update */}
+        {notification && notification.type === "success" && (
+          <div className="fixed top-5 right-5 bg-white border border-green-500 rounded-md shadow-md p-4 flex items-center space-x-2 z-50">
+            <FiCheck className="text-green-500 text-2xl" />
+            <span className="text-green-700 font-medium">Updated</span>
+          </div>
+        )}
+
+        {/* Inline Notification for Errors */}
+        {notification && notification.type === "error" && (
+          <div className="mb-4 p-4 rounded-md shadow-sm border-l-4 bg-red-50 border-red-500 text-red-800">
+            {notification.message}
+          </div>
+        )}
+
+        <div className="bg-white rounded-lg shadow overflow-hidden">
           {/* Header Section */}
-          <div className="bg-gray-800 px-6 py-6">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
               <div className="mb-4 sm:mb-0">
                 <h1 className="text-2xl font-semibold text-white">
                   {profile.name} {profile.surname}
                 </h1>
-                <p className="text-gray-300 mt-1 text-sm">
+                <p className="text-indigo-200 mt-1 text-sm">
                   {profile.designation}
                 </p>
               </div>
-              <div className="bg-blue-100 px-3 py-2 rounded-md">
-                <p className="text-gray-800 text-sm font-medium">
+              <div className="bg-indigo-100 px-3 py-2 rounded-md">
+                <p className="text-indigo-800 text-sm font-medium">
                   Member since: {profile.joiningDate}
                 </p>
               </div>
@@ -172,10 +206,10 @@ export default function Profile() {
                       }
                       required={required}
                       readOnly={readOnly}
-                      className={`w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      className={`w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
                         readOnly
                           ? "bg-gray-50 text-gray-500 cursor-not-allowed"
-                          : "hover:border-gray-300"
+                          : ""
                       }`}
                       placeholder={`Enter ${key
                         .replace(/([A-Z])/g, " $1")
@@ -191,10 +225,10 @@ export default function Profile() {
               ))}
             </div>
 
-            <div className="mt-8 border-t border-gray-100 pt-6">
+            <div className="mt-8 border-t border-gray-200 pt-6">
               <button
                 type="submit"
-                className="w-full sm:w-auto px-8 py-2.5 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800 transition-colors"
+                className="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 Save Changes
               </button>
