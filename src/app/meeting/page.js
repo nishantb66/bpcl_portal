@@ -351,13 +351,15 @@ export default function MeetingRooms() {
               <div className="flex justify-end space-x-3 pt-2">
                 <button
                   type="button"
-                  onClick={handleCloseModal}
-                  className="px-4 py-2 border rounded-md text-gray-600 
-                             hover:bg-gray-100 transition-colors duration-200 
-                             ease-in-out"
+                  onClick={() => {
+                    handleCloseModal();
+                    window.location.reload();
+                  }}
+                  className="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100 transition-colors duration-200 ease-in-out"
                 >
                   Cancel
                 </button>
+
                 <button
                   type="submit"
                   className="px-4 py-2 bg-indigo-600 text-white rounded-md 
