@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "nodemon server.js",
+    "dev": "next dev",
     "build": "next build",
-    "start": "NODE_ENV=production node server.js",
+    "start": "next start",
     "lint": "next lint",
     "init-admin": "node scripts/init-admin.js"
   },
@@ -16,7 +16,6 @@
     "bcrypt": "^5.1.1",
     "chart.js": "^4.4.7",
     "dotenv": "^16.4.7",
-    "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.475.0",
     "mongodb": "^6.12.0",
@@ -30,7 +29,6 @@
     "react-dom": "^19.0.0",
     "react-icons": "^5.4.0",
     "react-toastify": "^11.0.3",
-    "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
