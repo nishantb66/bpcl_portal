@@ -104,7 +104,6 @@ export default function MeetingRooms() {
       return;
     }
 
-    // Convert the form's local datetime values to Date objects then to UTC ISO strings
     const startLocal = new Date(formData.meetingStart);
     const endLocal = new Date(formData.meetingEnd);
 
@@ -246,7 +245,7 @@ export default function MeetingRooms() {
                 ></path>
               </svg>
               <p className="mt-4 text-indigo-600 text-lg">
-                Cheaking booking status...
+                Loading meeting rooms...
               </p>
             </div>
           ) : (
@@ -256,135 +255,153 @@ export default function MeetingRooms() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white w-full max-w-md mx-4 sm:max-w-lg rounded-xl shadow-2xl p-8 relative">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">
-              Book {selectedRoom} Meeting Room
-            </h2>
-            <form onSubmit={handleBookRoom} className="space-y-6">
-              <div className="grid grid-cols-1 gap-6">
-                {/* Meeting Start Time */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Meeting Start Time
-                  </label>
-                  <input
-                    type="datetime-local"
-                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                    value={formData.meetingStart}
-                    onChange={(e) =>
-                      setFormData({ ...formData, meetingStart: e.target.value })
-                    }
-                    required
-                  />
+        // Overlay: allow scrolling if needed, and center the modal with extra padding top & bottom
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-40">
+          <div className="flex min-h-full items-center justify-center px-4 py-8 sm:py-12">
+            <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl p-8 sm:p-10 relative">
+              <h2 className="text-2xl font-bold text-gray-800 border-b border-gray-200 pb-4 mb-6">
+                Book {selectedRoom} Meeting Room
+              </h2>
+              <form onSubmit={handleBookRoom} className="space-y-6">
+                <div className="grid grid-cols-1 gap-6">
+                  {/* Meeting Start Time */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Meeting Start Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 
+                                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                      value={formData.meetingStart}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          meetingStart: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
+                  {/* Meeting End Time */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Meeting End Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 
+                                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                      value={formData.meetingEnd}
+                      onChange={(e) =>
+                        setFormData({ ...formData, meetingEnd: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  {/* Discussion Topic */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Discussion Topic
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 
+                                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                      placeholder="Enter the topic"
+                      value={formData.topic}
+                      onChange={(e) =>
+                        setFormData({ ...formData, topic: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  {/* Department */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Department
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 
+                                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                      placeholder="e.g., HR, Finance"
+                      value={formData.department}
+                      onChange={(e) =>
+                        setFormData({ ...formData, department: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  {/* Number of Employees */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Number of Employees
+                    </label>
+                    <input
+                      type="number"
+                      max={20}
+                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 
+                                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                      placeholder="Up to 20"
+                      value={formData.numEmployees}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          numEmployees: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      (Maximum 20 participants)
+                    </p>
+                  </div>
+                  {/* Host's Designation */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Host&apos;s Designation
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 
+                                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+                      placeholder="e.g., Manager"
+                      value={formData.hostDesignation}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          hostDesignation: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
                 </div>
-                {/* Meeting End Time */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Meeting End Time
-                  </label>
-                  <input
-                    type="datetime-local"
-                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                    value={formData.meetingEnd}
-                    onChange={(e) =>
-                      setFormData({ ...formData, meetingEnd: e.target.value })
-                    }
-                    required
-                  />
+                {/* Form Actions */}
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleCloseModal();
+                      window.location.reload();
+                    }}
+                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm 
+                               font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 
+                               text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 
+                               focus:ring-indigo-500 focus:outline-none transition-colors duration-200"
+                  >
+                    Book Room
+                  </button>
                 </div>
-                {/* Discussion Topic */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Discussion Topic
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                    placeholder="Enter the topic"
-                    value={formData.topic}
-                    onChange={(e) =>
-                      setFormData({ ...formData, topic: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                {/* Department */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Department
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                    placeholder="e.g., HR, Finance"
-                    value={formData.department}
-                    onChange={(e) =>
-                      setFormData({ ...formData, department: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                {/* Number of Employees */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Number of Employees
-                  </label>
-                  <input
-                    type="number"
-                    max={20}
-                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                    placeholder="Up to 20"
-                    value={formData.numEmployees}
-                    onChange={(e) =>
-                      setFormData({ ...formData, numEmployees: e.target.value })
-                    }
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    (Maximum 20 participants)
-                  </p>
-                </div>
-                {/* Host's Designation */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Host&apos;s Designation
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-                    placeholder="e.g., Manager"
-                    value={formData.hostDesignation}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        hostDesignation: e.target.value,
-                      })
-                    }
-                    required
-                  />
-                </div>
-              </div>
-              {/* Form Actions */}
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleCloseModal();
-                    window.location.reload();
-                  }}
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors duration-200"
-                >
-                  Book Room
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       )}
