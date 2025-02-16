@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Enterprise Portal - Scalable MVP
 
-## Getting Started
+> A robust enterprise-grade web application designed for employees, offering multiple full-scale features. Launched as an MVP with a laser focus on scalability and enterprise-level integrations.
 
-First, run the development server:
+## Table of Contents
+1. [Project Overview](#project-overview)  
+2. [Key Features](#key-features)  
+3. [Screens & Highlights](#screens--highlights)  
+4. [Local Setup](#local-setup)  
+5. [Future Updates & New Features](#future-updates--new-features)  
+6. [Learn More About Next.js](#learn-more-about-nextjs)  
+7. [Deploy on Vercel](#deploy-on-vercel)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Project Overview
+Welcome to **Enterprise Portal - Scalable MVP**—the digital playground your workplace never knew it needed. This is a next-level, enterprise-grade web app built to unify employee workflows under one sleek roof. Think: streamlined complaint management, an all-in-one scheduling solution, frictionless reimbursements, and more. Yes, it’s labeled an MVP, but it already packs serious muscle for big corporate demands.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Key Features
+1. **Customers & Complaints**  
+   - Manage customer records, track issues, and handle them with zero drama.
 
-## Learn More
+2. **Apply for Leave (Submit and track)**  
+   - A friction-free way to request time off. No more email ping-pong with HR.
 
-To learn more about Next.js, take a look at the following resources:
+3. **Quick Survey**  
+   - Gather honest feedback in real-time. Raw, actionable insights to keep your workplace environment thriving.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. **Schedule Meetings & Manage Your Calendar (Role based feature)**  
+   - Centralized scheduling for all your events, meeting and invite users. Color-coded clarity at a glance.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+5. **Task Manager**  
+   - Create tasks, set deadlines, and assign to teammates. Keep everyone on track.
 
-## Deploy on Vercel
+6. **Reimbursement**  
+   - Upload receipts, submit requests, and track approvals—minus the email chaos.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+7. **Accident Profiling**  
+   - Predictive analysis and fault determination. Safety first, always.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+8. **Book Meeting Room**  
+   - Reserve rooms in seconds, with real-time availability.
+
+9. **Mark Your Dates**  
+   - A personal calendar for special occasions, deadlines, and all the day-to-day hustle.
+
+10. **Administration (Admin role)**  
+   - Admin management system in the to manage, complaints, customer data, Survey data (Visualization), manage reimbursements or users and employee data management.
+
+---
+
+## Screens & Highlights
+1. **Landing & Login** – Minimal, clean login screen that sets a professional tone.  
+2. **Dashboard** – Quick-access tiles for all core features, from Complaints to Surveys.  
+3. **Customer Management** – Consolidated view for customer details and their complaints.  
+4. **Survey Modal** – Straightforward wizard for gathering internal feedback.  
+5. **Meeting Scheduling** – Slick form for scheduling your next team huddle, integrated with your calendar.  
+6. **Task Manager** – Structured task listing with deadlines and statuses for easy oversight.  
+7. **Reimbursements** – Submit requests with attachments, track statuses, and reference old requests.  
+8. **Meeting Room Booking** – Real-time room availability to avoid double-booking fiascos.  
+9. **Choose Calendar** – Pick the built-in Portal Calendar or link an external Google Calendar.  
+10. **Admin Syatem** – Manage all data.
+
