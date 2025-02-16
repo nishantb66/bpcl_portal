@@ -35,6 +35,7 @@ export default function MeetingRooms() {
     hostDesignation: "",
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   // Get the current logged-in user's name from localStorage
@@ -54,6 +55,7 @@ export default function MeetingRooms() {
 
   // Fetch the meeting room data
   const fetchRooms = async () => {
+    setIsLoading(true);
     try {
       const res = await fetch("/api/meeting");
       const data = await res.json();
@@ -61,6 +63,8 @@ export default function MeetingRooms() {
     } catch (err) {
       console.error(err);
       toast.error("Failed to fetch rooms.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -159,12 +163,11 @@ export default function MeetingRooms() {
         className={`
           group relative 
           flex items-center justify-center
-          p-4 rounded-lg border
-          transition-all ease-in-out duration-300
+          p-4 rounded-lg border transition-all duration-300
           ${
             found?.booked
               ? "bg-gray-100 border-gray-200 cursor-not-allowed"
-              : "bg-white border-gray-200 cursor-pointer hover:shadow-md hover:border-indigo-300 hover:scale-105"
+              : "bg-white border-gray-200 cursor-pointer hover:shadow-lg hover:border-indigo-300 hover:scale-105"
           }
         `}
       >
@@ -220,26 +223,54 @@ export default function MeetingRooms() {
           <span className="font-semibold">20 participants</span>.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {gridItems}
+          {isLoading ? (
+            <div className="col-span-full flex flex-col items-center justify-center py-12">
+              <svg
+                className="animate-spin h-10 w-10 text-indigo-600"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8z"
+                ></path>
+              </svg>
+              <p className="mt-4 text-indigo-600 text-lg">
+                Cheaking booking status...
+              </p>
+            </div>
+          ) : (
+            gridItems
+          )}
         </div>
       </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white w-full max-w-md mx-4 rounded-lg shadow-lg p-6 relative">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">
+          <div className="bg-white w-full max-w-md mx-4 sm:max-w-lg rounded-xl shadow-2xl p-8 relative">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">
               Book {selectedRoom} Meeting Room
             </h2>
             <form onSubmit={handleBookRoom} className="space-y-6">
               <div className="grid grid-cols-1 gap-6">
                 {/* Meeting Start Time */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Meeting Start Time
                   </label>
                   <input
                     type="datetime-local"
-                    className="w-full px-3 py-2 rounded-md border border-gray-300 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200 ease-in-out shadow-sm"
+                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                     value={formData.meetingStart}
                     onChange={(e) =>
                       setFormData({ ...formData, meetingStart: e.target.value })
@@ -249,12 +280,12 @@ export default function MeetingRooms() {
                 </div>
                 {/* Meeting End Time */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Meeting End Time
                   </label>
                   <input
                     type="datetime-local"
-                    className="w-full px-3 py-2 rounded-md border border-gray-300 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200 ease-in-out shadow-sm"
+                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                     value={formData.meetingEnd}
                     onChange={(e) =>
                       setFormData({ ...formData, meetingEnd: e.target.value })
@@ -264,12 +295,12 @@ export default function MeetingRooms() {
                 </div>
                 {/* Discussion Topic */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Discussion Topic
                   </label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 rounded-md border border-gray-300 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200 ease-in-out shadow-sm"
+                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                     placeholder="Enter the topic"
                     value={formData.topic}
                     onChange={(e) =>
@@ -280,12 +311,12 @@ export default function MeetingRooms() {
                 </div>
                 {/* Department */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Department
                   </label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 rounded-md border border-gray-300 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200 ease-in-out shadow-sm"
+                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                     placeholder="e.g., HR, Finance"
                     value={formData.department}
                     onChange={(e) =>
@@ -296,13 +327,13 @@ export default function MeetingRooms() {
                 </div>
                 {/* Number of Employees */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Number of Employees
                   </label>
                   <input
                     type="number"
                     max={20}
-                    className="w-full px-3 py-2 rounded-md border border-gray-300 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200 ease-in-out shadow-sm"
+                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                     placeholder="Up to 20"
                     value={formData.numEmployees}
                     onChange={(e) =>
@@ -316,12 +347,12 @@ export default function MeetingRooms() {
                 </div>
                 {/* Host's Designation */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Host&apos;s Designation
                   </label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 rounded-md border border-gray-300 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200 ease-in-out shadow-sm"
+                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                     placeholder="e.g., Manager"
                     value={formData.hostDesignation}
                     onChange={(e) =>
@@ -335,20 +366,20 @@ export default function MeetingRooms() {
                 </div>
               </div>
               {/* Form Actions */}
-              <div className="flex justify-end space-x-3 pt-2">
+              <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={() => {
                     handleCloseModal();
                     window.location.reload();
                   }}
-                  className="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100 transition-colors duration-200 ease-in-out"
+                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors duration-200 ease-in-out"
+                  className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors duration-200"
                 >
                   Book Room
                 </button>
