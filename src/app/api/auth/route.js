@@ -5,7 +5,6 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
 
-
 // Input validation helpers
 const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -26,7 +25,8 @@ const isValidUsername = (name) => {
 };
 
 export async function POST(req) {
-  const { type, name, email, password, otp } = await req.json();
+  // Destructure all needed fields including role and emp_id
+  const { type, name, email, password, otp, role, emp_id } = await req.json();
   const db = await connectToDB();
   const usersCollection = db.collection("users");
   const otpCollection = db.collection("otps");
@@ -40,19 +40,33 @@ export async function POST(req) {
   // Ensure indexes for uniqueness
   await usersCollection.createIndex({ email: 1 }, { unique: true });
   await usersCollection.createIndex({ name: 1 }, { unique: true });
+  // Ensure employee id uniqueness as well
+  await usersCollection.createIndex({ emp_id: 1 }, { unique: true });
 
   if (type === "signup") {
-    // Validate input fields
-    if (!name || !email || !password) {
+    // Validate required fields
+    if (!name || !email || !password || !role || !emp_id) {
       return new Response(
-        JSON.stringify({
-          message: "All fields are required",
-        }),
+        JSON.stringify({ message: "All fields are required" }),
         { status: 400 }
       );
     }
 
-    // Validate format
+    // Validate role selection
+    const allowedRoles = [
+      "Executive",
+      "Staff grade 1",
+      "Staff grade 2",
+      "Staff grade 3",
+    ];
+    if (!allowedRoles.includes(role)) {
+      return new Response(
+        JSON.stringify({ message: "Invalid role selected." }),
+        { status: 400 }
+      );
+    }
+
+    // Validate format of username, email and password
     if (!isValidUsername(name)) {
       return new Response(
         JSON.stringify({
@@ -64,12 +78,9 @@ export async function POST(req) {
     }
 
     if (!isValidEmail(email)) {
-      return new Response(
-        JSON.stringify({
-          message: "Invalid email format",
-        }),
-        { status: 400 }
-      );
+      return new Response(JSON.stringify({ message: "Invalid email format" }), {
+        status: 400,
+      });
     }
 
     if (!isValidPassword(password)) {
@@ -81,20 +92,31 @@ export async function POST(req) {
         { status: 400 }
       );
     }
-    // Check existing users
+
+    // Check if user already exists by username, email, or employee id
     const existingUser = await usersCollection.findOne({
-      $or: [{ email: email.toLowerCase() }, { name }],
+      $or: [{ email: email.toLowerCase() }, { name }, { emp_id }],
     });
     if (existingUser) {
-      const field =
-        existingUser.email === email.toLowerCase() ? "Email" : "Username";
-      return new Response(
-        JSON.stringify({ message: `${field} already exists` }),
-        { status: 409 }
-      );
+      if (existingUser.email === email.toLowerCase()) {
+        return new Response(
+          JSON.stringify({ message: "Email already exists" }),
+          { status: 409 }
+        );
+      } else if (existingUser.name === name) {
+        return new Response(
+          JSON.stringify({ message: "Username already exists" }),
+          { status: 409 }
+        );
+      } else if (existingUser.emp_id === emp_id) {
+        return new Response(
+          JSON.stringify({ message: "Employee ID already exists" }),
+          { status: 409 }
+        );
+      }
     }
 
-    // Generate and save OTP
+    // Generate and save OTP along with user data (including role & emp_id)
     const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
     const hashedPassword = await hash(password, 10);
 
@@ -103,7 +125,13 @@ export async function POST(req) {
       otp: generatedOtp,
       purpose: "signup",
       createdAt: new Date(),
-      userData: { name, email: email.toLowerCase(), password: hashedPassword },
+      userData: {
+        name,
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        role,
+        emp_id,
+      },
     });
 
     // Send OTP via email
@@ -157,26 +185,26 @@ export async function POST(req) {
     if (!user || !(await compare(password, user.password))) {
       return new Response(
         JSON.stringify({ message: "Invalid email or password" }),
-        {
-          status: 401,
-        }
+        { status: 401 }
       );
     }
 
+    // Include role and emp_id in the JWT payload
     const token = sign(
-      { email: user.email, name: user.name },
-      process.env.JWT_SECRET,
       {
-        expiresIn: "1h",
-      }
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        emp_id: user.emp_id,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
     );
     console.log("Generated Token:", token);
 
     return new Response(
       JSON.stringify({ message: "Login successful", token, name: user.name }),
-      {
-        status: 200,
-      }
+      { status: 200 }
     );
   }
 

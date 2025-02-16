@@ -7,12 +7,14 @@ import "react-toastify/dist/ReactToastify.css";
 import { FiUserPlus } from "react-icons/fi";
 
 export default function Signup() {
-  // ----------------- Non-UI State & Logic (kept intact) -----------------
+  // Updated form state with role and emp_id fields
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
+    role: "",
+    emp_id: "",
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -33,6 +35,7 @@ export default function Signup() {
       const response = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // Include role and emp_id in the request body
         body: JSON.stringify({ ...form, type: "signup" }),
       });
 
@@ -50,7 +53,6 @@ export default function Signup() {
       setLoading(false);
     }
   };
-  // ----------------------------------------------------------------------
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col">
@@ -258,6 +260,48 @@ export default function Signup() {
                   )}
                 </button>
               </div>
+            </div>
+
+            {/* Role Selection */}
+            <div>
+              <label
+                htmlFor="role"
+                className="block text-sm font-medium text-gray-700 mb-0.5"
+              >
+                Role
+              </label>
+              <select
+                id="role"
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
+                className="block w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+                required
+              >
+                <option value="">Select your role</option>
+                <option value="Executive">Executive</option>
+                <option value="Staff grade 1">Staff grade 1</option>
+                <option value="Staff grade 2">Staff grade 2</option>
+                <option value="Staff grade 3">Staff grade 3</option>
+              </select>
+            </div>
+
+            {/* Employee ID */}
+            <div>
+              <label
+                htmlFor="emp_id"
+                className="block text-sm font-medium text-gray-700 mb-0.5"
+              >
+                Employee ID
+              </label>
+              <input
+                id="emp_id"
+                type="text"
+                value={form.emp_id}
+                onChange={(e) => setForm({ ...form, emp_id: e.target.value })}
+                className="block w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-400"
+                placeholder="Enter your Employee ID"
+                required
+              />
             </div>
 
             {/* Submit Button */}

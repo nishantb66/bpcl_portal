@@ -24,8 +24,8 @@ import "react-toastify/dist/ReactToastify.css";
 import jwt from "jsonwebtoken";
 
 export default function Home() {
-  // All previous state and logic remains unchanged
   const [userName, setUserName] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [loadingCard, setLoadingCard] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
@@ -57,6 +57,11 @@ export default function Home() {
         }, 2000);
       } else {
         setUserName(name);
+        // Decode the token to get the role
+        const decoded = jwt.decode(token);
+        if (decoded && decoded.role) {
+          setUserRole(decoded.role);
+        }
       }
     }
   }, [router]);
@@ -92,6 +97,63 @@ export default function Home() {
       setLoadingCard(null);
     }
   };
+
+  // Dashboard cards array – note the new meeting scheduling option
+  const dashboardCards = [
+    {
+      path: "/customer-details",
+      icon: <FiUsers className="w-6 h-6" />,
+      title: "Customers & Complaints",
+      description: "Manage customer records and resolve complaints",
+    },
+    {
+      path: "/leave",
+      icon: <FiCalendar className="w-6 h-6" />,
+      title: "Apply for Leave",
+      description: "Submit and manage your leave applications",
+      api: "/api/status",
+    },
+    {
+      path: "/survey",
+      icon: <FiClipboard className="w-6 h-6" />,
+      title: "Quick Survey",
+      description: "Share feedback on working conditions",
+    },
+    {
+      // New card for scheduling meetings (only for Executives)
+      path: "/schedule-meetings",
+      icon: <FiCalendar className="w-6 h-6" />,
+      title: "Schedule Meetings & Manage Your Calendar",
+      description:
+        "Plan your meetings, invite colleagues, and keep track of schedules",
+      requiresExecutive: true,
+    },
+    {
+      path: "/tasks",
+      icon: <FiCheckSquare className="w-6 h-6" />,
+      title: "Task Manager",
+      description: "Create, track, edit your tasks and assign tasks to others",
+    },
+    {
+      path: "/reimbursement",
+      icon: <FiDollarSign className="w-6 h-6" />,
+      title: "Reimbursement",
+      description: "Submit your cost details for reimbursement",
+    },
+    {
+      href: "https://accident-profiling-frontend.vercel.app",
+      icon: <FiAlertTriangle className="w-6 h-6" />,
+      title: "Accident Profiling",
+      description: "AI-powered accident analysis system (Tank Lorry)",
+      external: true,
+    },
+    {
+      path: "/meeting",
+      icon: <FiCalendar className="w-6 h-6" />,
+      title: "Book Meeting Room",
+      description: "Check availability and reserve meeting rooms",
+    },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -235,61 +297,36 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {userName ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Dashboard Cards */}
-              {[
-                {
-                  path: "/customer-details",
-                  icon: <FiUsers className="w-6 h-6" />,
-                  title: "Customers & Complaints",
-                  description: "Manage customer records and resolve complaints",
-                },
-                {
-                  path: "/leave",
-                  icon: <FiCalendar className="w-6 h-6" />,
-                  title: "Apply for Leave",
-                  description: "Submit and manage your leave applications",
-                  api: "/api/status",
-                },
-                {
-                  path: "/survey",
-                  icon: <FiClipboard className="w-6 h-6" />,
-                  title: "Quick Survey",
-                  description: "Share feedback on working conditions",
-                },
-                {
-                  // New card for tasks feature:
-                  path: "/tasks",
-                  icon: <FiCheckSquare className="w-6 h-6" />,
-                  title: "Task Manager",
-                  description:
-                    "Create, track, edit your tasks and assign tasks to others",
-                },
-                {
-                  path: "/reimbursement",
-                  icon: <FiDollarSign className="w-6 h-6" />,
-                  title: "Reimbursement",
-                  description: "Submit your cost details for reimbursement",
-                },
-                {
-                  href: "https://accident-profiling-frontend.vercel.app",
-                  icon: <FiAlertTriangle className="w-6 h-6" />,
-                  title: "Accident Profiling",
-                  description:
-                    "AI-powered accident analysis system (Tank Lorry)",
-                  external: true,
-                },
-                {
-                  path: "/meeting",
-                  icon: <FiCalendar className="w-6 h-6" />,
-                  title: "Book Meeting Room",
-                  description: "Check availability and reserve meeting rooms",
-                },
-              ].map((item, index) => (
-                <div
-                  key={index}
-                  className="group relative bg-white rounded-xl border border-gray-200 hover:border-indigo-200 shadow-sm hover:shadow-md transition-all"
-                >
-                  <div className="p-6">
+              {dashboardCards.map((item, index) => {
+                // If this card is for Executives only and the user isn’t one, render it as disabled.
+                if (item.requiresExecutive && userRole !== "Executive") {
+                  return (
+                    <div
+                      key={index}
+                      className="group relative bg-gray-200 rounded-xl border border-gray-200 shadow-sm transition-all opacity-50 cursor-not-allowed p-6"
+                    >
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0 w-12 h-12 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
+                          {item.icon}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                            {item.title}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {item.description}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="absolute inset-0 rounded-xl z-10" />
+                    </div>
+                  );
+                }
+                return (
+                  <div
+                    key={index}
+                    className="group relative bg-white rounded-xl border border-gray-200 hover:border-indigo-200 shadow-sm hover:shadow-md transition-all p-6"
+                  >
                     <div className="flex items-start space-x-4">
                       <div className="flex-shrink-0 w-12 h-12 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
                         {item.icon}
@@ -303,27 +340,27 @@ export default function Home() {
                         </p>
                       </div>
                     </div>
+                    {item.external ? (
+                      <a
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute inset-0 rounded-xl z-10"
+                      />
+                    ) : (
+                      <button
+                        onClick={() => handleNavigation(item.path, item.api)}
+                        className="absolute inset-0 w-full rounded-xl z-10"
+                      />
+                    )}
+                    {loadingCard === item.path && (
+                      <div className="absolute inset-0 bg-white/90 flex items-center justify-center rounded-xl">
+                        <FiLoader className="w-8 h-8 animate-spin text-indigo-600" />
+                      </div>
+                    )}
                   </div>
-                  {item.external ? (
-                    <a
-                      href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute inset-0 rounded-xl z-10"
-                    />
-                  ) : (
-                    <button
-                      onClick={() => handleNavigation(item.path, item.api)}
-                      className="absolute inset-0 w-full rounded-xl z-10"
-                    />
-                  )}
-                  {loadingCard === item.path && (
-                    <div className="absolute inset-0 bg-white/90 flex items-center justify-center rounded-xl">
-                      <FiLoader className="w-8 h-8 animate-spin text-indigo-600" />
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
 
               {/* Coming Soon Card */}
               <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-6">
