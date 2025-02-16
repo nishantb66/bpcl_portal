@@ -223,6 +223,12 @@ export default function ScheduleMeetings() {
           </div>
           <nav className="flex items-center space-x-4">
             <Link
+              href="/meeting"
+              className="text-sm font-medium text-gray-600 hover:text-indigo-700 transition-colors"
+            >
+              Book Meeting Room
+            </Link>
+            <Link
               href="/"
               className="text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
             >

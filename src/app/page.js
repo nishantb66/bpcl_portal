@@ -19,6 +19,7 @@ import {
   FiCheckSquare,
   FiDollarSign,
 } from "react-icons/fi";
+import { FaGoogle } from "react-icons/fa"; 
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import jwt from "jsonwebtoken";
@@ -28,6 +29,7 @@ export default function Home() {
   const [userRole, setUserRole] = useState(null);
   const [loadingCard, setLoadingCard] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showCalendarPopup, setShowCalendarPopup] = useState(false);
   const router = useRouter();
 
   const checkTokenExpiration = (token) => {
@@ -153,7 +155,29 @@ export default function Home() {
       title: "Book Meeting Room",
       description: "Check availability and reserve meeting rooms",
     },
+    // The "Mark your dates" card
+    {
+      path: "/calendar",
+      icon: <FiCalendar className="w-6 h-6" />,
+      title: "Mark your dates",
+      description: "Organize personal reminders and upcoming plans",
+    },
   ];
+
+  const handleCalendarClick = () => {
+    // Instead of navigating directly, open our fancy popup
+    setShowCalendarPopup(true);
+  };
+
+  const handlePortalCalendar = () => {
+    setShowCalendarPopup(false);
+    handleNavigation("/calendar"); // The existing page path for the Portal Calendar
+  };
+
+  const handleGoogleCalendar = () => {
+    setShowCalendarPopup(false);
+    window.open("https://calendar.google.com", "_blank");
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -322,6 +346,45 @@ export default function Home() {
                     </div>
                   );
                 }
+
+                // Special handling for the "Mark your dates" card
+                if (item.path === "/calendar") {
+                  return (
+                    <div
+                      key={index}
+                      className="group relative bg-white rounded-xl border border-gray-200 hover:border-indigo-200 shadow-sm hover:shadow-md transition-all p-6"
+                    >
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0 w-12 h-12 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
+                          {item.icon}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                            {item.title}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {item.description}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setLoadingCard(item.path);
+                          // We only show the popup, so no immediate navigation
+                          handleCalendarClick();
+                          setTimeout(() => setLoadingCard(null), 500);
+                        }}
+                        className="absolute inset-0 w-full rounded-xl z-10"
+                      />
+                      {loadingCard === item.path && (
+                        <div className="absolute inset-0 bg-white/90 flex items-center justify-center rounded-xl">
+                          <FiLoader className="w-8 h-8 animate-spin text-indigo-600" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
                 return (
                   <div
                     key={index}
@@ -361,18 +424,6 @@ export default function Home() {
                   </div>
                 );
               })}
-
-              {/* Coming Soon Card */}
-              <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-6">
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <FiPlusCircle className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-                    <p className="text-sm font-medium text-gray-500">
-                      New Feature Coming Soon
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           ) : (
             <div className="max-w-md mx-auto py-12 text-center">
@@ -398,6 +449,66 @@ export default function Home() {
         </div>
       </main>
 
+      {/* Popup Modal for Calendar Selection */}
+      {/* Popup Modal for Calendar Selection */}
+      {showCalendarPopup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4"
+          onClick={() => setShowCalendarPopup(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h2 className="text-xl font-semibold text-gray-800">
+                Choose Calendar
+              </h2>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <p className="text-gray-600 mb-6">
+                Select where you would like to schedule your plans
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Portal Calendar Option */}
+                <button
+                  onClick={handlePortalCalendar}
+                  className="flex items-center justify-center space-x-3 px-4 py-3 bg-indigo-50 
+              text-indigo-700 rounded-lg hover:bg-indigo-100 transition-all duration-200"
+                >
+                  <FiCalendar className="w-5 h-5" />
+                  <span className="font-medium">Portal Calendar</span>
+                </button>
+
+                {/* Google Calendar Option */}
+                <button
+                  onClick={handleGoogleCalendar}
+                  className="flex items-center justify-center space-x-3 px-4 py-3 bg-blue-50 
+              text-blue-700 rounded-lg hover:bg-blue-100 transition-all duration-200"
+                >
+                  <FaGoogle className="w-5 h-5" />
+                  <span className="font-medium">Calendar</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={() => setShowCalendarPopup(false)}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-700 
+            font-medium transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <footer className="border-t border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
