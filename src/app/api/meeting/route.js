@@ -3,16 +3,16 @@ import { verify } from "jsonwebtoken";
 
 export async function GET(request) {
   try {
-    // Connect to DB
     const db = await connectToDB();
     const meetingRooms = db.collection("meetingRooms");
 
-    // Fetch all rooms
-    const rooms = await meetingRooms.find({}).toArray();
+    // Ensure TTL index is created (for auto-deletion after meetingEnd)
+    await meetingRooms.createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 });
 
+    const rooms = await meetingRooms.find({}).toArray();
     return new Response(JSON.stringify(rooms), { status: 200 });
   } catch (error) {
-    console.error(error);
+    console.error("GET error:", error);
     return new Response(JSON.stringify({ message: "Server error" }), {
       status: 500,
     });
@@ -21,7 +21,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    // 1. Verify the user’s token to ensure they’re logged in
+    // 1. Verify token
     const authHeader = request.headers.get("authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ message: "No token provided" }), {
@@ -31,32 +31,44 @@ export async function POST(request) {
     const token = authHeader.split(" ")[1];
     const decoded = verify(token, process.env.JWT_SECRET);
 
-    // 2. Parse the incoming form data
+    // 2. Parse incoming data
     const {
       roomId,
-      meetingTime,
+      meetingStart, // ISO string, e.g. "2025-02-16T08:12:00.000Z"
+      meetingEnd, // ISO string, e.g. "2025-02-16T09:12:00.000Z"
       topic,
       department,
-      duration,
       numEmployees,
       hostDesignation,
     } = await request.json();
 
-    // 3. Connect to DB
+    const startDate = new Date(meetingStart);
+    const endDate = new Date(meetingEnd);
+
+    if (endDate <= startDate) {
+      return new Response(
+        JSON.stringify({
+          message: "Meeting End Time must be after Start Time",
+        }),
+        { status: 400 }
+      );
+    }
+
+    // 3. Connect to DB and ensure TTL index exists
     const db = await connectToDB();
     const meetingRooms = db.collection("meetingRooms");
+    await meetingRooms.createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 });
 
-    // 4. Check if that room is already booked
-    const existingBooking = await meetingRooms.findOne({ roomId });
-    if (existingBooking && existingBooking.booked) {
+    // 4. Check if room is already booked
+    const existing = await meetingRooms.findOne({ roomId });
+    if (existing && existing.booked) {
       return new Response(
         JSON.stringify({ message: "Room is already booked" }),
         { status: 400 }
       );
     }
 
-    // 5. Insert or update the booking in the DB
-    // If you never created the docs for each room beforehand, we can do upsert:
+    // 5. Upsert the booking with UTC times and TTL field
     await meetingRooms.updateOne(
       { roomId },
       {
@@ -64,15 +76,17 @@ export async function POST(request) {
           roomId,
           booked: true,
           bookingDetails: {
-            hostName: decoded.name, // from token
-            hostEmail: decoded.email, // from token
+            hostName: decoded.name,
+            hostEmail: decoded.email,
             hostDesignation,
             topic,
             department,
-            meetingTime,
-            duration,
+            meetingStart: startDate.toISOString(),
+            meetingEnd: endDate.toISOString(),
             numEmployees,
           },
+          // TTL: Mongo will remove the doc once expireAt is past
+          expireAt: endDate,
         },
       },
       { upsert: true }

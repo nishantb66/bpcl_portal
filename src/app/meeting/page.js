@@ -16,19 +16,25 @@ function formatGoogleDateTime(date) {
   return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
 }
 
+// Helper to convert a UTC date string into local time for display
+function formatLocalTime(utcDateStr) {
+  if (!utcDateStr) return "";
+  const date = new Date(utcDateStr);
+  return date.toLocaleString();
+}
+
 export default function MeetingRooms() {
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [formData, setFormData] = useState({
-    meetingTime: "",
+    meetingStart: "",
+    meetingEnd: "",
     topic: "",
     department: "",
-    duration: "",
     numEmployees: "",
     hostDesignation: "",
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
-
   const router = useRouter();
 
   // Get the current logged-in user's name from localStorage
@@ -60,12 +66,8 @@ export default function MeetingRooms() {
 
   // Clicking on a room
   const handleRoomClick = (roomId) => {
-    // Find the room from state
     const room = rooms.find((r) => r.roomId === roomId);
-    // If booked, do nothing (tooltip shows info)
     if (room?.booked) return;
-
-    // Otherwise, open the modal for booking
     setSelectedRoom(roomId);
     setIsModalOpen(true);
   };
@@ -75,16 +77,16 @@ export default function MeetingRooms() {
     setIsModalOpen(false);
     setSelectedRoom(null);
     setFormData({
-      meetingTime: "",
+      meetingStart: "",
+      meetingEnd: "",
       topic: "",
       department: "",
-      duration: "",
       numEmployees: "",
       hostDesignation: "",
     });
   };
 
-  // Book a room
+  // Book a room (convert local datetime to UTC ISO strings before sending)
   const handleBookRoom = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
@@ -93,11 +95,22 @@ export default function MeetingRooms() {
       return;
     }
 
-    // Enforce maximum capacity of 20
     if (Number(formData.numEmployees) > 20) {
       toast.error("A single room can’t exceed 20 participants.");
       return;
     }
+
+    // Convert the form's local datetime values to Date objects then to UTC ISO strings
+    const startLocal = new Date(formData.meetingStart);
+    const endLocal = new Date(formData.meetingEnd);
+
+    if (endLocal <= startLocal) {
+      toast.error("Meeting End Time must be after the Start Time.");
+      return;
+    }
+
+    const meetingStartUTC = startLocal.toISOString();
+    const meetingEndUTC = endLocal.toISOString();
 
     try {
       const res = await fetch("/api/meeting", {
@@ -108,7 +121,12 @@ export default function MeetingRooms() {
         },
         body: JSON.stringify({
           roomId: selectedRoom,
-          ...formData,
+          meetingStart: meetingStartUTC,
+          meetingEnd: meetingEndUTC,
+          topic: formData.topic,
+          department: formData.department,
+          numEmployees: formData.numEmployees,
+          hostDesignation: formData.hostDesignation,
         }),
       });
 
@@ -128,7 +146,7 @@ export default function MeetingRooms() {
     }
   };
 
-  // Create an array of 25 room items (if not seeded in DB)
+  // Create an array of 25 room items
   const gridItems = [];
   for (let i = 1; i <= 25; i++) {
     const roomId = `R${i}`;
@@ -137,7 +155,6 @@ export default function MeetingRooms() {
     gridItems.push(
       <div
         key={roomId}
-        // When clicked, trigger the booking modal if the room is available
         onClick={() => handleRoomClick(roomId)}
         className={`
           group relative 
@@ -152,8 +169,6 @@ export default function MeetingRooms() {
         `}
       >
         <span className="font-semibold text-gray-800">{roomId}</span>
-
-        {/* Show tooltip ONLY if the room is booked */}
         {found?.booked && (
           <div
             className="
@@ -176,13 +191,16 @@ export default function MeetingRooms() {
               {found.bookingDetails?.department}
             </p>
             <p className="mb-0.5">
-              <span className="font-medium">Duration:</span>{" "}
-              {found.bookingDetails?.duration} hr(s)
+              <span className="font-medium">From:</span>{" "}
+              {formatLocalTime(found.bookingDetails?.meetingStart)}
             </p>
             <p className="mb-0">
-              <span className="font-medium">Time:</span>{" "}
-              {found.bookingDetails?.meetingTime}
+              <span className="font-medium">To:</span>{" "}
+              {formatLocalTime(found.bookingDetails?.meetingEnd)}
             </p>
+            {currentUserName === found.bookingDetails?.hostName && (
+              <AddToCalendarLink bookingDetails={found.bookingDetails} />
+            )}
           </div>
         )}
       </div>
@@ -192,9 +210,7 @@ export default function MeetingRooms() {
   return (
     <div className="min-h-screen bg-white">
       <ToastContainer />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Heading */}
         <h1 className="text-3xl font-extrabold text-gray-900 mb-4">
           Meeting Room Booking
         </h1>
@@ -203,14 +219,11 @@ export default function MeetingRooms() {
           Each room accommodates up to{" "}
           <span className="font-semibold">20 participants</span>.
         </p>
-
-        {/* Grid of Rooms */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {gridItems}
         </div>
       </div>
 
-      {/* Booking Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white w-full max-w-md mx-4 rounded-lg shadow-lg p-6 relative">
@@ -218,27 +231,37 @@ export default function MeetingRooms() {
               Book {selectedRoom} Meeting Room
             </h2>
             <form onSubmit={handleBookRoom} className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {/* Meeting Time */}
+              <div className="grid grid-cols-1 gap-6">
+                {/* Meeting Start Time */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Meeting Time
+                    Meeting Start Time
                   </label>
                   <input
                     type="datetime-local"
-                    className="w-full px-3 py-2 rounded-md border border-gray-300 
-                               text-gray-700 placeholder-gray-400 focus:outline-none 
-                               focus:ring-2 focus:ring-indigo-500 focus:border-transparent 
-                               transition-colors duration-200 ease-in-out shadow-sm"
-                    placeholder="Select date & time"
-                    value={formData.meetingTime}
+                    className="w-full px-3 py-2 rounded-md border border-gray-300 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200 ease-in-out shadow-sm"
+                    value={formData.meetingStart}
                     onChange={(e) =>
-                      setFormData({ ...formData, meetingTime: e.target.value })
+                      setFormData({ ...formData, meetingStart: e.target.value })
                     }
                     required
                   />
                 </div>
-
+                {/* Meeting End Time */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Meeting End Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="w-full px-3 py-2 rounded-md border border-gray-300 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200 ease-in-out shadow-sm"
+                    value={formData.meetingEnd}
+                    onChange={(e) =>
+                      setFormData({ ...formData, meetingEnd: e.target.value })
+                    }
+                    required
+                  />
+                </div>
                 {/* Discussion Topic */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -246,10 +269,7 @@ export default function MeetingRooms() {
                   </label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 rounded-md border border-gray-300 
-                               text-gray-700 placeholder-gray-400 focus:outline-none 
-                               focus:ring-2 focus:ring-indigo-500 focus:border-transparent 
-                               transition-colors duration-200 ease-in-out shadow-sm"
+                    className="w-full px-3 py-2 rounded-md border border-gray-300 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200 ease-in-out shadow-sm"
                     placeholder="Enter the topic"
                     value={formData.topic}
                     onChange={(e) =>
@@ -258,7 +278,6 @@ export default function MeetingRooms() {
                     required
                   />
                 </div>
-
                 {/* Department */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -266,10 +285,7 @@ export default function MeetingRooms() {
                   </label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 rounded-md border border-gray-300 
-                               text-gray-700 placeholder-gray-400 focus:outline-none 
-                               focus:ring-2 focus:ring-indigo-500 focus:border-transparent 
-                               transition-colors duration-200 ease-in-out shadow-sm"
+                    className="w-full px-3 py-2 rounded-md border border-gray-300 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200 ease-in-out shadow-sm"
                     placeholder="e.g., HR, Finance"
                     value={formData.department}
                     onChange={(e) =>
@@ -278,27 +294,6 @@ export default function MeetingRooms() {
                     required
                   />
                 </div>
-
-                {/* Duration (hours) */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Duration (hours)
-                  </label>
-                  <input
-                    type="number"
-                    className="w-full px-3 py-2 rounded-md border border-gray-300 
-                               text-gray-700 placeholder-gray-400 focus:outline-none 
-                               focus:ring-2 focus:ring-indigo-500 focus:border-transparent 
-                               transition-colors duration-200 ease-in-out shadow-sm"
-                    placeholder="e.g., 2"
-                    value={formData.duration}
-                    onChange={(e) =>
-                      setFormData({ ...formData, duration: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-
                 {/* Number of Employees */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -307,10 +302,7 @@ export default function MeetingRooms() {
                   <input
                     type="number"
                     max={20}
-                    className="w-full px-3 py-2 rounded-md border border-gray-300 
-                               text-gray-700 placeholder-gray-400 focus:outline-none 
-                               focus:ring-2 focus:ring-indigo-500 focus:border-transparent 
-                               transition-colors duration-200 ease-in-out shadow-sm"
+                    className="w-full px-3 py-2 rounded-md border border-gray-300 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200 ease-in-out shadow-sm"
                     placeholder="Up to 20"
                     value={formData.numEmployees}
                     onChange={(e) =>
@@ -322,7 +314,6 @@ export default function MeetingRooms() {
                     (Maximum 20 participants)
                   </p>
                 </div>
-
                 {/* Host's Designation */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -330,10 +321,7 @@ export default function MeetingRooms() {
                   </label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 rounded-md border border-gray-300 
-                               text-gray-700 placeholder-gray-400 focus:outline-none 
-                               focus:ring-2 focus:ring-indigo-500 focus:border-transparent 
-                               transition-colors duration-200 ease-in-out shadow-sm"
+                    className="w-full px-3 py-2 rounded-md border border-gray-300 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200 ease-in-out shadow-sm"
                     placeholder="e.g., Manager"
                     value={formData.hostDesignation}
                     onChange={(e) =>
@@ -346,7 +334,6 @@ export default function MeetingRooms() {
                   />
                 </div>
               </div>
-
               {/* Form Actions */}
               <div className="flex justify-end space-x-3 pt-2">
                 <button
@@ -359,13 +346,9 @@ export default function MeetingRooms() {
                 >
                   Cancel
                 </button>
-
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md 
-                             hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 
-                             focus:outline-none transition-colors duration-200 
-                             ease-in-out"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors duration-200 ease-in-out"
                 >
                   Book Room
                 </button>
@@ -378,24 +361,18 @@ export default function MeetingRooms() {
   );
 }
 
-/**
- * A component that creates a Google Calendar link using booking details.
- * This link appears in the hover tooltip if the current user is the host.
- */
+// Google Calendar link component
 function AddToCalendarLink({ bookingDetails }) {
-  const startDate = new Date(bookingDetails.meetingTime);
-  const durationHours = Number(bookingDetails.duration) || 1;
-  const endDate = new Date(
-    startDate.getTime() + durationHours * 60 * 60 * 1000
-  );
-  const startStr = formatGoogleDateTime(startDate);
-  const endStr = formatGoogleDateTime(endDate);
+  const startDate = new Date(bookingDetails.meetingStart);
+  const endDate = new Date(bookingDetails.meetingEnd);
   const text = encodeURIComponent(bookingDetails.topic || "Meeting");
   const details = encodeURIComponent(
     `Department: ${bookingDetails.department}\nHost Designation: ${bookingDetails.hostDesignation}\nExpected Participants: ${bookingDetails.numEmployees}`
   );
   const location = encodeURIComponent("Company Office");
-  const gcalLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${startStr}/${endStr}&location=${location}&details=${details}`;
+  const gcalLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${formatGoogleDateTime(
+    startDate
+  )}/${formatGoogleDateTime(endDate)}&location=${location}&details=${details}`;
 
   return (
     <a
