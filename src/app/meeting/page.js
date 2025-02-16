@@ -7,7 +7,6 @@ import "react-toastify/dist/ReactToastify.css";
 
 // Helper to format a JavaScript date into Google Calendar's required format (UTC-based)
 function formatGoogleDateTime(date) {
-  // Google Calendar wants YYYYMMDDTHHmmssZ in UTC
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
   const day = String(date.getUTCDate()).padStart(2, "0");
@@ -61,6 +60,7 @@ export default function MeetingRooms() {
 
   // Clicking on a room
   const handleRoomClick = (roomId) => {
+    // Find the room from state
     const room = rooms.find((r) => r.roomId === roomId);
     // If booked, do nothing (tooltip shows info)
     if (room?.booked) return;
@@ -137,17 +137,19 @@ export default function MeetingRooms() {
     gridItems.push(
       <div
         key={roomId}
+        // When clicked, trigger the booking modal if the room is available
+        onClick={() => handleRoomClick(roomId)}
         className={`
-    group relative 
-    flex items-center justify-center
-    p-4 rounded-lg border
-    transition-all ease-in-out duration-300
-    ${
-      found?.booked
-        ? "bg-gray-100 border-gray-200 cursor-not-allowed"
-        : "bg-white border-gray-200 cursor-pointer hover:shadow-md hover:border-indigo-300 hover:scale-105"
-    }
-  `}
+          group relative 
+          flex items-center justify-center
+          p-4 rounded-lg border
+          transition-all ease-in-out duration-300
+          ${
+            found?.booked
+              ? "bg-gray-100 border-gray-200 cursor-not-allowed"
+              : "bg-white border-gray-200 cursor-pointer hover:shadow-md hover:border-indigo-300 hover:scale-105"
+          }
+        `}
       >
         <span className="font-semibold text-gray-800">{roomId}</span>
 
@@ -155,13 +157,12 @@ export default function MeetingRooms() {
         {found?.booked && (
           <div
             className="
-
-      absolute top-full left-1/2 mt-2 pointer-events-none
-        w-60 p-3 bg-white border border-gray-200 text-gray-700 text-sm 
-        rounded-md shadow-lg transform -translate-x-1/2 
-        opacity-0 group-hover:opacity-100 transition-opacity 
-        z-50
-      "
+              absolute top-full left-1/2 mt-2 pointer-events-none
+              w-60 p-3 bg-white border border-gray-200 text-gray-700 text-sm 
+              rounded-md shadow-lg transform -translate-x-1/2 
+              opacity-0 group-hover:opacity-100 transition-opacity 
+              z-50
+            "
           >
             <p className="font-bold text-gray-900 mb-1">
               Booked by: {found.bookingDetails?.hostName}
@@ -391,7 +392,6 @@ function AddToCalendarLink({ bookingDetails }) {
   const details = encodeURIComponent(
     `Department: ${bookingDetails.department}\nHost Designation: ${bookingDetails.hostDesignation}\nExpected Participants: ${bookingDetails.numEmployees}`
   );
-  // Adjust the location as needed
   const location = encodeURIComponent("Company Office");
   const gcalLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${startStr}/${endStr}&location=${location}&details=${details}`;
 
