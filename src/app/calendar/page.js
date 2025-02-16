@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import jwt from "jsonwebtoken";
-import { FiLoader, FiPlus, FiCheck, FiTrash2, FiX } from "react-icons/fi"; // for icon buttons
+import { FiLoader, FiPlus, FiCheck, FiTrash2, FiX } from "react-icons/fi";
 
 export default function CalendarPage() {
   const router = useRouter();
@@ -367,7 +367,10 @@ export default function CalendarPage() {
         {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-1 sm:gap-2 mt-3">
           {calendarDays.map((day, index) => {
-            // Add a highlight if it's today
+            const dateColorClass = getDateColor(day);
+            const cellBgClass = dateColorClass
+              ? dateColorClass
+              : "bg-white hover:bg-gray-100 transition-colors";
             const isTodayClass =
               day && isToday(day)
                 ? "ring-2 ring-blue-400 ring-offset-2 ring-offset-gray-50"
@@ -377,9 +380,8 @@ export default function CalendarPage() {
                 key={index}
                 onClick={() => handleDateClick(day)}
                 className={`relative p-2 sm:p-3 min-h-[60px] sm:min-h-[80px] flex items-center justify-center border rounded cursor-pointer 
-                  bg-white hover:bg-gray-100 transition-colors 
                   ${day ? "" : "opacity-50 pointer-events-none"}
-                  ${getDateColor(day)}
+                  ${cellBgClass}
                   ${isTodayClass}`}
               >
                 {day && (
