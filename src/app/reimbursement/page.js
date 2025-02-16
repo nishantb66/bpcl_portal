@@ -24,6 +24,15 @@ export default function ReimbursementPage() {
 
   const router = useRouter();
 
+  //useEffect hook to scroll to the bottom of the page
+  useEffect(() => {
+    
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: "smooth", // Optional: Adds smooth scrolling
+    });
+  });
+
   // Check if token is expired, if so, redirect to login
   const checkTokenExpiration = (token) => {
     try {

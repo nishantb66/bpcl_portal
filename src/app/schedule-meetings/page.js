@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function ScheduleMeetings() {
@@ -65,6 +66,15 @@ export default function ScheduleMeetings() {
     }
     fetchMeetings();
   }, [router]);
+
+  // Add this useEffect hook to scroll to the bottom of the page
+  useEffect(() => {
+    // Scroll to the bottom of the page when the component mounts or when meetings are updated
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: "smooth", // Optional: Adds smooth scrolling
+    });
+  }, [meetings]); // Dependency array: triggers the effect when `meetings` changes
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -508,27 +518,19 @@ export default function ScheduleMeetings() {
                     {isHost && (
                       <div className="space-y-3">
                         {/* Edit/Delete Row */}
-                        <div className="flex items-center space-x-2">
-                          <button
+                        <div className="flex items-center space-x-4 justify-center">
+                          <FiEdit2
                             onClick={() => handleEdit(meeting)}
-                            className="flex-1 px-4 py-2 bg-indigo-600 text-white 
-                               rounded-md text-sm font-medium 
-                               hover:bg-indigo-700 focus:outline-none 
-                               focus:ring-2 focus:ring-indigo-400 
-                               transition-colors"
-                          >
-                            Edit
-                          </button>
-                          <button
+                            className="w-20 h-6 text-indigo-600 hover:text-indigo-700 
+    cursor-pointer transition-colors"
+                            title="Edit meeting"
+                          />
+                          <FiTrash2
                             onClick={() => handleDelete(meeting._id)}
-                            className="flex-1 px-4 py-2 bg-red-600 text-white 
-                               rounded-md text-sm font-medium 
-                               hover:bg-red-700 focus:outline-none 
-                               focus:ring-2 focus:ring-red-400 
-                               transition-colors"
-                          >
-                            Delete
-                          </button>
+                            className="w-20 h-6 text-red-600 hover:text-red-700 
+    cursor-pointer transition-colors"
+                            title="Delete meeting"
+                          />
                         </div>
 
                         {/* Invite Row */}

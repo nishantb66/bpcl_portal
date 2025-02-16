@@ -35,6 +35,14 @@ export default function TasksPage() {
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const user = token ? jwt.decode(token) : null;
 
+  //useEffect hook to scroll to the bottom of the page
+  useEffect(() => {
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: "smooth", // Optional: Adds smooth scrolling
+    });
+  });
+
   useEffect(() => {
     if (!token) {
       router.push("/login");
