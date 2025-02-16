@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
+import io from "socket.io-client";
 import "react-toastify/dist/ReactToastify.css";
 
 // Helper to format a JavaScript date into Google Calendar's required format (UTC-based)
@@ -15,6 +16,8 @@ function formatGoogleDateTime(date) {
   const seconds = String(date.getUTCSeconds()).padStart(2, "0");
   return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
 }
+
+let socket; // Keep a reference to the socket
 
 export default function MeetingRooms() {
   const [rooms, setRooms] = useState([]);
@@ -31,10 +34,6 @@ export default function MeetingRooms() {
 
   const router = useRouter();
 
-  // Get the current logged-in user's name from localStorage
-  const currentUserName =
-    typeof window !== "undefined" ? localStorage.getItem("name") : "";
-
   // Check for token & fetch rooms on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -43,7 +42,46 @@ export default function MeetingRooms() {
       router.push("/login");
       return;
     }
+
+    // 1) Fetch initial rooms data
     fetchRooms();
+
+    // 2) Initialize Socket.IO client connection
+    socket = io(); // By default, connects to same origin
+    socket.on("connect", () => {
+      console.log("Connected to Socket.IO server, id:", socket.id);
+    });
+
+    // 3) Listen for "roomBooked" event
+    socket.on("roomBooked", (data) => {
+      // data: { roomId, booked, bookingDetails }
+      setRooms((prevRooms) => {
+        // If the room is in prevRooms, update it
+        const updated = [...prevRooms];
+        const idx = updated.findIndex((r) => r.roomId === data.roomId);
+        if (idx !== -1) {
+          updated[idx].booked = data.booked;
+          updated[idx].bookingDetails = data.bookingDetails;
+        } else {
+          // If it doesn't exist, push it
+          updated.push({
+            roomId: data.roomId,
+            booked: data.booked,
+            bookingDetails: data.bookingDetails,
+          });
+        }
+        return updated;
+      });
+    });
+
+    // Cleanup on unmount
+    return () => {
+      if (socket) {
+        socket.off("connect");
+        socket.off("roomBooked");
+        socket.disconnect();
+      }
+    };
   }, [router]);
 
   // Fetch the meeting room data
@@ -115,13 +153,16 @@ export default function MeetingRooms() {
       const data = await res.json();
 
       if (!res.ok) {
+        // If second user tries to book the same room, 400 error
         toast.error(data.message || "Failed to book room.");
+        // Optionally refresh the rooms or let the socket event handle it
+        fetchRooms();
         return;
       }
 
       toast.success("Room booked successfully!");
       handleCloseModal();
-      fetchRooms();
+      // We rely on the socket event to reflect the new state in real time
     } catch (err) {
       console.error(err);
       toast.error("An error occurred while booking.");
@@ -137,7 +178,6 @@ export default function MeetingRooms() {
     gridItems.push(
       <div
         key={roomId}
-        // When clicked, trigger the booking modal if the room is available
         onClick={() => handleRoomClick(roomId)}
         className={`
           group relative 
@@ -377,7 +417,7 @@ export default function MeetingRooms() {
 }
 
 /**
- * A component that creates a Google Calendar link using booking details.
+ * Optional: A component that creates a Google Calendar link using booking details.
  * This link appears in the hover tooltip if the current user is the host.
  */
 function AddToCalendarLink({ bookingDetails }) {
