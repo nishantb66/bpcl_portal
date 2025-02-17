@@ -19,7 +19,7 @@ import {
   FiCheckSquare,
   FiDollarSign,
 } from "react-icons/fi";
-import { FaGoogle } from "react-icons/fa"; 
+import { FaGoogle } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import jwt from "jsonwebtoken";
@@ -100,7 +100,7 @@ export default function Home() {
     }
   };
 
-  // Dashboard cards array – note the new meeting scheduling option
+  // Dashboard cards array with added executive-only checks for Book Meeting Room and Reimbursement
   const dashboardCards = [
     {
       path: "/customer-details",
@@ -122,7 +122,7 @@ export default function Home() {
       description: "Share feedback on working conditions",
     },
     {
-      // New card for scheduling meetings (only for Executives)
+      // Card for scheduling meetings (only for Executives)
       path: "/schedule-meetings",
       icon: <FiCalendar className="w-6 h-6" />,
       title: "Schedule Meetings & Manage Your Calendar",
@@ -141,6 +141,7 @@ export default function Home() {
       icon: <FiDollarSign className="w-6 h-6" />,
       title: "Reimbursement",
       description: "Submit your cost details for reimbursement",
+      requiresExecutive: true, // Only execs can access reimbursement
     },
     {
       href: "https://accident-profiling-frontend.vercel.app",
@@ -154,6 +155,7 @@ export default function Home() {
       icon: <FiCalendar className="w-6 h-6" />,
       title: "Book Meeting Room",
       description: "Check availability and reserve meeting rooms",
+      requiresExecutive: true, // Only execs can book meeting rooms
     },
     // The "Mark your dates" card
     {
@@ -449,7 +451,6 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Popup Modal for Calendar Selection */}
       {/* Popup Modal for Calendar Selection */}
       {showCalendarPopup && (
         <div
