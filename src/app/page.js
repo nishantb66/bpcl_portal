@@ -18,6 +18,7 @@ import {
   FiX,
   FiCheckSquare,
   FiDollarSign,
+  FiMessageSquare, // <-- Import the chat icon
 } from "react-icons/fi";
 import { FaGoogle } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
@@ -100,7 +101,7 @@ export default function Home() {
     }
   };
 
-  // Dashboard cards array with added executive-only checks for Book Meeting Room and Reimbursement
+  // Dashboard cards array
   const dashboardCards = [
     {
       path: "/customer-details",
@@ -122,7 +123,6 @@ export default function Home() {
       description: "Share feedback on working conditions",
     },
     {
-      // Card for scheduling meetings (only for Executives)
       path: "/schedule-meetings",
       icon: <FiCalendar className="w-6 h-6" />,
       title: "Schedule Meetings & Manage Your Calendar",
@@ -141,7 +141,7 @@ export default function Home() {
       icon: <FiDollarSign className="w-6 h-6" />,
       title: "Reimbursement",
       description: "Submit your cost details for reimbursement",
-      requiresExecutive: true, // Only execs can access reimbursement
+      requiresExecutive: true,
     },
     {
       href: "https://accident-profiling-frontend.vercel.app",
@@ -155,9 +155,8 @@ export default function Home() {
       icon: <FiCalendar className="w-6 h-6" />,
       title: "Book Meeting Room",
       description: "Check availability and reserve meeting rooms",
-      requiresExecutive: true, // Only execs can book meeting rooms
+      requiresExecutive: true,
     },
-    // The "Mark your dates" card
     {
       path: "/calendar",
       icon: <FiCalendar className="w-6 h-6" />,
@@ -167,13 +166,12 @@ export default function Home() {
   ];
 
   const handleCalendarClick = () => {
-    // Instead of navigating directly, open our fancy popup
     setShowCalendarPopup(true);
   };
 
   const handlePortalCalendar = () => {
     setShowCalendarPopup(false);
-    handleNavigation("/calendar"); // The existing page path for the Portal Calendar
+    handleNavigation("/calendar");
   };
 
   const handleGoogleCalendar = () => {
@@ -222,6 +220,18 @@ export default function Home() {
                       {userName}
                     </span>
                   </div>
+
+                  {/* Forum Link - always visible */}
+                  <Link
+                    href="https://portal-discussion-forum.onrender.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-1 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg"
+                  >
+                    <FiMessageSquare />
+                    <span>Forum</span>
+                  </Link>
+
                   <button
                     onClick={() => router.push("/profile")}
                     className="px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -279,6 +289,21 @@ export default function Home() {
                       {userName}
                     </span>
                   </div>
+
+                  {/* Forum Link in Mobile Menu */}
+                  <Link
+                    href="https://portal-discussion-forum.onrender.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <FiMessageSquare />
+                      <span>Forum</span>
+                    </div>
+                  </Link>
+
                   <button
                     onClick={() => {
                       router.push("/profile");
@@ -303,12 +328,14 @@ export default function Home() {
                   <Link
                     href="/admin"
                     className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg"
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Admin
                   </Link>
                   <Link
                     href="/login"
                     className="block px-3 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm"
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Login
                   </Link>
@@ -372,7 +399,6 @@ export default function Home() {
                       <button
                         onClick={() => {
                           setLoadingCard(item.path);
-                          // We only show the popup, so no immediate navigation
                           handleCalendarClick();
                           setTimeout(() => setLoadingCard(null), 500);
                         }}
@@ -461,48 +487,39 @@ export default function Home() {
             className="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="px-6 py-4 border-b border-gray-100">
               <h2 className="text-xl font-semibold text-gray-800">
                 Choose Calendar
               </h2>
             </div>
-
-            {/* Content */}
             <div className="p-6">
               <p className="text-gray-600 mb-6">
                 Select where you would like to schedule your plans
               </p>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Portal Calendar Option */}
                 <button
                   onClick={handlePortalCalendar}
                   className="flex items-center justify-center space-x-3 px-4 py-3 bg-indigo-50 
-              text-indigo-700 rounded-lg hover:bg-indigo-100 transition-all duration-200"
+                  text-indigo-700 rounded-lg hover:bg-indigo-100 transition-all duration-200"
                 >
                   <FiCalendar className="w-5 h-5" />
                   <span className="font-medium">Portal Calendar</span>
                 </button>
 
-                {/* Google Calendar Option */}
                 <button
                   onClick={handleGoogleCalendar}
                   className="flex items-center justify-center space-x-3 px-4 py-3 bg-blue-50 
-              text-blue-700 rounded-lg hover:bg-blue-100 transition-all duration-200"
+                  text-blue-700 rounded-lg hover:bg-blue-100 transition-all duration-200"
                 >
                   <FaGoogle className="w-5 h-5" />
                   <span className="font-medium">Calendar</span>
                 </button>
               </div>
             </div>
-
-            {/* Footer */}
             <div className="px-6 py-4 border-t border-gray-100 flex justify-end">
               <button
                 onClick={() => setShowCalendarPopup(false)}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-700 
-            font-medium transition-colors"
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-700 font-medium transition-colors"
               >
                 Cancel
               </button>
@@ -510,6 +527,7 @@ export default function Home() {
           </div>
         </div>
       )}
+
       <footer className="border-t border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">

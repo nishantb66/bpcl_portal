@@ -505,7 +505,7 @@ export default function CalendarPage() {
 
       <footer className="mt-auto w-full py-4 border-t flex items-center justify-center bg-white">
         <p className="text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} Calendar Portal. All rights
+          &copy; {new Date().getFullYear()} Nishant. All rights
           reserved.
         </p>
       </footer>
