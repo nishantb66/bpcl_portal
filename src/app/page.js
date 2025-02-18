@@ -182,11 +182,13 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <ToastContainer position="top-center" autoClose={3000} />
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
+      <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm dark:bg-gray-900 dark:border-gray-700 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center">
+          {/* Top Bar */}
+          <div className="flex items-center justify-between h-16">
+            {/* Brand Logo */}
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center transform group-hover:scale-105 transition-transform">
                 <svg
                   className="w-5 h-5 text-white"
                   viewBox="0 0 24 24"
@@ -205,18 +207,18 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <span className="text-xl font-semibold text-gray-900">
+              <span className="text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-wide">
                 Portal
               </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-4">
+            <nav className="hidden md:flex items-center space-x-6">
               {userName ? (
                 <>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <FiUser className="text-gray-500" />
-                    <span className="font-medium text-gray-900">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
+                    <FiUser className="text-gray-500 dark:text-gray-400" />
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
                       {userName}
                     </span>
                   </div>
@@ -226,7 +228,7 @@ export default function Home() {
                     href="https://portal-discussion-forum.onrender.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-1 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg"
+                    className="flex items-center space-x-2 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   >
                     <FiMessageSquare />
                     <span>Forum</span>
@@ -234,13 +236,13 @@ export default function Home() {
 
                   <button
                     onClick={() => router.push("/profile")}
-                    className="px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                    className="px-4 py-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/10 hover:bg-indigo-100 dark:hover:bg-indigo-800/20 rounded-lg transition-colors"
                   >
                     Profile
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="px-4 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-800/20 rounded-lg transition-colors"
                   >
                     Logout
                   </button>
@@ -249,7 +251,7 @@ export default function Home() {
                 <div className="flex items-center space-x-3">
                   <Link
                     href="/admin"
-                    className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg"
+                    className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                   >
                     Admin
                   </Link>
@@ -266,7 +268,7 @@ export default function Home() {
             {/* Mobile Navigation Toggle */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-gray-500 hover:text-gray-600"
+              className="md:hidden p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
             >
               {isMobileMenuOpen ? (
                 <FiX className="w-5 h-5" />
@@ -279,13 +281,13 @@ export default function Home() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden absolute w-full bg-white border-b border-gray-200">
+          <div className="md:hidden absolute w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm transition-all">
             <div className="px-4 py-5 space-y-4">
               {userName ? (
                 <>
-                  <div className="flex items-center space-x-2 pb-4 border-b border-gray-200">
-                    <FiUser className="text-gray-500" />
-                    <span className="font-medium text-gray-900">
+                  <div className="flex items-center space-x-2 pb-4 border-b border-gray-200 dark:border-gray-700">
+                    <FiUser className="text-gray-500 dark:text-gray-400" />
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
                       {userName}
                     </span>
                   </div>
@@ -295,7 +297,7 @@ export default function Home() {
                     href="https://portal-discussion-forum.onrender.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg"
+                    className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <div className="flex items-center space-x-2">
@@ -309,7 +311,7 @@ export default function Home() {
                       router.push("/profile");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg"
+                    className="w-full px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   >
                     Profile
                   </button>
@@ -318,7 +320,7 @@ export default function Home() {
                       handleLogout();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg"
+                    className="w-full px-3 py-2 text-left text-sm font-medium text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-800/20 transition-colors"
                   >
                     Logout
                   </button>
@@ -327,14 +329,14 @@ export default function Home() {
                 <div className="space-y-3">
                   <Link
                     href="/admin"
-                    className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg"
+                    className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Admin
                   </Link>
                   <Link
                     href="/login"
-                    className="block px-3 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm"
+                    className="block px-3 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Login

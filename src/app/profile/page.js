@@ -103,14 +103,14 @@ export default function Profile() {
 
   if (loading)
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex justify-center items-center h-screen bg-gray-100">
         <p className="text-gray-500 text-lg">Loading...</p>
       </div>
     );
 
   if (error)
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-gray-100">
         <div className="bg-red-50 border border-red-400 text-red-700 px-6 py-4 rounded-md max-w-md">
           {error}
         </div>
@@ -119,16 +119,16 @@ export default function Profile() {
 
   const getIcon = (key) => {
     const icons = {
-      name: <FiUser className="text-indigo-500" />,
-      surname: <FiUser className="text-indigo-500" />,
-      email: <FiMail className="text-indigo-500" />,
-      city: <FiMapPin className="text-indigo-500" />,
-      localArea: <FiMapPin className="text-indigo-500" />,
-      previousCompany: <FiBriefcase className="text-indigo-500" />,
-      addressLine1: <FiHome className="text-indigo-500" />,
-      addressLine2: <FiHome className="text-indigo-500" />,
-      designation: <FiBriefcase className="text-indigo-500" />,
-      shiftTimings: <FiClock className="text-indigo-500" />,
+      name: <FiUser className="text-blue-600" />,
+      surname: <FiUser className="text-blue-600" />,
+      email: <FiMail className="text-blue-600" />,
+      city: <FiMapPin className="text-blue-600" />,
+      localArea: <FiMapPin className="text-blue-600" />,
+      previousCompany: <FiBriefcase className="text-blue-600" />,
+      addressLine1: <FiHome className="text-blue-600" />,
+      addressLine2: <FiHome className="text-blue-600" />,
+      designation: <FiBriefcase className="text-blue-600" />,
+      shiftTimings: <FiClock className="text-blue-600" />,
     };
     return icons[key] || null;
   };
@@ -147,7 +147,7 @@ export default function Profile() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto relative">
         {/* Popup Notification for Successful Update */}
         {notification && notification.type === "success" && (
@@ -164,32 +164,26 @@ export default function Profile() {
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
           {/* Header Section */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-              <div className="mb-4 sm:mb-0">
-                <h1 className="text-2xl font-semibold text-white">
-                  {profile.name} {profile.surname}
-                </h1>
-                <p className="text-indigo-200 mt-1 text-sm">
-                  {profile.designation}
-                </p>
-              </div>
-              <div className="bg-indigo-100 px-3 py-2 rounded-md">
-                <p className="text-indigo-800 text-sm font-medium">
-                  Member since: {profile.joiningDate}
-                </p>
-              </div>
-            </div>
+          <div className="p-6 border-b border-gray-200">
+            <h1 className="text-2xl font-semibold text-gray-800">
+              {profile.name} {profile.surname}
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {profile.designation || "No designation"}
+            </p>
+            <p className="text-sm text-gray-400 mt-2">
+              Member since: {profile.joiningDate || "N/A"}
+            </p>
           </div>
 
           {/* Form Section */}
-          <form onSubmit={handleSave} className="px-6 py-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <form onSubmit={handleSave} className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {formFields.map(({ key, type, required, readOnly }) => (
                 <div key={key} className="w-full">
-                  <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
                     {key.replace(/([A-Z])/g, " $1")}
                     {required && <span className="text-red-500 ml-1">*</span>}
                   </label>
@@ -206,7 +200,7 @@ export default function Profile() {
                       }
                       required={required}
                       readOnly={readOnly}
-                      className={`w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      className={`w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-600 focus:border-blue-600 focus:outline-none ${
                         readOnly
                           ? "bg-gray-50 text-gray-500 cursor-not-allowed"
                           : ""
@@ -216,7 +210,7 @@ export default function Profile() {
                         .toLowerCase()}`}
                     />
                     {key === "email" && (
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                         <FiLock className="text-gray-400" />
                       </div>
                     )}
@@ -228,7 +222,7 @@ export default function Profile() {
             <div className="mt-8 border-t border-gray-200 pt-6">
               <button
                 type="submit"
-                className="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
               >
                 Save Changes
               </button>
