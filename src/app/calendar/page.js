@@ -28,7 +28,7 @@ export default function CalendarPage() {
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
 
-  // Ref to scroll the form into view when a date is clicked
+  // Ref to scroll the form into view when a date is clicked (used if not using modal)
   const formRef = useRef(null);
 
   // ========== Effects ==========
@@ -50,7 +50,7 @@ export default function CalendarPage() {
     }
   }, [router]);
 
-  // After isFormOpen becomes true, scroll down to the form
+  // After isFormOpen becomes true, scroll down to the form (if inline form)
   useEffect(() => {
     if (isFormOpen && formRef.current) {
       // Wait a tiny bit for form to appear, then scroll
@@ -75,7 +75,7 @@ export default function CalendarPage() {
     }
   };
 
-  // Load user’s reminders (with loading spinner)
+  // Load user’s reminders
   const fetchUserReminders = async (token) => {
     try {
       setLoadingReminders(true);
@@ -132,17 +132,14 @@ export default function CalendarPage() {
   ];
 
   // ========== Calendar Helpers ==========
-  // Days in a given month (year, monthIndex)
   const getDaysInMonth = (year, month) => {
     return new Date(year, month + 1, 0).getDate();
   };
 
-  // Index (0-based) of day of the week for first day
   const getFirstDayOfMonth = (year, month) => {
     return new Date(year, month, 1).getDay(); // Sunday = 0
   };
 
-  // Build array of days (and blanks) to display
   const buildCalendarDays = () => {
     const days = [];
     const totalDays = getDaysInMonth(currentYear, currentMonth);
@@ -159,7 +156,6 @@ export default function CalendarPage() {
     return days;
   };
 
-  // Helper to check if a date is "today"
   const isToday = (date) => {
     if (!date) return false;
     const now = new Date();
@@ -195,7 +191,6 @@ export default function CalendarPage() {
   };
 
   // ========== CRUD Operations ==========
-  // CREATE
   const handleCreateReminder = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -227,7 +222,6 @@ export default function CalendarPage() {
     }
   };
 
-  // UPDATE
   const handleEditReminder = async () => {
     const token = localStorage.getItem("token");
     if (!token || !currentId) return;
@@ -260,7 +254,6 @@ export default function CalendarPage() {
     }
   };
 
-  // DELETE
   const handleDeleteReminder = async () => {
     const token = localStorage.getItem("token");
     if (!token || !currentId) return;
@@ -285,7 +278,6 @@ export default function CalendarPage() {
   };
 
   // For color-coding based on importance
-  // Updated for more visible coloring
   const getDateColor = (date) => {
     if (!date) return "";
     const reminder = userReminders.find(
@@ -301,212 +293,236 @@ export default function CalendarPage() {
   const calendarDays = buildCalendarDays();
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-white to-gray-50 flex flex-col items-center">
+    <div className="min-h-screen flex flex-col bg-gray-100">
+      {/* Top Navbar to mimic the theme */}
+      <nav className="bg-gray-900 text-white py-3 px-4 flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <h1 className="text-xl font-bold">Portal</h1>
+          <span className="text-xs text-gray-300">Crafted by Nishant</span>
+        </div>
+        <div className="flex items-center space-x-4">
+          <a
+            href="/"
+            className="text-sm hover:underline transition-colors duration-200"
+          >
+            Home
+          </a>
+        </div>
+      </nav>
+
       {/* Toast notifications */}
       <ToastContainer position="top-center" autoClose={3000} />
 
       {/* Loading Indicator Overlay */}
       {loadingReminders && (
-        <div className="fixed inset-0 flex items-center justify-center bg-white/70 z-50">
-          <FiLoader className="text-gray-700 w-10 h-10 animate-spin" />
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-900/50 z-50">
+          <FiLoader className="text-white w-10 h-10 animate-spin" />
         </div>
       )}
 
-      <header className="w-full max-w-5xl px-4 py-4 flex flex-col items-center">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-4">
-          Your Personal Calendar
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Keep track of important dates and reminders
-        </p>
-      </header>
+      {/* Main Content Container */}
+      <main className="flex-grow w-full max-w-6xl mx-auto px-4 py-6">
+        {/* Page Header */}
+        <header className="mb-6 text-center">
+          <h2 className="text-3xl font-bold text-gray-800">
+            Your Personal Calendar
+          </h2>
+          <p className="text-gray-500 mt-1 text-sm">
+            Keep track of important dates and reminders
+          </p>
+        </header>
 
-      <main className="w-full max-w-5xl px-4 flex-grow pb-8">
-        {/* Month Navigation */}
-        <div className="flex flex-col sm:flex-row items-center justify-between mt-6 mb-4">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={handlePrevMonth}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded shadow-sm hover:bg-gray-200 transition-colors"
-            >
-              Prev
-            </button>
-            <button
-              onClick={handleNextMonth}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded shadow-sm hover:bg-gray-200 transition-colors"
-            >
-              Next
-            </button>
-          </div>
-          <div className="mt-3 sm:mt-0 text-xl font-semibold text-gray-800">
-            {monthNames[currentMonth]} {currentYear}
-          </div>
-        </div>
-
-        {/* Day-of-week header */}
-        <div className="hidden sm:grid grid-cols-7 text-center font-medium border-b pb-2 text-gray-600">
-          <div>Sun</div>
-          <div>Mon</div>
-          <div>Tue</div>
-          <div>Wed</div>
-          <div>Thu</div>
-          <div>Fri</div>
-          <div>Sat</div>
-        </div>
-        {/* Mobile-friendly row for day-of-week */}
-        <div className="sm:hidden grid grid-cols-7 text-xs text-center font-medium border-b pb-2 text-gray-600">
-          <div>Sun</div>
-          <div>Mon</div>
-          <div>Tue</div>
-          <div>Wed</div>
-          <div>Thu</div>
-          <div>Fri</div>
-          <div>Sat</div>
-        </div>
-
-        {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-1 sm:gap-2 mt-3">
-          {calendarDays.map((day, index) => {
-            const dateColorClass = getDateColor(day);
-            const cellBgClass = dateColorClass
-              ? dateColorClass
-              : "bg-white hover:bg-gray-100 transition-colors";
-            const isTodayClass =
-              day && isToday(day)
-                ? "ring-2 ring-blue-400 ring-offset-2 ring-offset-gray-50"
-                : "";
-            return (
-              <div
-                key={index}
-                onClick={() => handleDateClick(day)}
-                className={`relative p-2 sm:p-3 min-h-[60px] sm:min-h-[80px] flex items-center justify-center border rounded cursor-pointer 
-                  ${day ? "" : "opacity-50 pointer-events-none"}
-                  ${cellBgClass}
-                  ${isTodayClass}`}
+        {/* Calendar Card */}
+        <div className="bg-white shadow-lg rounded-lg p-4 sm:p-6">
+          {/* Month Navigation */}
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handlePrevMonth}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
               >
-                {day && (
-                  <span className="text-sm sm:text-base font-medium text-gray-800">
-                    {day.getDate()}
-                  </span>
-                )}
-              </div>
-            );
-          })}
+                Prev
+              </button>
+              <button
+                onClick={handleNextMonth}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+              >
+                Next
+              </button>
+            </div>
+            <div className="mt-3 sm:mt-0 text-xl font-semibold text-gray-800">
+              {monthNames[currentMonth]} {currentYear}
+            </div>
+          </div>
+
+          {/* Day-of-week header */}
+          <div className="hidden sm:grid grid-cols-7 text-center font-semibold border-b pb-2 text-gray-600">
+            <div>Sun</div>
+            <div>Mon</div>
+            <div>Tue</div>
+            <div>Wed</div>
+            <div>Thu</div>
+            <div>Fri</div>
+            <div>Sat</div>
+          </div>
+          <div className="sm:hidden grid grid-cols-7 text-xs text-center font-semibold border-b pb-2 text-gray-600">
+            <div>Sun</div>
+            <div>Mon</div>
+            <div>Tue</div>
+            <div>Wed</div>
+            <div>Thu</div>
+            <div>Fri</div>
+            <div>Sat</div>
+          </div>
+
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 mt-3">
+            {calendarDays.map((day, index) => {
+              const dateColorClass = getDateColor(day);
+              const cellBgClass = dateColorClass
+                ? dateColorClass
+                : "bg-white hover:bg-gray-50";
+              const isTodayClass =
+                day && isToday(day)
+                  ? "ring-2 ring-blue-400 ring-offset-2 ring-offset-white"
+                  : "";
+              return (
+                <div
+                  key={index}
+                  onClick={() => handleDateClick(day)}
+                  className={`relative p-2 sm:p-3 min-h-[60px] sm:min-h-[80px] flex items-center justify-center border rounded cursor-pointer transition transform hover:scale-105 
+                    ${day ? "" : "opacity-50 pointer-events-none"}
+                    ${cellBgClass}
+                    ${isTodayClass}`}
+                >
+                  {day && (
+                    <span className="text-sm sm:text-base font-medium text-gray-800">
+                      {day.getDate()}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Form for creating/editing */}
+        {/* Form (Displayed in a modal style OR inline) */}
         {isFormOpen && (
           <div
-            ref={formRef}
-            className="mt-6 p-4 sm:p-6 border rounded bg-white shadow transition-all"
+            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4"
+            // If you prefer inline, remove fixed overlay and adjust styling
           >
-            <h2 className="text-lg font-semibold mb-4 text-gray-800">
-              {currentId ? "Edit Reminder" : "Create Reminder"} –{" "}
-              {selectedDate.toDateString()}
-            </h2>
+            <div
+              ref={formRef}
+              className="w-full max-w-xl bg-white p-6 rounded shadow-lg relative"
+            >
+              <h2 className="text-lg font-semibold mb-4 text-gray-800">
+                {currentId ? "Edit Reminder" : "Create Reminder"} –{" "}
+                {selectedDate.toDateString()}
+              </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Plans */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Plans
-                </label>
-                <input
-                  type="text"
-                  className="w-full p-2 border border-gray-200 rounded focus:ring focus:ring-blue-100 focus:outline-none"
-                  value={plans}
-                  onChange={(e) => setPlans(e.target.value)}
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Plans */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Plans
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-200 rounded focus:ring focus:ring-blue-100 focus:outline-none"
+                    value={plans}
+                    onChange={(e) => setPlans(e.target.value)}
+                  />
+                </div>
+
+                {/* Time */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Time
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-200 rounded focus:ring focus:ring-blue-100 focus:outline-none"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                    placeholder="3:00 PM - 4:00 PM"
+                  />
+                </div>
+
+                {/* Importance */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Importance
+                  </label>
+                  <select
+                    className="w-full p-2 border border-gray-200 rounded focus:ring focus:ring-blue-100 focus:outline-none"
+                    value={importance}
+                    onChange={(e) => setImportance(e.target.value)}
+                  >
+                    <option value="Low">Low (Green)</option>
+                    <option value="Medium">Medium (Yellow)</option>
+                    <option value="High">High (Red)</option>
+                  </select>
+                </div>
+
+                {/* Associated People */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Associated People
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-200 rounded focus:ring focus:ring-blue-100 focus:outline-none"
+                    value={associatedPeople}
+                    onChange={(e) => setAssociatedPeople(e.target.value)}
+                    placeholder="John, Daisy..."
+                  />
+                </div>
               </div>
 
-              {/* Time */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Time
-                </label>
-                <input
-                  type="text"
-                  className="w-full p-2 border border-gray-200 rounded focus:ring focus:ring-blue-100 focus:outline-none"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  placeholder="3:00 PM - 4:00 PM"
-                />
-              </div>
-
-              {/* Importance */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Importance
-                </label>
-                <select
-                  className="w-full p-2 border border-gray-200 rounded focus:ring focus:ring-blue-100 focus:outline-none"
-                  value={importance}
-                  onChange={(e) => setImportance(e.target.value)}
-                >
-                  <option value="Low">Low (Green)</option>
-                  <option value="Medium">Medium (Yellow)</option>
-                  <option value="High">High (Red)</option>
-                </select>
-              </div>
-
-              {/* Associated People */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Associated People
-                </label>
-                <input
-                  type="text"
-                  className="w-full p-2 border border-gray-200 rounded focus:ring focus:ring-blue-100 focus:outline-none"
-                  value={associatedPeople}
-                  onChange={(e) => setAssociatedPeople(e.target.value)}
-                  placeholder="John, Daisy..."
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4 mt-5">
-              {!currentId ? (
+              <div className="flex items-center space-x-4 mt-5">
+                {!currentId ? (
+                  <button
+                    onClick={handleCreateReminder}
+                    className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    aria-label="Create"
+                  >
+                    <FiPlus className="w-5 h-5" />
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleEditReminder}
+                      className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-400"
+                      aria-label="Update"
+                    >
+                      <FiCheck className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={handleDeleteReminder}
+                      className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
+                      aria-label="Delete"
+                    >
+                      <FiTrash2 className="w-5 h-5" />
+                    </button>
+                  </>
+                )}
                 <button
-                  onClick={handleCreateReminder}
-                  className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  aria-label="Create"
+                  onClick={() => setIsFormOpen(false)}
+                  className="p-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  aria-label="Cancel"
                 >
-                  <FiPlus className="w-5 h-5" />
+                  <FiX className="w-5 h-5" />
                 </button>
-              ) : (
-                <>
-                  <button
-                    onClick={handleEditReminder}
-                    className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-400"
-                    aria-label="Update"
-                  >
-                    <FiCheck className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={handleDeleteReminder}
-                    className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
-                    aria-label="Delete"
-                  >
-                    <FiTrash2 className="w-5 h-5" />
-                  </button>
-                </>
-              )}
-              <button
-                onClick={() => setIsFormOpen(false)}
-                className="p-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
-                aria-label="Cancel"
-              >
-                <FiX className="w-5 h-5" />
-              </button>
+              </div>
             </div>
           </div>
         )}
       </main>
 
-      <footer className="mt-auto w-full py-4 border-t flex items-center justify-center bg-white">
+      <footer className="bg-white w-full py-4 border-t flex items-center justify-center">
         <p className="text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} Nishant. All rights
-          reserved.
+          &copy; {new Date().getFullYear()} Portal. All rights reserved.
         </p>
       </footer>
     </div>

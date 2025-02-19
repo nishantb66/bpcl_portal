@@ -19,6 +19,7 @@ import {
   FiCheckSquare,
   FiDollarSign,
   FiMessageSquare, // <-- Import the chat icon
+  FiArrowRight,
 } from "react-icons/fi";
 import { FaGoogle } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
@@ -313,7 +314,7 @@ export default function Home() {
                     onClick={() => setShowChat(true)}
                     className="px-4 py-2 bg-blue-900 text-white rounded-lg shadow"
                   >
-                    Open AI Assistant
+                    Chat with AI
                   </button>
 
                   <button
@@ -393,7 +394,7 @@ export default function Home() {
                     onClick={() => setShowChat(true)}
                     className="px-4 py-2 bg-blue-900 text-white rounded-lg shadow"
                   >
-                    Open AI Assistant
+                    Chat with AI
                   </button>
 
                   <button
@@ -441,49 +442,52 @@ export default function Home() {
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {userName ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
               {dashboardCards.map((item, index) => {
-                // If this card is for Executives only and the user isn’t one, render it as disabled.
+                // Executive-only disabled cards
                 if (item.requiresExecutive && userRole !== "Executive") {
                   return (
                     <div
                       key={index}
-                      className="group relative bg-gray-200 rounded-xl border border-gray-200 shadow-sm transition-all opacity-50 cursor-not-allowed p-6"
+                      className="group relative bg-gradient-to-br from-gray-50/50 to-gray-100/30 rounded-2xl border-2 border-dashed border-gray-100 cursor-not-allowed p-5 sm:p-6"
                     >
                       <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0 w-12 h-12 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
+                        <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-white text-gray-400 rounded-xl flex items-center justify-center shadow-sm">
                           {item.icon}
                         </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        <div className="flex-1 space-y-1.5">
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-400">
                             {item.title}
                           </h3>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-xs sm:text-sm text-gray-400/80">
                             {item.description}
                           </p>
                         </div>
                       </div>
-                      <div className="absolute inset-0 rounded-xl z-10" />
+                      <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,_transparent,_transparent_4px,_rgba(255,255,255,0.8)_4px,_rgba(255,255,255,0.8)_6px)] rounded-2xl z-10" />
                     </div>
                   );
                 }
 
-                // Special handling for the "Mark your dates" card
+                // Calendar card special treatment
                 if (item.path === "/calendar") {
                   return (
                     <div
                       key={index}
-                      className="group relative bg-white rounded-xl border border-gray-200 hover:border-indigo-200 shadow-sm hover:shadow-md transition-all p-6"
+                      className="group relative bg-white rounded-2xl border border-gray-100 hover:border-indigo-100 shadow-xs hover:shadow-md transition-all p-5 sm:p-6"
                     >
                       <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0 w-12 h-12 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
+                        <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
                           {item.icon}
+                          <div className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs border-2 border-white">
+                            <FiCalendar className="w-3 h-3" />
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        <div className="flex-1 space-y-1.5">
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                             {item.title}
                           </h3>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-xs sm:text-sm text-gray-600">
                             {item.description}
                           </p>
                         </div>
@@ -494,31 +498,32 @@ export default function Home() {
                           handleCalendarClick();
                           setTimeout(() => setLoadingCard(null), 500);
                         }}
-                        className="absolute inset-0 w-full rounded-xl z-10"
+                        className="absolute inset-0 w-full rounded-2xl z-10"
                       />
                       {loadingCard === item.path && (
-                        <div className="absolute inset-0 bg-white/90 flex items-center justify-center rounded-xl">
-                          <FiLoader className="w-8 h-8 animate-spin text-indigo-600" />
+                        <div className="absolute inset-0 bg-white/90 flex items-center justify-center rounded-2xl backdrop-blur-sm">
+                          <FiLoader className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-indigo-600" />
                         </div>
                       )}
                     </div>
                   );
                 }
 
+                // Regular cards
                 return (
                   <div
                     key={index}
-                    className="group relative bg-white rounded-xl border border-gray-200 hover:border-indigo-200 shadow-sm hover:shadow-md transition-all p-6"
+                    className="group relative bg-white rounded-2xl border border-gray-100 hover:border-indigo-100 shadow-xs hover:shadow-md transition-all p-5 sm:p-6"
                   >
                     <div className="flex items-start space-x-4">
-                      <div className="flex-shrink-0 w-12 h-12 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
+                      <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
                         {item.icon}
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                      <div className="flex-1 space-y-1.5">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                           {item.title}
                         </h3>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-xs sm:text-sm text-gray-600">
                           {item.description}
                         </p>
                       </div>
@@ -528,17 +533,17 @@ export default function Home() {
                         href={item.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="absolute inset-0 rounded-xl z-10"
+                        className="absolute inset-0 rounded-2xl z-10"
                       />
                     ) : (
                       <button
                         onClick={() => handleNavigation(item.path, item.api)}
-                        className="absolute inset-0 w-full rounded-xl z-10"
+                        className="absolute inset-0 w-full rounded-2xl z-10"
                       />
                     )}
                     {loadingCard === item.path && (
-                      <div className="absolute inset-0 bg-white/90 flex items-center justify-center rounded-xl">
-                        <FiLoader className="w-8 h-8 animate-spin text-indigo-600" />
+                      <div className="absolute inset-0 bg-white/90 flex items-center justify-center rounded-2xl backdrop-blur-sm">
+                        <FiLoader className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-indigo-600" />
                       </div>
                     )}
                   </div>
@@ -546,22 +551,25 @@ export default function Home() {
               })}
             </div>
           ) : (
-            <div className="max-w-md mx-auto py-12 text-center">
-              <div className="mb-8">
-                <div className="w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <FiAlertTriangle className="w-8 h-8 text-indigo-600" />
+            <div className="max-w-md mx-auto py-12 sm:py-16 text-center">
+              <div className="space-y-6">
+                <div className="w-24 h-24 sm:w-28 sm:h-28 bg-indigo-50 rounded-3xl flex items-center justify-center mx-auto shadow-xs">
+                  <FiAlertTriangle className="w-10 h-10 sm:w-12 sm:h-12 text-indigo-600/80" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                  Employee Portal Access
-                </h2>
-                <p className="text-gray-600 mb-8">
-                  Sign in to access your personalized management tools
-                </p>
+                <div className="space-y-3">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                    Employee Portal Access
+                  </h2>
+                  <p className="text-gray-600 text-sm sm:text-base max-w-xs mx-auto">
+                    Authenticate to access your management dashboard
+                  </p>
+                </div>
                 <Link
                   href="/login"
-                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                  className="inline-flex items-center justify-center px-6 py-3.5 sm:py-3 text-sm sm:text-base font-medium rounded-xl shadow-xs text-white bg-indigo-600 hover:bg-indigo-700 transition-colors focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
                   Get Started
+                  <FiArrowRight className="ml-2 w-4 h-4" />
                 </Link>
               </div>
             </div>

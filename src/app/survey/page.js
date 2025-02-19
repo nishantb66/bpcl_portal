@@ -10,6 +10,8 @@ import {
 } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { FiMenu, FiX } from "react-icons/fi";
+import Link from "next/link";
 
 /**
  * Non-UI data & logic (kept intact)
@@ -137,6 +139,7 @@ export default function Survey() {
   const [user, setUser] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPopup, setShowPopup] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -250,24 +253,62 @@ export default function Survey() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col">
       {/* Top Navigation */}
-      <header className="bg-white shadow-sm">
+      {/* Top Navigation */}
+      <header className="bg-gray-900 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-indigo-700">Portal</h1>
-          <nav className="flex items-center space-x-4">
-            <button
-              onClick={() => router.push("/")}
-              className="text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+          {/* Left side: Title & Subtitle */}
+          <div className="flex items-center space-x-2">
+            <h1 className="text-white text-xl font-bold">Portal</h1>
+            <span className="text-xs text-gray-300">Crafted by Nishant</span>
+          </div>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            type="button"
+            className="text-white hover:text-gray-300 sm:hidden"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+          </button>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden sm:flex items-center space-x-4">
+            <Link
+              href="/"
+              className="text-sm font-medium text-white hover:text-gray-300 transition-colors"
             >
               Home
-            </button>
-            <button
-              onClick={() => router.push("/profile")}
-              className="text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            </Link>
+            <Link
+              href="/profile"
+              className="text-sm font-medium text-white hover:text-gray-300 transition-colors"
             >
               Profile
-            </button>
+            </Link>
           </nav>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="sm:hidden bg-gray-800 px-4 py-2">
+            <nav className="flex flex-col space-y-2">
+              <Link
+                href="/"
+                className="text-sm font-medium text-white hover:text-gray-300 transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Home
+              </Link>
+              <Link
+                href="/profile"
+                className="text-sm font-medium text-white hover:text-gray-300 transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Profile
+              </Link>
+            </nav>
+          </div>
+        )}
       </header>
 
       <ToastContainer

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import { FiMenu, FiX } from "react-icons/fi";
 
 export default function CustomerDetails() {
   const [complaints, setComplaints] = useState([]);
@@ -11,6 +12,7 @@ export default function CustomerDetails() {
   const [error, setError] = useState("");
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const router = useRouter();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // -------------------- AI Chat State & Logic --------------------
   const [showChat, setShowChat] = useState(false);
@@ -119,25 +121,38 @@ export default function CustomerDetails() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Navigation */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-gray-900 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <h1 className="text-xl font-bold text-indigo-700">Portal</h1>
+          {/* Left side: Title & Subtitle */}
+          <div className="flex items-center space-x-2">
+            <h1 className="text-white text-xl font-bold">Portal</h1>
+            <span className="text-xs text-gray-300">Crafted by Nishant</span>
           </div>
-          <nav className="flex items-center space-x-4">
+
+          {/* Mobile Menu Toggle */}
+          <button
+            type="button"
+            className="text-white hover:text-gray-300 sm:hidden"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+          </button>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden sm:flex items-center space-x-4">
             <Link
               href="/"
-              className="text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+              className="text-sm font-medium text-white hover:text-gray-300 transition-colors"
             >
               Home
             </Link>
             <Link
               href="/profile"
-              className="text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+              className="text-sm font-medium text-white hover:text-gray-300 transition-colors"
             >
               Profile
             </Link>
-            {/* NEW: AI Complaints Analyzer Button */}
+            {/* AI Complaints Analyzer Button */}
             <button
               type="button"
               onClick={() => setShowChat(true)}
@@ -147,6 +162,39 @@ export default function CustomerDetails() {
             </button>
           </nav>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="sm:hidden bg-gray-800 px-4 py-2">
+            <nav className="flex flex-col space-y-2">
+              <Link
+                href="/"
+                className="text-sm font-medium text-white hover:text-gray-300 transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Home
+              </Link>
+              <Link
+                href="/profile"
+                className="text-sm font-medium text-white hover:text-gray-300 transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Profile
+              </Link>
+              {/* AI Complaints Analyzer Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowChat(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-md transition-colors"
+              >
+                AI Complaints Analyzer
+              </button>
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Main Content Container */}
