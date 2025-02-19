@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 export default function LeaveApplication() {
   const router = useRouter();
 
-  // ----------------- Non-UI State & Logic (kept intact) -----------------
+  // ----------------- Existing Non-UI State & Logic -----------------
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -93,13 +93,90 @@ export default function LeaveApplication() {
       setLoading(false);
     }
   };
-  // ----------------------------------------------------------------------
+  // ------------------------------------------------------------------
+
+  // -------------------- AI Chat State & Logic --------------------
+  const [showChat, setShowChat] = useState(false);
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      content: "Hello! How can I assist you with your leave information today?",
+    },
+  ]);
+  const [userInput, setUserInput] = useState("");
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const messageListRef = useRef(null);
+
+  const handleSendMessage = async () => {
+    if (!userInput.trim()) return;
+    const newMessages = [...messages, { role: "user", content: userInput }];
+    setMessages(newMessages);
+    setUserInput("");
+    setIsLoadingAI(true);
+
+    const response = await fetch("/api/ai", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`, // Pass the JWT
+      },
+      body: JSON.stringify({ messages: newMessages }),
+    });
+
+    if (!response.ok) {
+      setIsLoadingAI(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Oops, something went wrong with the AI service.",
+        },
+      ]);
+      return;
+    }
+
+    // Stream the AI response
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let done = false;
+
+    while (!done) {
+      const { value, done: doneReading } = await reader.read();
+      done = doneReading;
+      const chunkValue = decoder.decode(value || new Uint8Array(), {
+        stream: !doneReading,
+      });
+
+      setMessages((prev) => {
+        // If the last message is from the assistant, append chunk
+        const lastMsg = prev[prev.length - 1];
+        if (lastMsg?.role === "assistant") {
+          return [
+            ...prev.slice(0, -1),
+            { ...lastMsg, content: lastMsg.content + chunkValue },
+          ];
+        } else {
+          return [...prev, { role: "assistant", content: chunkValue }];
+        }
+      });
+    }
+
+    setIsLoadingAI(false);
+  };
+
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    if (messageListRef.current) {
+      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+    }
+  }, [messages]);
+  // ------------------------------------------------------------------
 
   // If user already has a pending leave application, show the status screen
   if (pendingApplication) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-        {/* Optional Top Navigation Bar */}
+        {/* Top Navigation Bar */}
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
             <h1 className="text-xl font-bold text-indigo-700">Portal</h1>
@@ -116,10 +193,18 @@ export default function LeaveApplication() {
               >
                 Profile
               </button>
+
+              {/* AI Assistant in top nav */}
+              <button
+                type="button"
+                onClick={() => setShowChat(true)}
+                className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-md transition-colors"
+              >
+                Ask AI about your leave applications
+              </button>
             </nav>
           </div>
         </header>
-
         {/* Pending Application Content */}
         <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
           <div className="w-full max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg">
@@ -262,14 +347,163 @@ export default function LeaveApplication() {
             </div>
           </div>
         </main>
+
+        {/* AI Chat Popup */}
+        {showChat && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-[fadeIn_0.3s_ease-out]">
+            <div
+              className="relative w-full max-w-lg mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-[slideUp_0.4s_ease-out]"
+              style={{ maxHeight: "85vh" }}
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setShowChat(false)}
+                className="absolute top-3 right-3 p-2 rounded-full text-black hover:text-black hover:bg-black dark:hover:bg-black transition-all duration-200"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+
+              {/* Chat Header */}
+              <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-6 flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">
+                    AI Leave Assistant
+                  </h3>
+                  <p className="text-sm text-blue-100 opacity-90">
+                    Always here to help
+                  </p>
+                </div>
+              </div>
+
+              {/* Messages Container */}
+              <div
+                ref={messageListRef}
+                className="flex-1 overflow-y-auto p-6 space-y-4 scroll-smooth"
+                style={{ maxHeight: "calc(85vh - 180px)" }}
+              >
+                {messages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex ${
+                      msg.role === "assistant" ? "justify-start" : "justify-end"
+                    } animate-[slideUp_0.3s_ease-out]`}
+                  >
+                    {msg.role === "assistant" && (
+                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-2">
+                        <svg
+                          className="w-5 h-5 text-indigo-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                    <div
+                      className={`
+                max-w-[80%] px-4 py-3 rounded-2xl shadow-sm
+                ${
+                  msg.role === "assistant"
+                    ? "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200"
+                    : "bg-indigo-600 text-white ml-auto"
+                }
+              `}
+                    >
+                      <p className="text-sm">{msg.content}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Input Box */}
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="text"
+                    placeholder="Type your message..."
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                    className="flex-1 px-4 py-3 rounded-lg text-white bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 
+              focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+              text-sm placeholder-gray-400 transition-all duration-200"
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={isLoadingAI}
+                    className={`
+              flex items-center justify-center p-3 rounded-lg transition-all duration-200
+              ${
+                isLoadingAI
+                  ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white"
+              }
+            `}
+                  >
+                    {isLoadingAI ? (
+                      <div className="w-5 h-5 border-2 border-gray-400 border-t-gray-600 rounded-full animate-spin" />
+                    ) : (
+                      <svg
+                        className="w-5 h-5 transform rotate-90"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
-  // Otherwise, show the form to apply for leave
+  // -------------------------------------------------------------
+  // If there's no pending leave, show the normal form + top nav
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Optional Top Navigation Bar */}
+      {/* Top Navigation */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-xl font-bold text-indigo-700">Portal</h1>
@@ -285,6 +519,15 @@ export default function LeaveApplication() {
               className="text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
             >
               Profile
+            </button>
+
+            {/* AI Assistant in top nav */}
+            <button
+              type="button"
+              onClick={() => setShowChat(true)}
+              className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-md transition-colors"
+            >
+              Ask AI about your leave applications
             </button>
           </nav>
         </div>
@@ -336,7 +579,7 @@ export default function LeaveApplication() {
             Apply for Leave
           </h2>
 
-          {/* The Form */}
+          {/* The Leave Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -428,36 +671,156 @@ export default function LeaveApplication() {
         </div>
       </main>
 
-      {/* Animations & Styles */}
-      <style jsx global>{`
-        @keyframes scaleIn {
-          from {
-            transform: scale(0);
-          }
-          to {
-            transform: scale(1);
-          }
-        }
-        .animate-scaleIn {
-          animation: scaleIn 0.3s ease-out;
-        }
-        .checkmark__circle {
-          stroke-dasharray: 166;
-          stroke-dashoffset: 166;
-          animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
-        }
-        .checkmark__check {
-          transform-origin: 50% 50%;
-          stroke-dasharray: 48;
-          stroke-dashoffset: 48;
-          animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
-        }
-        @keyframes stroke {
-          100% {
-            stroke-dashoffset: 0;
-          }
-        }
-      `}</style>
+      {/* AI Chat Popup */}
+      {showChat && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-[fadeIn_0.3s_ease-out]">
+          <div
+            className="relative w-full max-w-lg mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-[slideUp_0.4s_ease-out]"
+            style={{ maxHeight: "85vh" }}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowChat(false)}
+              className="absolute top-3 right-3 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-all duration-200 z-10"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+
+            {/* Chat Header */}
+            <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-6 flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">
+                  AI Leave Assistant
+                </h3>
+                <p className="text-sm text-blue-100 opacity-90">
+                  Always here to help
+                </p>
+              </div>
+            </div>
+
+            {/* Messages Container */}
+            <div
+              ref={messageListRef}
+              className="flex-1 overflow-y-auto p-6 space-y-4 scroll-smooth"
+              style={{ maxHeight: "calc(85vh - 180px)" }}
+            >
+              {messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${
+                    msg.role === "assistant" ? "justify-start" : "justify-end"
+                  } animate-[slideUp_0.3s_ease-out]`}
+                >
+                  {msg.role === "assistant" && (
+                    <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center mr-2">
+                      <svg
+                        className="w-5 h-5 text-indigo-600 dark:text-indigo-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                  <div
+                    className={`
+                max-w-[80%] px-4 py-3 rounded-2xl shadow-sm
+                ${
+                  msg.role === "assistant"
+                    ? "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200"
+                    : "bg-indigo-600 text-white ml-auto"
+                }
+              `}
+                  >
+                    <p className="text-sm leading-relaxed">{msg.content}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Input Box */}
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-3">
+                <input
+                  type="text"
+                  placeholder="Type your message..."
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  className="flex-1 px-4 py-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 
+              focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+              text-sm placeholder-gray-400 dark:placeholder-gray-500 
+              text-gray-900 dark:text-gray-100
+              transition-all duration-200"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={isLoadingAI}
+                  className={`
+              flex items-center justify-center p-3 rounded-lg transition-all duration-200
+              ${
+                isLoadingAI
+                  ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white"
+              }
+            `}
+                >
+                  {isLoadingAI ? (
+                    <div className="w-5 h-5 border-2 border-gray-400 border-t-gray-600 rounded-full animate-spin" />
+                  ) : (
+                    <svg
+                      className="w-5 h-5 transform rotate-90"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

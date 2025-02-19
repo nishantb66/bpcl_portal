@@ -114,7 +114,6 @@ export default function Home() {
       icon: <FiCalendar className="w-6 h-6" />,
       title: "Apply for Leave",
       description: "Submit and manage your leave applications",
-      api: "/api/status",
     },
     {
       path: "/survey",
