@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   FiUser,
@@ -31,7 +31,82 @@ export default function Home() {
   const [loadingCard, setLoadingCard] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showCalendarPopup, setShowCalendarPopup] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      content: "Hello! I'm your personal assistant. How can I help?",
+    },
+  ]);
+  const [userInput, setUserInput] = useState("");
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const messageListRef = useRef(null);
   const router = useRouter();
+
+  // Auto-scroll
+  useEffect(() => {
+    if (messageListRef.current) {
+      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!userInput.trim()) return;
+    const newMessages = [...messages, { role: "user", content: userInput }];
+    setMessages(newMessages);
+    setUserInput("");
+    setIsLoadingAI(true);
+
+    try {
+      const response = await fetch("/api/assistant/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ messages: newMessages }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to contact AI service");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value || new Uint8Array(), {
+          stream: !doneReading,
+        });
+
+        setMessages((prev) => {
+          const lastMsg = prev[prev.length - 1];
+          if (lastMsg?.role === "assistant") {
+            return [
+              ...prev.slice(0, -1),
+              { ...lastMsg, content: lastMsg.content + chunkValue },
+            ];
+          } else {
+            return [...prev, { role: "assistant", content: chunkValue }];
+          }
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Oops, something went wrong. Please try again later.",
+        },
+      ]);
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
 
   const checkTokenExpiration = (token) => {
     try {
@@ -233,6 +308,14 @@ export default function Home() {
                     <span>Forum</span>
                   </Link>
 
+                  {/* Button to open AI Assistant */}
+                  <button
+                    onClick={() => setShowChat(true)}
+                    className="px-4 py-2 bg-blue-900 text-white rounded-lg shadow"
+                  >
+                    Open AI Assistant
+                  </button>
+
                   <button
                     onClick={() => router.push("/profile")}
                     className="px-4 py-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/10 hover:bg-indigo-100 dark:hover:bg-indigo-800/20 rounded-lg transition-colors"
@@ -304,6 +387,14 @@ export default function Home() {
                       <span>Forum</span>
                     </div>
                   </Link>
+
+                  {/* Button to open AI Assistant */}
+                  <button
+                    onClick={() => setShowChat(true)}
+                    className="px-4 py-2 bg-blue-900 text-white rounded-lg shadow"
+                  >
+                    Open AI Assistant
+                  </button>
 
                   <button
                     onClick={() => {
@@ -524,6 +615,156 @@ export default function Home() {
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Chat Popup */}
+      {showChat && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-black/60 backdrop-blur-sm animate-[fadeIn_0.3s_ease-out]">
+          <div
+            className="relative w-full max-w-3xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-[slideUp_0.4s_ease-out]"
+            style={{ maxHeight: "90vh" }}
+          >
+            {/* Close Button - unchanged */}
+            <button
+              onClick={() => setShowChat(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-all duration-200 z-10"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+
+            {/* Chat Header - made slightly bigger */}
+            <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-8 flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <svg
+                  className="w-7 h-7 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-white">AI Assistant</h3>
+                <p className="text-base text-blue-100 opacity-90">
+                  How can I help you today?
+                </p>
+              </div>
+            </div>
+
+            {/* Messages Container - increased padding and text size */}
+            <div
+              ref={messageListRef}
+              className="flex-1 overflow-y-auto px-8 py-6 space-y-6 scroll-smooth"
+              style={{ maxHeight: "calc(90vh - 200px)" }}
+            >
+              {messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${
+                    msg.role === "assistant" ? "justify-start" : "justify-end"
+                  } animate-[slideUp_0.3s_ease-out]`}
+                >
+                  {msg.role === "assistant" && (
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center mr-3">
+                      <svg
+                        className="w-6 h-6 text-indigo-600 dark:text-indigo-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                  <div
+                    className={`
+                max-w-[85%] px-6 py-4 rounded-2xl shadow-sm
+                ${
+                  msg.role === "assistant"
+                    ? "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200"
+                    : "bg-indigo-600 text-white ml-auto"
+                }
+              `}
+                  >
+                    <p className="text-base leading-relaxed whitespace-pre-wrap">
+                      {msg.content}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Input Box - increased size and padding */}
+            <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-4">
+                <input
+                  type="text"
+                  placeholder="Type your message..."
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  className="flex-1 px-6 py-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 
+              focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+              text-base placeholder-gray-400 dark:placeholder-gray-500 
+              text-gray-900 dark:text-gray-100
+              transition-all duration-200"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={isLoadingAI}
+                  className={`
+              flex items-center justify-center p-4 rounded-xl transition-all duration-200
+              ${
+                isLoadingAI
+                  ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white"
+              }
+            `}
+                >
+                  {isLoadingAI ? (
+                    <div className="w-6 h-6 border-2 border-gray-400 border-t-gray-600 rounded-full animate-spin" />
+                  ) : (
+                    <svg
+                      className="w-6 h-6 transform rotate-90"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

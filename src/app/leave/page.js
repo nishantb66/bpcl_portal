@@ -198,7 +198,7 @@ export default function LeaveApplication() {
               <button
                 type="button"
                 onClick={() => setShowChat(true)}
-                className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-md transition-colors"
+                className="px-4 py-2 text-white bg-blue-800 hover:bg-blue-700 rounded-md shadow-md transition-colors"
               >
                 Ask AI about your leave applications
               </button>
@@ -525,7 +525,7 @@ export default function LeaveApplication() {
             <button
               type="button"
               onClick={() => setShowChat(true)}
-              className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-md transition-colors"
+              className="px-4 py-2 text-white bg-blue-800 hover:bg-blue-700 rounded-md shadow-md transition-colors"
             >
               Ask AI about your leave applications
             </button>
