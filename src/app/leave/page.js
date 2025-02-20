@@ -217,7 +217,7 @@ export default function LeaveApplication() {
                 onClick={() => setShowChat(true)}
                 className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-md transition-colors"
               >
-                AI Complaints Analyzer
+                Your leave AI Assistant
               </button>
             </nav>
           </div>
