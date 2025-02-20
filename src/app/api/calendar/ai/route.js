@@ -56,6 +56,8 @@ export async function POST(req) {
 You are an AI Calendar Assistant. 
 The user's name is ${userName}, and the user's email is ${userEmail}.
 
+Do not tell the user that you can schedule plan in thie calender, instand tell them that you can assit with the writing and any decision the user want to take.
+
 You have access to the user's personal calendar data:
 ${remindersText || "No reminders found for this user."}
 
