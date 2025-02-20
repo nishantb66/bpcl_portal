@@ -5,7 +5,14 @@ import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import jwt from "jsonwebtoken";
-import { FiLoader, FiPlus, FiCheck, FiTrash2, FiX } from "react-icons/fi";
+import {
+  FiLoader,
+  FiPlus,
+  FiCheck,
+  FiTrash2,
+  FiX,
+  FiMessageSquare,
+} from "react-icons/fi";
 
 export default function CalendarPage() {
   const router = useRouter();
@@ -28,7 +35,7 @@ export default function CalendarPage() {
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
 
-  // Ref to scroll the form into view when a date is clicked (used if not using modal)
+  // For scrolling to form
   const formRef = useRef(null);
 
   // ========== Effects ==========
@@ -50,10 +57,8 @@ export default function CalendarPage() {
     }
   }, [router]);
 
-  // After isFormOpen becomes true, scroll down to the form (if inline form)
   useEffect(() => {
     if (isFormOpen && formRef.current) {
-      // Wait a tiny bit for form to appear, then scroll
       setTimeout(() => {
         formRef.current.scrollIntoView({ behavior: "smooth" });
       }, 100);
@@ -61,7 +66,6 @@ export default function CalendarPage() {
   }, [isFormOpen]);
 
   // ========== Helpers ==========
-  // Check if JWT is expired
   const checkTokenExpiration = (token) => {
     try {
       const decoded = jwt.decode(token);
@@ -75,7 +79,6 @@ export default function CalendarPage() {
     }
   };
 
-  // Load user’s reminders
   const fetchUserReminders = async (token) => {
     try {
       setLoadingReminders(true);
@@ -137,19 +140,16 @@ export default function CalendarPage() {
   };
 
   const getFirstDayOfMonth = (year, month) => {
-    return new Date(year, month, 1).getDay(); // Sunday = 0
+    return new Date(year, month, 1).getDay();
   };
 
   const buildCalendarDays = () => {
     const days = [];
     const totalDays = getDaysInMonth(currentYear, currentMonth);
     const firstDayIndex = getFirstDayOfMonth(currentYear, currentMonth);
-
-    // Blank cells before 1st
     for (let i = 0; i < firstDayIndex; i++) {
       days.push(null);
     }
-    // Actual date objects
     for (let d = 1; d <= totalDays; d++) {
       days.push(new Date(currentYear, currentMonth, d));
     }
@@ -168,9 +168,8 @@ export default function CalendarPage() {
 
   // ========== Click a Date (Open Form) ==========
   const handleDateClick = (date) => {
-    if (!date) return; // blank cell
+    if (!date) return;
     setSelectedDate(date);
-
     const existingReminder = userReminders.find(
       (r) => new Date(r.date).toDateString() === date.toDateString()
     );
@@ -194,7 +193,6 @@ export default function CalendarPage() {
   const handleCreateReminder = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
-
     const newReminder = {
       date: selectedDate,
       plans,
@@ -202,7 +200,6 @@ export default function CalendarPage() {
       importance,
       associatedPeople,
     };
-
     try {
       const response = await fetch("/api/calendar", {
         method: "POST",
@@ -225,7 +222,6 @@ export default function CalendarPage() {
   const handleEditReminder = async () => {
     const token = localStorage.getItem("token");
     if (!token || !currentId) return;
-
     const updatedReminder = {
       _id: currentId,
       date: selectedDate,
@@ -234,7 +230,6 @@ export default function CalendarPage() {
       importance,
       associatedPeople,
     };
-
     try {
       const response = await fetch("/api/calendar", {
         method: "PUT",
@@ -257,7 +252,6 @@ export default function CalendarPage() {
   const handleDeleteReminder = async () => {
     const token = localStorage.getItem("token");
     if (!token || !currentId) return;
-
     try {
       const response = await fetch("/api/calendar", {
         method: "DELETE",
@@ -292,9 +286,97 @@ export default function CalendarPage() {
 
   const calendarDays = buildCalendarDays();
 
+  // ========== AI Chat State & Logic ==========
+  const [showAiChat, setShowAiChat] = useState(false);
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      content: `Hello! How can I help you with your calendar, friend?`,
+    },
+  ]);
+  const [userInput, setUserInput] = useState("");
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const messageListRef = useRef(null);
+
+  // Scroll chat to bottom on each new message
+  useEffect(() => {
+    if (messageListRef.current) {
+      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!userInput.trim()) return;
+    const newMessages = [...messages, { role: "user", content: userInput }];
+    setMessages(newMessages);
+    setUserInput("");
+    setIsLoadingAI(true);
+
+    try {
+      const response = await fetch("/api/calendar/ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ messages: newMessages }),
+      });
+
+      if (!response.ok) {
+        setIsLoadingAI(false);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "Oops, something went wrong with the AI service.",
+          },
+        ]);
+        return;
+      }
+
+      // Stream the AI response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let aiResponse = "";
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value || new Uint8Array(), {
+          stream: !doneReading,
+        });
+        aiResponse += chunkValue;
+
+        setMessages((prev) => {
+          const lastMsg = prev[prev.length - 1];
+          if (lastMsg?.role === "assistant") {
+            return [
+              ...prev.slice(0, -1),
+              { ...lastMsg, content: lastMsg.content + chunkValue },
+            ];
+          } else {
+            return [...prev, { role: "assistant", content: chunkValue }];
+          }
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Sorry, I'm having trouble responding right now.",
+        },
+      ]);
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
-      {/* Top Navbar to mimic the theme */}
+      {/* Top Navbar */}
       <nav className="bg-gray-900 text-white py-3 px-4 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <h1 className="text-xl font-bold">Portal</h1>
@@ -331,6 +413,17 @@ export default function CalendarPage() {
             Keep track of important dates and reminders
           </p>
         </header>
+
+        {/* ---------- NEW: AI Chat Feature ---------- */}
+        <div className="mt-8 text-right">
+          <button
+            onClick={() => setShowAiChat(true)}
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition-colors"
+          >
+            <FiMessageSquare />
+            <span>Chat with AI about your Calendar</span>
+          </button>
+        </div>
 
         {/* Calendar Card */}
         <div className="bg-white shadow-lg rounded-lg p-4 sm:p-6">
@@ -377,11 +470,9 @@ export default function CalendarPage() {
 
           {/* Calendar Grid */}
           <div className="grid grid-cols-7 gap-1 sm:gap-2 mt-3">
-            {calendarDays.map((day, index) => {
+            {buildCalendarDays().map((day, index) => {
               const dateColorClass = getDateColor(day);
-              const cellBgClass = dateColorClass
-                ? dateColorClass
-                : "bg-white hover:bg-gray-50";
+              const cellBgClass = dateColorClass || "bg-white hover:bg-gray-50";
               const isTodayClass =
                 day && isToday(day)
                   ? "ring-2 ring-blue-400 ring-offset-2 ring-offset-white"
@@ -406,12 +497,9 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {/* Form (Displayed in a modal style OR inline) */}
+        {/* Form (modal style) */}
         {isFormOpen && (
-          <div
-            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4"
-            // If you prefer inline, remove fixed overlay and adjust styling
-          >
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
             <div
               ref={formRef}
               className="w-full max-w-xl bg-white p-6 rounded shadow-lg relative"
@@ -420,9 +508,7 @@ export default function CalendarPage() {
                 {currentId ? "Edit Reminder" : "Create Reminder"} –{" "}
                 {selectedDate.toDateString()}
               </h2>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Plans */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Plans
@@ -434,8 +520,6 @@ export default function CalendarPage() {
                     onChange={(e) => setPlans(e.target.value)}
                   />
                 </div>
-
-                {/* Time */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Time
@@ -448,8 +532,6 @@ export default function CalendarPage() {
                     placeholder="3:00 PM - 4:00 PM"
                   />
                 </div>
-
-                {/* Importance */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Importance
@@ -464,8 +546,6 @@ export default function CalendarPage() {
                     <option value="High">High (Red)</option>
                   </select>
                 </div>
-
-                {/* Associated People */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Associated People
@@ -518,7 +598,158 @@ export default function CalendarPage() {
             </div>
           </div>
         )}
+
+        {/* ---------- NEW: AI Chat Feature ---------- */}
+        {/* <div className="mt-8 text-right">
+          <button
+            onClick={() => setShowAiChat(true)}
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition-colors"
+          >
+            <FiMessageSquare />
+            <span>Chat with AI about your Calendar</span>
+          </button>
+        </div> */}
       </main>
+
+      {/* AI Chat Popup */}
+      {showAiChat && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-black/60 backdrop-blur-sm animate-[fadeIn_0.3s_ease-out]">
+          <div
+            className="relative w-full max-w-3xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-[slideUp_0.4s_ease-out]"
+            style={{ maxHeight: "90vh" }}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowAiChat(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-all duration-200 z-10"
+            >
+              <FiX className="w-6 h-6" />
+            </button>
+
+            {/* Header */}
+            <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-8 flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <svg
+                  className="w-7 h-7 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-white">
+                  AI Calendar Assistant
+                </h3>
+                <p className="text-base text-blue-100 opacity-90">
+                  Many plans sceduled? don't have time to just look all the scheduled plans? Its ok, I have got this, ask me anything you want to know about all your scheduled tasks
+                </p>
+              </div>
+            </div>
+
+            {/* Messages Container */}
+            <div
+              ref={messageListRef}
+              className="flex-1 overflow-y-auto px-8 py-6 space-y-6 scroll-smooth"
+              style={{ maxHeight: "calc(90vh - 200px)" }}
+            >
+              {messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${
+                    msg.role === "assistant" ? "justify-start" : "justify-end"
+                  } animate-[slideUp_0.3s_ease-out]`}
+                >
+                  {msg.role === "assistant" && (
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center mr-3">
+                      <svg
+                        className="w-6 h-6 text-indigo-600 dark:text-indigo-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                  <div
+                    className={`
+                max-w-[85%] px-6 py-4 rounded-2xl shadow-sm
+                ${
+                  msg.role === "assistant"
+                    ? "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200"
+                    : "bg-indigo-600 text-white ml-auto"
+                }
+              `}
+                  >
+                    <p className="text-base leading-relaxed whitespace-pre-wrap">
+                      {msg.content}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Input Box */}
+            <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-4">
+                <input
+                  type="text"
+                  placeholder="Ask about your schedule..."
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  className="flex-1 px-6 py-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 
+              focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+              text-base placeholder-gray-400 dark:placeholder-gray-500 
+              text-gray-900 dark:text-gray-100
+              transition-all duration-200"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={isLoadingAI}
+                  className={`
+              flex items-center justify-center p-4 rounded-xl transition-all duration-200
+              ${
+                isLoadingAI
+                  ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white"
+              }
+            `}
+                >
+                  {isLoadingAI ? (
+                    <div className="w-6 h-6 border-2 border-gray-400 border-t-gray-600 rounded-full animate-spin" />
+                  ) : (
+                    <svg
+                      className="w-6 h-6 transform rotate-90"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="bg-white w-full py-4 border-t flex items-center justify-center">
         <p className="text-sm text-gray-500">
