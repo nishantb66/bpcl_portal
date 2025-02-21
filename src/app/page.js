@@ -220,13 +220,6 @@ export default function Home() {
       requiresExecutive: true,
     },
     {
-      href: "https://accident-profiling-frontend.vercel.app",
-      icon: <FiAlertTriangle className="w-6 h-6" />,
-      title: "Accident Profiling",
-      description: "AI-powered accident analysis system (Tank Lorry)",
-      external: true,
-    },
-    {
       path: "/meeting",
       icon: <FiCalendar className="w-6 h-6" />,
       title: "Book Meeting Room",
