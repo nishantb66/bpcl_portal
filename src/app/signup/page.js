@@ -4,10 +4,53 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FiUserPlus } from "react-icons/fi";
+import {
+  FiUser,
+  FiLock,
+  FiBriefcase,
+  FiArrowRight,
+  FiArrowLeft,
+} from "react-icons/fi";
+
+const ProgressBar = ({ currentStep, steps }) => {
+  return (
+    <div className="w-full mb-8">
+      <div className="flex items-center justify-between relative">
+        {/* Progress line */}
+        <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 transform -translate-y-1/2"></div>
+
+        {steps.map((step, index) => (
+          <div key={step} className="relative z-10 flex flex-col items-center">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors
+              ${
+                currentStep >= index + 1
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white border-2 border-gray-300 text-gray-400"
+              }`}
+            >
+              {currentStep > index + 1 ? (
+                <FiArrowRight className="w-4 h-4" />
+              ) : (
+                <span className="text-sm font-medium">{index + 1}</span>
+              )}
+            </div>
+            <span
+              className={`mt-2 text-sm font-medium ${
+                currentStep >= index + 1 ? "text-gray-800" : "text-gray-400"
+              }`}
+            >
+              {step}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export default function Signup() {
-  // Updated form state with role and emp_id fields
+  const [currentStep, setCurrentStep] = useState(1);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -18,24 +61,61 @@ export default function Signup() {
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
+
+  const steps = ["Personal", "Security", "Professional"];
+
+  const validateStep = (step) => {
+    switch (step) {
+      case 1:
+        if (!form.name || !form.email) {
+          toast.error("Please fill all required fields");
+          return false;
+        }
+        if (!/\S+@\S+\.\S+/.test(form.email)) {
+          toast.error("Please enter a valid email address");
+          return false;
+        }
+        return true;
+      case 2:
+        if (!form.password || !form.confirmPassword) {
+          toast.error("Please fill all password fields");
+          return false;
+        }
+        if (form.password !== form.confirmPassword) {
+          toast.error("Passwords do not match");
+          return false;
+        }
+        return true;
+      case 3:
+        if (!form.role || !form.emp_id) {
+          toast.error("Please fill all professional details");
+          return false;
+        }
+        return true;
+      default:
+        return true;
+    }
+  };
+
+  const handleNext = () => {
+    if (!validateStep(currentStep)) return;
+    setCurrentStep((prev) => Math.min(prev + 1, steps.length));
+  };
+
+  const handlePrev = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateStep(3)) return;
+
     setLoading(true);
-
-    if (form.password !== form.confirmPassword) {
-      toast.error("Passwords do not match.");
-      setLoading(false);
-      return;
-    }
-
     try {
       const response = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Include role and emp_id in the request body
         body: JSON.stringify({ ...form, type: "signup" }),
       });
 
@@ -48,291 +128,215 @@ export default function Signup() {
         toast.error(data.message);
       }
     } catch (err) {
-      toast.error("Failed to send OTP");
+      toast.error("Failed to create account");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col">
-      {/* Top Navigation */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-indigo-700">Portal</h1>
-          <nav className="flex items-center space-x-3">
-            <button
-              onClick={() => router.push("/")}
-              className="text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Home
-            </button>
-            <button
-              onClick={() => router.push("/login")}
-              className="text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Login
-            </button>
-          </nav>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-grow flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-8">
         <ToastContainer />
-        <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-6 space-y-4">
-          {/* Icon + Heading */}
-          <div className="text-center space-y-1">
-            <div className="flex flex-col items-center">
-              <FiUserPlus className="w-10 h-10 text-indigo-700" />
-            </div>
-            <h2 className="text-xl font-bold text-gray-800">
-              Create an Account
-            </h2>
-            <p className="text-sm text-gray-500">
-              Register to access your portal
-            </p>
-          </div>
+        <ProgressBar currentStep={currentStep} steps={steps} />
 
-          {/* Sign Up Form */}
-          <form className="space-y-3" onSubmit={handleSubmit}>
-            {/* Username */}
-            <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-gray-700 mb-0.5"
-              >
-                Username
-              </label>
-              <input
-                id="username"
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="block w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-400"
-                placeholder="Enter your username"
-                required
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Step 1: Personal Info */}
+          {currentStep === 1 && (
+            <div className="space-y-4 animate-fadeIn">
+              <div className="flex items-center space-x-3 mb-6">
+                <FiUser className="w-6 h-6 text-indigo-600" />
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Personal Information
+                </h2>
+              </div>
 
-            {/* Email */}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-0.5"
-              >
-                Email address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="block w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-400"
-                placeholder="Enter your email"
-                required
-              />
-            </div>
-
-            {/* Password */}
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-0.5"
-              >
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={form.password}
-                  onChange={(e) =>
-                    setForm({ ...form, password: e.target.value })
-                  }
-                  className="block w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-400"
-                  placeholder="Create a password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showPassword ? (
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      ></path>
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      ></path>
-                    </svg>
-                  ) : (
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-                      ></path>
-                    </svg>
-                  )}
-                </button>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="John Doe"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm({ ...form, email: e.target.value })
+                    }
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="john@company.com"
+                    required
+                  />
+                </div>
               </div>
             </div>
+          )}
 
-            {/* Confirm Password */}
-            <div>
-              <label
-                htmlFor="confirm-password"
-                className="block text-sm font-medium text-gray-700 mb-0.5"
-              >
-                Confirm Password
-              </label>
-              <div className="relative">
-                <input
-                  id="confirm-password"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={form.confirmPassword}
-                  onChange={(e) =>
-                    setForm({ ...form, confirmPassword: e.target.value })
-                  }
-                  className="block w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-400"
-                  placeholder="Confirm your password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showConfirmPassword ? (
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+          {/* Step 2: Security Info */}
+          {currentStep === 2 && (
+            <div className="space-y-4 animate-fadeIn">
+              <div className="flex items-center space-x-3 mb-6">
+                <FiLock className="w-6 h-6 text-indigo-600" />
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Account Security
+                </h2>
+              </div>
+
+              <div className="grid gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={form.password}
+                      onChange={(e) =>
+                        setForm({ ...form, password: e.target.value })
+                      }
+                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      placeholder="••••••••"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      ></path>
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      ></path>
-                    </svg>
-                  ) : (
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-                      ></path>
-                    </svg>
-                  )}
-                </button>
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    value={form.confirmPassword}
+                    onChange={(e) =>
+                      setForm({ ...form, confirmPassword: e.target.value })
+                    }
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
               </div>
             </div>
+          )}
 
-            {/* Role Selection */}
-            <div>
-              <label
-                htmlFor="role"
-                className="block text-sm font-medium text-gray-700 mb-0.5"
-              >
-                Role
-              </label>
-              <select
-                id="role"
-                value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value })}
-                className="block w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
-                required
-              >
-                <option value="">Select your role</option>
-                <option value="Executive">Executive</option>
-                <option value="Staff grade 1">Staff grade 1</option>
-                <option value="Staff grade 2">Staff grade 2</option>
-                <option value="Staff grade 3">Staff grade 3</option>
-              </select>
+          {/* Step 3: Professional Info */}
+          {currentStep === 3 && (
+            <div className="space-y-4 animate-fadeIn">
+              <div className="flex items-center space-x-3 mb-6">
+                <FiBriefcase className="w-6 h-6 text-indigo-600" />
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Professional Details
+                </h2>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Role
+                  </label>
+                  <select
+                    value={form.role}
+                    onChange={(e) => setForm({ ...form, role: e.target.value })}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Select Role</option>
+                    <option value="Executive">Executive</option>
+                    <option value="Staff grade 1">Staff grade 1</option>
+                    <option value="Staff grade 2">Staff grade 2</option>
+                    <option value="Staff grade 3">Staff grade 3</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Employee ID
+                  </label>
+                  <input
+                    type="text"
+                    value={form.emp_id}
+                    onChange={(e) =>
+                      setForm({ ...form, emp_id: e.target.value })
+                    }
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="EMP-123"
+                    required
+                  />
+                </div>
+              </div>
             </div>
+          )}
 
-            {/* Employee ID */}
-            <div>
-              <label
-                htmlFor="emp_id"
-                className="block text-sm font-medium text-gray-700 mb-0.5"
+          {/* Navigation Controls */}
+          <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+            {currentStep > 1 && (
+              <button
+                type="button"
+                onClick={handlePrev}
+                className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
               >
-                Employee ID
-              </label>
-              <input
-                id="emp_id"
-                type="text"
-                value={form.emp_id}
-                onChange={(e) => setForm({ ...form, emp_id: e.target.value })}
-                className="block w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-400"
-                placeholder="Enter your Employee ID"
-                required
-              />
-            </div>
+                <FiArrowLeft className="w-5 h-5" />
+                <span>Back</span>
+              </button>
+            )}
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full flex justify-center py-2.5 px-4 rounded-lg text-white text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ${
-                loading ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              {loading ? "Creating Account..." : "Sign Up"}
-            </button>
-          </form>
+            <div className="flex-1"></div>
 
-          {/* Footer / Sign In Redirect */}
-          <div className="pt-3 border-t border-gray-200 text-center text-sm space-y-1">
-            <p className="text-gray-600">
-              Already have an account?{" "}
-              <Link
-                href="/login"
-                className="font-medium text-indigo-600 hover:text-indigo-500 transition duration-150"
+            {currentStep < steps.length ? (
+              <button
+                type="button"
+                onClick={handleNext}
+                className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg transition-colors"
               >
-                Sign In
-              </Link>
-            </p>
-            <p className="text-gray-500">
-              OTP will be sent to your entered Email ID
-            </p>
+                <span>Next</span>
+                <FiArrowRight className="w-5 h-5" />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={loading}
+                className={`flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg transition-colors ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                {loading ? "Creating Account..." : "Sign Up"}
+              </button>
+            )}
           </div>
+        </form>
+
+        <div className="mt-6 text-center text-sm text-gray-600">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+            Login here
+          </Link>
         </div>
-      </main>
+        {/* Copyright Footer */}
+        <footer className="mt-8 text-center text-sm text-gray-500">
+          &copy; {new Date().getFullYear()} Portal. Crafted by Nishant.
+        </footer>
+      </div>
     </div>
   );
 }
