@@ -20,6 +20,7 @@ import {
   FiDollarSign,
   FiMessageSquare, // <-- Import the chat icon
   FiArrowRight,
+  FiFileText,
 } from "react-icons/fi";
 import { FaGoogle } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
@@ -237,6 +238,13 @@ export default function Home() {
       icon: <FiCalendar className="w-6 h-6" />,
       title: "Mark your dates",
       description: "Organize personal reminders and upcoming plans",
+    },
+    // Inside the dashboardCards array in src/app/page.js
+    {
+      path: "/talktopdf",
+      icon: <FiFileText className="w-6 h-6" />, // import FiFileText from react-icons
+      title: "Talk to PDF",
+      description: "Chat with your PDF documents",
     },
   ];
 
