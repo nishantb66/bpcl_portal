@@ -37,16 +37,16 @@ Welcome to **Enterprise Portal - Scalable MVP**—the digital playground your wo
 6. **Reimbursement**  
    - Upload receipts, submit requests, and track approvals—minus the email chaos.
 
-7. **Accident Profiling**  
-   - Predictive analysis and fault determination. Safety first, always.
-
-8. **Book Meeting Room**  
+7. **Book Meeting Room**  
    - Reserve rooms in seconds, with real-time availability.
 
-9. **Mark Your Dates**  
+8. **Mark Your Dates**  
    - A personal calendar for special occasions, deadlines, and all the day-to-day hustle.
+  
+9. **Analyze, understand, and chat with a pdf document**
+   - A personalized tool, that will act as your document reader and memorizer so you can ask any question.
 
-10. **Administration (Admin role)**  
+11. **Administration (Admin role)**  
    - Admin management system in the to manage, complaints, customer data, Survey data (Visualization), manage reimbursements or users and employee data management.
 
 ---
@@ -60,6 +60,8 @@ Welcome to **Enterprise Portal - Scalable MVP**—the digital playground your wo
 6. **Task Manager** – Structured task listing with deadlines and statuses for easy oversight.  
 7. **Reimbursements** – Submit requests with attachments, track statuses, and reference old requests.  
 8. **Meeting Room Booking** – Real-time room availability to avoid double-booking fiascos.  
-9. **Choose Calendar** – Pick the built-in Portal Calendar or link an external Google Calendar.  
-10. **Admin Syatem** – Manage all data.
+9. **Choose Calendar** – Pick the built-in Portal Calendar or link an external Google Calendar.
+10. **Chat with PDF** – Pick your PDF document and AI will help you to get valuable information from it.
+11. **Personalised AI assistants** - Your personal AI assistants at different modules of the application, can give you insights about your data with high internal level security and privacy.
+12. **Admin Syatem** – Management all data.
 
