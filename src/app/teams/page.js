@@ -119,9 +119,16 @@ export default function TeamsPage() {
   const [dependencySearchTerm, setDependencySearchTerm] = useState("");
   const [filteredTasks, setFilteredTasks] = useState([]);
 
-  const token = localStorage.getItem("token");
-  const currentUserEmail = token ? jwt.decode(token)?.email : null;
+  const [currentUserEmail, setCurrentUserEmail] = useState(null);
 
+   useEffect(() => {
+     const token = localStorage.getItem("token");
+     if (token) {
+       const decoded = jwt.decode(token);
+       setCurrentUserEmail(decoded?.email ?? null);
+     }
+   }, []);
+   
   const checkTokenExpiration = (token) => {
     try {
       const decodedToken = jwt.decode(token);
@@ -1123,7 +1130,6 @@ export default function TeamsPage() {
           Important Links
         </button>
       </div>
-
 
       {/* Sidebar */}
       <aside className="w-64 bg-gradient-to-b from-white to-gray-50 border-r border-gray-100 px-4 py-4 flex flex-col text-sm text-gray-800 shadow-lg">
