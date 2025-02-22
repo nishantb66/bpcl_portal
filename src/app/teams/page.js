@@ -121,14 +121,20 @@ export default function TeamsPage() {
 
   const [currentUserEmail, setCurrentUserEmail] = useState(null);
 
-   useEffect(() => {
-     const token = localStorage.getItem("token");
-     if (token) {
-       const decoded = jwt.decode(token);
-       setCurrentUserEmail(decoded?.email ?? null);
-     }
-   }, []);
-   
+  // --- AI Chat States ---
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiQuestion, setAiQuestion] = useState("");
+  const [aiAnswer, setAiAnswer] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = jwt.decode(token);
+      setCurrentUserEmail(decoded?.email ?? null);
+    }
+  }, []);
+
   const checkTokenExpiration = (token) => {
     try {
       const decodedToken = jwt.decode(token);
@@ -1071,6 +1077,48 @@ export default function TeamsPage() {
     }
   };
 
+  // AI
+  const handleAskAI = async () => {
+    try {
+      if (!aiQuestion.trim()) return;
+      setAiLoading(true);
+      setAiAnswer("");
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("No token found. Please log in again.");
+        setAiLoading(false);
+        return;
+      }
+
+      // Call our AI route
+      const res = await fetch("/api/teams/ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ question: aiQuestion }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || "AI request failed");
+        setAiLoading(false);
+        return;
+      }
+
+      // Show the AI’s response
+      setAiAnswer(data.aiAnswer);
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong with AI.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+
   // If loading, show spinner
   if (loading) {
     return (
@@ -1250,6 +1298,14 @@ export default function TeamsPage() {
         >
           <FiPlusCircle className="text-xs" />
           <span className="text-xs">CheckPoints</span>
+        </button>
+
+        {/* Ask AI Button (Sidebar) */}
+        <button
+          onClick={() => setShowAIModal(true)}
+          className="mt-3 flex items-center justify-center space-x-2 px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors duration-150"
+        >
+          Ask AI (Under Development)
         </button>
 
         {/* Notice Display */}
@@ -2361,6 +2417,82 @@ export default function TeamsPage() {
                 </li>
               )}
             </ul>
+          </div>
+        </div>
+      )}
+
+      {/* --- AI Chat Modal --- */}
+      {showAIModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4"
+          onClick={() => setShowAIModal(false)}
+        >
+          <div
+            className="relative bg-white w-full max-w-md rounded-lg shadow-xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowAIModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-xl font-bold mb-4">AI Assistant</h2>
+
+            {/* Question Input */}
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Your Question
+            </label>
+            <textarea
+              className="w-full border border-gray-300 rounded px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              rows={3}
+              value={aiQuestion}
+              onChange={(e) => setAiQuestion(e.target.value)}
+            />
+
+            {/* Answer Display */}
+            {aiAnswer && (
+              <div className="bg-gray-50 p-3 rounded mb-3 text-sm text-gray-800">
+                {aiAnswer}
+              </div>
+            )}
+
+            {/* Loading Spinner */}
+            {aiLoading && (
+              <div className="flex items-center space-x-2 text-gray-600 mb-3">
+                <svg
+                  className="animate-spin h-5 w-5 text-indigo-600"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8z"
+                  />
+                </svg>
+                <span>Thinking...</span>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              onClick={handleAskAI}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+              disabled={!aiQuestion.trim() || aiLoading}
+            >
+              Ask
+            </button>
           </div>
         </div>
       )}
