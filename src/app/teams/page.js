@@ -10,6 +10,16 @@ import {
   FiTrash2,
   FiPlusCircle,
   FiX,
+  FiEdit3,
+  FiCrown,
+  FiShield,
+  FiUser,
+  FiUnlock,
+  FiLock,
+  FiEye,
+  FiFlag,
+  FiBell,
+  FiClipboard,
 } from "react-icons/fi";
 import jwt from "jsonwebtoken";
 import { Pie, Bar, Doughnut } from "react-chartjs-2";
@@ -924,12 +934,12 @@ export default function TeamsPage() {
       <ToastContainer />
 
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 px-3 py-3 flex flex-col text-sm text-gray-800">
+      <aside className="w-64 bg-gradient-to-b from-white to-gray-50 border-r border-gray-100 px-4 py-4 flex flex-col text-sm text-gray-800 shadow-lg">
         {/* Team Info Header */}
-        <div className="mb-3">
+        <div className="mb-4">
           {isLeader ? (
             <h2
-              className="font-semibold text-gray-900 cursor-pointer"
+              className="font-semibold text-gray-900 cursor-pointer hover:text-indigo-600 transition-colors duration-150"
               onClick={() => {
                 setTempTeamName(teamInfo?.teamName || "");
                 setTempDescription(teamInfo?.teamDescription || "");
@@ -976,7 +986,7 @@ export default function TeamsPage() {
             teamInfo?.members?.length > 4 ? "max-h-48" : ""
           }`}
         >
-          <ul className="space-y-1">
+          <ul className="space-y-2">
             {/* Leader always on top */}
             <li className="font-semibold text-indigo-600 text-xs">
               Leader: {teamInfo?.leaderName}
@@ -987,7 +997,7 @@ export default function TeamsPage() {
               ?.map((member) => (
                 <li
                   key={member.email}
-                  className="flex items-center justify-between text-xs space-x-2"
+                  className="flex items-center justify-between text-xs space-x-2 p-2 rounded-md hover:bg-gray-50 transition-colors duration-150"
                 >
                   {/* Show 'Cap' tag if canAddMembers is true */}
                   <div className="flex items-center space-x-1">
@@ -1004,7 +1014,7 @@ export default function TeamsPage() {
                     {isLeader && (
                       <button
                         onClick={() => confirmUpdateAccess(member)}
-                        className="text-blue-500 hover:text-blue-700"
+                        className="text-blue-500 hover:text-blue-700 transition-colors duration-150"
                       >
                         {member.canAddMembers
                           ? "Revoke Access"
@@ -1015,7 +1025,7 @@ export default function TeamsPage() {
                     {(isLeader || userHasCap) && (
                       <button
                         onClick={() => handleRemoveMember(member.email)}
-                        className="text-red-500 hover:text-red-700"
+                        className="text-red-500 hover:text-red-700 transition-colors duration-150"
                       >
                         <FiTrash2 />
                       </button>
@@ -1029,17 +1039,16 @@ export default function TeamsPage() {
         {/* Overview button (for all members) */}
         <button
           onClick={openOverview}
-          className="mt-3 flex items-center justify-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="mt-4 flex items-center justify-center space-x-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-150"
         >
           <FiPlusCircle className="text-xs" />
           <span className="text-xs">Overview</span>
         </button>
 
         {/* CheckPoints button (for leader or cap) */}
-
         <button
           onClick={openCheckpoints}
-          className="mt-3 flex items-center justify-center space-x-2 px-3 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
+          className="mt-3 flex items-center justify-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md transition-colors duration-150"
         >
           <FiPlusCircle className="text-xs" />
           <span className="text-xs">CheckPoints</span>
@@ -1048,10 +1057,10 @@ export default function TeamsPage() {
         {/* Notice Display */}
         {teamInfo?.notice && (
           <div
-            className={`p-3 mt-3 rounded ${
+            className={`p-3 mt-3 rounded-md ${
               teamInfo.notice.importance === "High"
-                ? "bg-red-50"
-                : "bg-green-50"
+                ? "bg-red-100"
+                : "bg-green-100"
             }`}
           >
             <h3 className="text-sm font-bold text-gray-800">
@@ -1075,7 +1084,7 @@ export default function TeamsPage() {
               setNoticeImportance(teamInfo.notice?.importance || "Low");
               setShowNoticeModal(true);
             }}
-            className="mt-3 flex items-center justify-center space-x-2 px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+            className="mt-3 flex items-center justify-center space-x-2 px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-md transition-colors duration-150"
           >
             <FiPlusCircle className="text-xs" />
             <span className="text-xs">Notice for Members</span>
@@ -1086,7 +1095,7 @@ export default function TeamsPage() {
         {isLeader && (
           <button
             onClick={openAssignTaskModal}
-            className="mt-3 flex items-center justify-center space-x-2 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            className="mt-3 flex items-center justify-center space-x-2 px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors duration-150"
           >
             <FiPlusCircle className="text-xs" />
             <span className="text-xs">Assign Tasks</span>
@@ -1095,10 +1104,12 @@ export default function TeamsPage() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-6 space-y-6 bg-gradient-to-br from-gray-50 to-white min-h-screen">
         {isLeader || userHasCap ? (
           <>
-            <h2 className="text-xl font-semibold text-gray-800">Add Members</h2>
+            <h2 className="text-xl font-semibold text-gray-800 border-b pb-2 border-gray-200">
+              Add Members
+            </h2>
             <div className="relative mb-6 max-w-sm">
               <input
                 type="text"
@@ -1108,7 +1119,7 @@ export default function TeamsPage() {
                   setSearchTerm(e.target.value);
                   handleSearch(e.target.value);
                 }}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-150"
               />
               <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
               {searchLoading && (
@@ -1116,11 +1127,11 @@ export default function TeamsPage() {
               )}
               {/* Search Results */}
               {searchTerm && searchResults.length > 0 && (
-                <div className="absolute mt-1 w-full bg-white border border-gray-200 rounded shadow z-10 max-h-56 overflow-auto">
+                <div className="absolute mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-md z-10 max-h-56 overflow-auto">
                   {searchResults.map((user) => (
                     <div
                       key={user._id}
-                      className="flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      className="flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer transition-colors duration-150"
                     >
                       <span className="text-sm text-gray-700">
                         {user.name} ({user.email})
@@ -1142,7 +1153,7 @@ export default function TeamsPage() {
             </p>
           </>
         ) : (
-          <div>
+          <div className="bg-white rounded-lg p-4 shadow-md">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Welcome to {teamInfo?.teamName}
             </h2>
@@ -1154,7 +1165,7 @@ export default function TeamsPage() {
         )}
 
         {/* TASK LIST for both leader & member */}
-        <div className="bg-white rounded-lg p-4 shadow">
+        <div className="bg-white rounded-lg p-4 shadow-md">
           <h3 className="text-lg font-bold text-gray-800 mb-4">Tasks</h3>
           {tasks.length === 0 ? (
             <p className="text-gray-600 text-sm">
@@ -1168,7 +1179,7 @@ export default function TeamsPage() {
                   <li
                     key={task._id}
                     onClick={() => openTaskDetails(task)}
-                    className="p-3 bg-gray-50 rounded hover:bg-gray-100 cursor-pointer"
+                    className="p-3 bg-gray-50 rounded hover:bg-gray-100 cursor-pointer transition-colors duration-150"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-gray-800">
@@ -1195,11 +1206,11 @@ export default function TeamsPage() {
       {/* Assign Task Modal (Leader only) */}
       {showAssignTaskModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4"
           onClick={() => setShowAssignTaskModal(false)}
         >
           <div
-            className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg relative"
+            className="relative bg-white w-full max-w-lg rounded-lg shadow-xl p-6"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
@@ -1210,7 +1221,9 @@ export default function TeamsPage() {
               <FiX />
             </button>
 
-            <h2 className="text-xl font-bold mb-4">Assign New Task</h2>
+            <h2 className="text-xl font-bold mb-4 border-b pb-2 text-gray-800">
+              Assign New Task
+            </h2>
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700">
@@ -1220,7 +1233,7 @@ export default function TeamsPage() {
                 type="text"
                 value={taskNameField}
                 onChange={(e) => setTaskNameField(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
             </div>
 
@@ -1231,7 +1244,7 @@ export default function TeamsPage() {
               <textarea
                 value={descriptionField}
                 onChange={(e) => setDescriptionField(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
             </div>
 
@@ -1243,7 +1256,7 @@ export default function TeamsPage() {
                 type="date"
                 value={deadlineField}
                 onChange={(e) => setDeadlineField(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
             </div>
 
@@ -1254,7 +1267,7 @@ export default function TeamsPage() {
               <select
                 value={urgencyField}
                 onChange={(e) => setUrgencyField(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               >
                 <option>Low</option>
                 <option>Medium</option>
@@ -1276,7 +1289,10 @@ export default function TeamsPage() {
                     checked={assignToAll}
                     onChange={() => setAssignToAll(true)}
                   />
-                  <label htmlFor="assignAll" className="ml-1 text-sm">
+                  <label
+                    htmlFor="assignAll"
+                    className="ml-1 text-sm text-gray-700"
+                  >
                     All Members
                   </label>
                 </div>
@@ -1288,7 +1304,10 @@ export default function TeamsPage() {
                     checked={!assignToAll}
                     onChange={() => setAssignToAll(false)}
                   />
-                  <label htmlFor="assignSpecific" className="ml-1 text-sm">
+                  <label
+                    htmlFor="assignSpecific"
+                    className="ml-1 text-sm text-gray-700"
+                  >
                     Specific Members
                   </label>
                 </div>
@@ -1306,12 +1325,12 @@ export default function TeamsPage() {
                   placeholder="Start typing to see team members..."
                   value={memberSearchTerm}
                   onChange={(e) => setMemberSearchTerm(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 />
 
                 {/* Only show results if user typed something */}
                 {memberSearchTerm.trim() !== "" && (
-                  <div className="max-h-32 overflow-auto border border-gray-200 rounded p-2">
+                  <div className="max-h-32 overflow-auto border border-gray-200 rounded-lg p-2">
                     {teamInfo?.members
                       ?.filter((member) =>
                         member.name
@@ -1342,7 +1361,7 @@ export default function TeamsPage() {
                           />
                           <label
                             htmlFor={member.email}
-                            className="ml-2 text-sm"
+                            className="ml-2 text-sm text-gray-700"
                           >
                             {member.name}
                           </label>
@@ -1367,7 +1386,7 @@ export default function TeamsPage() {
 
             <button
               onClick={handleCreateTask}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded font-semibold tracking-wide"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold tracking-wide focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >
               Assign Task
             </button>
@@ -1378,20 +1397,25 @@ export default function TeamsPage() {
       {/* Task Details Modal (for both leader & members) */}
       {showTaskDetailsModal && selectedTask && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
           onClick={() => setShowTaskDetailsModal(false)}
         >
           <div
-            className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg relative"
+            className="relative bg-white w-full max-w-lg rounded-lg shadow-xl p-6 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Close Button */}
             <button
               onClick={() => setShowTaskDetailsModal(false)}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
             >
               <FiX />
             </button>
-            <h2 className="text-xl font-bold mb-4">{selectedTask.taskName}</h2>
+
+            <h2 className="text-xl font-bold mb-4 border-b border-gray-200 pb-2 text-gray-800">
+              {selectedTask.taskName}
+            </h2>
+
             <p className="text-sm text-gray-500 mb-2">
               Urgency: {selectedTask.urgency}
             </p>
@@ -1403,8 +1427,16 @@ export default function TeamsPage() {
             {/* Show assignedTo list with statuses if user is the leader */}
             {isLeader && (
               <div className="mb-4">
-                <h3 className="font-semibold mb-2">Assignees:</h3>
-                <ul className="space-y-1">
+                <h3 className="font-semibold mb-2 border-b border-gray-200 pb-1">
+                  Assignees:
+                </h3>
+                <ul
+                  className={`space-y-1 ${
+                    selectedTask.assignedTo.length > 3
+                      ? "max-h-32 overflow-y-auto pr-2"
+                      : ""
+                  }`}
+                >
                   {selectedTask.assignedTo.map((assignee) => (
                     <li key={assignee.email} className="text-sm text-gray-700">
                       {assignee.email} -{" "}
@@ -1417,9 +1449,17 @@ export default function TeamsPage() {
 
             {/* Discussion Section - visible to everyone assigned + leader */}
             <div className="mb-4">
-              <h3 className="font-semibold mb-2">Discussion / Ideas:</h3>
+              <h3 className="font-semibold mb-2 border-b border-gray-200 pb-1">
+                Discussion / Ideas:
+              </h3>
               {selectedTask.discussion && selectedTask.discussion.length > 0 ? (
-                <ul className="space-y-1">
+                <ul
+                  className={`space-y-1 ${
+                    selectedTask.discussion.length > 2
+                      ? "max-h-40 overflow-y-auto pr-2"
+                      : ""
+                  }`}
+                >
                   {selectedTask.discussion.map((item, idx) => (
                     <li
                       key={idx}
@@ -1645,23 +1685,27 @@ export default function TeamsPage() {
         </div>
       )}
 
-      {/* Notice Model */}
+      {/* Notice Modal */}
       {showNoticeModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4"
           onClick={() => setShowNoticeModal(false)}
         >
           <div
-            className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative"
+            className="relative bg-white w-full max-w-md rounded-lg shadow-xl p-6"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Close Button */}
             <button
               onClick={() => setShowNoticeModal(false)}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
             >
               <FiX />
             </button>
-            <h2 className="text-xl font-bold mb-4">Notice for Members</h2>
+
+            <h2 className="text-xl font-bold mb-4 border-b border-gray-200 pb-2 text-gray-800">
+              Notice for Members
+            </h2>
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700">
@@ -1671,7 +1715,7 @@ export default function TeamsPage() {
                 type="text"
                 value={noticeTopic}
                 onChange={(e) => setNoticeTopic(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
             </div>
 
@@ -1682,7 +1726,7 @@ export default function TeamsPage() {
               <textarea
                 value={noticeMessage}
                 onChange={(e) => setNoticeMessage(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 rows={3}
               />
             </div>
@@ -1694,7 +1738,7 @@ export default function TeamsPage() {
               <select
                 value={noticeImportance}
                 onChange={(e) => setNoticeImportance(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               >
                 <option>Low</option>
                 <option>High</option>
@@ -1703,7 +1747,7 @@ export default function TeamsPage() {
 
             <button
               onClick={saveNotice}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >
               Save Notice
             </button>
