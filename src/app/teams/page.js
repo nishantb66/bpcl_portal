@@ -119,8 +119,6 @@ export default function TeamsPage() {
   const [dependencySearchTerm, setDependencySearchTerm] = useState("");
   const [filteredTasks, setFilteredTasks] = useState([]);
 
-  const token = localStorage.getItem("token");
-  const currentUserEmail = token ? jwt.decode(token)?.email : null;
 
   const checkTokenExpiration = (token) => {
     try {
