@@ -213,6 +213,12 @@ export default function Home() {
       description: "Create, track, edit your tasks and assign tasks to others",
     },
     {
+      path: "/teams",
+      icon: <FiUsers className="w-6 h-6" />,
+      title: "Teams & Assignments",
+      description: "Create or join a team, manage your squad’s tasks",
+    },
+    {
       path: "/reimbursement",
       icon: <FiDollarSign className="w-6 h-6" />,
       title: "Reimbursement",
