@@ -239,7 +239,7 @@ export async function POST(req) {
     // 6) UPDATE NOTICE (Leader only)
     //    => store or edit a notice object in the doc
     if (type === "update-notice") {
-      // We expect: { topic, message, importance }
+      // We expect: { topic, noticeMessage, importance }
       const { topic, noticeMessage, importance } = body;
       if (!topic || !noticeMessage || !importance) {
         return NextResponse.json(
@@ -276,6 +276,107 @@ export async function POST(req) {
 
       return NextResponse.json(
         { message: "Notice updated successfully!" },
+        { status: 200 }
+      );
+    }
+
+    /***********************************
+     * 7) IMPORTANT LINKS HANDLERS
+     ***********************************/
+
+    // ADD LINK
+    if (type === "add-link") {
+      // Check if user is in a team (leader or member)
+      const team = await teamsCollection.findOne({
+        $or: [{ leaderEmail: email }, { "members.email": email }],
+      });
+      if (!team) {
+        return NextResponse.json(
+          { message: "You are not in any team." },
+          { status: 400 }
+        );
+      }
+
+      const { linkUrl, linkTitle } = body;
+      if (!linkUrl || !linkTitle) {
+        return NextResponse.json(
+          { message: "Missing linkUrl or linkTitle." },
+          { status: 400 }
+        );
+      }
+
+      // If there's no array yet, initialize it
+      if (!team.importantLinks) {
+        team.importantLinks = [];
+      }
+
+      // Optionally check for duplicates
+      const linkExists = team.importantLinks.find(
+        (link) => link.url === linkUrl
+      );
+      if (linkExists) {
+        return NextResponse.json(
+          { message: "That link is already in the list." },
+          { status: 400 }
+        );
+      }
+
+      const newLink = {
+        url: linkUrl,
+        title: linkTitle,
+        addedBy: email,
+        addedAt: new Date(),
+      };
+
+      await teamsCollection.updateOne(
+        { _id: team._id },
+        {
+          $push: {
+            importantLinks: newLink,
+          },
+          $set: { updatedAt: new Date() },
+        }
+      );
+
+      return NextResponse.json(
+        { message: "Link added successfully!" },
+        { status: 200 }
+      );
+    }
+
+    // REMOVE LINK
+    if (type === "remove-link") {
+      // Check if user is in a team
+      const team = await teamsCollection.findOne({
+        $or: [{ leaderEmail: email }, { "members.email": email }],
+      });
+      if (!team) {
+        return NextResponse.json(
+          { message: "You are not in any team." },
+          { status: 400 }
+        );
+      }
+
+      const { linkUrl } = body;
+      if (!linkUrl) {
+        return NextResponse.json(
+          { message: "No linkUrl provided" },
+          { status: 400 }
+        );
+      }
+
+      await teamsCollection.updateOne(
+        { _id: team._id },
+        {
+          $pull: {
+            importantLinks: { url: linkUrl },
+          },
+          $set: { updatedAt: new Date() },
+        }
+      );
+
+      return NextResponse.json(
+        { message: "Link removed successfully!" },
         { status: 200 }
       );
     }
@@ -377,6 +478,24 @@ export async function GET(req) {
           isLeader,
           team,
         },
+        { status: 200 }
+      );
+    }
+
+    // If 'links=1', fetch the team's important links
+    const linksParam = searchParams.get("links");
+    if (linksParam === "1") {
+      const team = await teamsCollection.findOne({
+        $or: [{ leaderEmail: email }, { "members.email": email }],
+      });
+      if (!team) {
+        // If user isn't in a team, just return empty
+        return NextResponse.json({ importantLinks: [] }, { status: 200 });
+      }
+
+      // Return the array if it exists, or an empty array
+      return NextResponse.json(
+        { importantLinks: team.importantLinks || [] },
         { status: 200 }
       );
     }

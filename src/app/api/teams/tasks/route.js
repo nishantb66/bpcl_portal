@@ -27,33 +27,8 @@ export async function POST(req) {
     const body = await req.json();
     const { type } = body;
 
-    // Task Document structure now includes a discussion field:
-    // {
-    //   _id: ObjectId,
-    //   teamId: ObjectId,
-    //   createdBy: string,         // leader's email
-    //   taskName: string,
-    //   description: string,
-    //   deadline: Date,
-    //   urgency: 'Low' | 'Medium' | 'High',
-    //   assignedTo: [
-    //     {
-    //       email: string,
-    //       status: 'Not Started' | 'In Progress' | 'Done',
-    //       updatedAt: Date
-    //     }
-    //   ],
-    //   discussion: [              // For ideas/messages
-    //     {
-    //       email: string,
-    //       name: string,
-    //       message: string,
-    //       createdAt: Date
-    //     }
-    //   ],
-    //   createdAt: Date,
-    //   updatedAt: Date
-    // }
+    // Task Document structure includes "dependsOn" array
+    // We'll also build a "successors" array in memory at GET time
 
     if (type === "create-task") {
       const {
@@ -87,7 +62,7 @@ export async function POST(req) {
           updatedAt: new Date(),
         }));
       }
-      // Create the new task document with an empty discussion array
+      // Create the new task document
       const newTask = {
         teamId: team._id,
         createdBy: email,
@@ -97,6 +72,7 @@ export async function POST(req) {
         urgency,
         assignedTo: assignedMembers,
         discussion: [],
+        dependsOn: [], // no dependencies by default
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -108,7 +84,6 @@ export async function POST(req) {
     }
 
     if (type === "update-status") {
-      // Update the status for a user assigned to a task
       const { taskId, newStatus } = body;
       if (!taskId || !newStatus) {
         return NextResponse.json(
@@ -147,7 +122,6 @@ export async function POST(req) {
     }
 
     if (type === "add-idea") {
-      // Allow a team member (or the leader) to post an idea/message
       const { taskId, message } = body;
       if (!taskId || !message) {
         return NextResponse.json(
@@ -170,8 +144,7 @@ export async function POST(req) {
           { status: 403 }
         );
       }
-      // For simplicity, using email as the name (you could query a users collection for a proper name)
-      const userName = email;
+      const userName = email; // Or fetch real name from "users" collection
       await tasksCollection.updateOne(
         { _id: task._id },
         {
@@ -193,7 +166,6 @@ export async function POST(req) {
     }
 
     if (type === "delete-task") {
-      // NEW FEATURE: Only the team leader (creator) can delete a task
       const { taskId } = body;
       if (!taskId) {
         return NextResponse.json(
@@ -221,6 +193,76 @@ export async function POST(req) {
       );
     }
 
+    // ADD DEPENDENCY
+    if (type === "add-dependency") {
+      const { mainTaskId, dependsOnTaskId } = body;
+      if (!mainTaskId || !dependsOnTaskId) {
+        return NextResponse.json(
+          { message: "Missing mainTaskId or dependsOnTaskId." },
+          { status: 400 }
+        );
+      }
+
+      // Check if user is the team leader
+      const team = await teamsCollection.findOne({ leaderEmail: email });
+      if (!team) {
+        return NextResponse.json(
+          { message: "Only the team leader can set dependencies." },
+          { status: 403 }
+        );
+      }
+
+      // Find the main task
+      const mainTask = await tasksCollection.findOne({
+        _id: new ObjectId(mainTaskId),
+      });
+      if (!mainTask) {
+        return NextResponse.json(
+          { message: "Main task not found." },
+          { status: 404 }
+        );
+      }
+      if (!mainTask.teamId.equals(team._id)) {
+        return NextResponse.json(
+          { message: "This task is not part of your team." },
+          { status: 403 }
+        );
+      }
+
+      // Find the dependsOn task
+      const depTask = await tasksCollection.findOne({
+        _id: new ObjectId(dependsOnTaskId),
+      });
+      if (!depTask) {
+        return NextResponse.json(
+          { message: "Dependency task not found." },
+          { status: 404 }
+        );
+      }
+      if (!depTask.teamId.equals(team._id)) {
+        return NextResponse.json(
+          { message: "Dependency task is not part of your team." },
+          { status: 403 }
+        );
+      }
+
+      // Update the main task doc
+      await tasksCollection.updateOne(
+        { _id: mainTask._id },
+        {
+          $addToSet: {
+            dependsOn: depTask._id,
+          },
+          $set: { updatedAt: new Date() },
+        }
+      );
+
+      return NextResponse.json(
+        { message: "Dependency established successfully!" },
+        { status: 200 }
+      );
+    }
+
     return NextResponse.json(
       { message: "Invalid request type" },
       { status: 400 }
@@ -237,7 +279,7 @@ export async function POST(req) {
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const overview = searchParams.get("overview"); // check if overview=1
+    const overview = searchParams.get("overview");
 
     const token = req.headers.get("authorization")?.split(" ")[1];
     if (!token) {
@@ -259,40 +301,37 @@ export async function GET(req) {
     const teamsCollection = db.collection("teams");
     const tasksCollection = db.collection("tasks");
 
-    // 1) Find the team in which this user belongs
+    // Find the team in which this user belongs
     const team = await teamsCollection.findOne({
       $or: [{ leaderEmail: email }, { "members.email": email }],
     });
     if (!team) {
-      // user not in any team
       return NextResponse.json(
         { message: "You are not in any team", inTeam: false },
         { status: 200 }
       );
     }
 
-    // If overview=1, gather stats for the entire team
+    // If overview=1, gather stats
     if (overview === "1") {
       const allTasks = await tasksCollection
         .find({ teamId: team._id })
         .toArray();
 
-      // The team doc has `leaderEmail` + `members` array
-      // We'll exclude the leader from assigned/unassigned calculations.
       const membersOnly = team.members || [];
       const totalMembers = membersOnly.length; // Excluding the leader
 
-      // Task Priority Stats
+      // Priority Stats
       let highCount = 0;
       let mediumCount = 0;
       let lowCount = 0;
 
-      // Task Status Stats
+      // Status Stats
       let notStartedCount = 0;
       let inProgressCount = 0;
       let doneCount = 0;
 
-      // Track which members (excluding leader) are assigned
+      // Track which members are assigned
       const assignedEmails = new Set();
 
       for (const task of allTasks) {
@@ -301,25 +340,18 @@ export async function GET(req) {
         else if (task.urgency === "Medium") mediumCount++;
         else if (task.urgency === "Low") lowCount++;
 
-        // Check each assignee's status
+        // Assignees
         for (const assignee of task.assignedTo) {
-          // Only count if assignee is one of the members, not the leader
           if (membersOnly.some((m) => m.email === assignee.email)) {
-            // Status tallies
             if (assignee.status === "Not Started") notStartedCount++;
             else if (assignee.status === "In Progress") inProgressCount++;
             else if (assignee.status === "Done") doneCount++;
-
-            // Mark them as assigned
             assignedEmails.add(assignee.email);
           }
         }
       }
 
-      // total tasks
       const totalTasks = allTasks.length;
-
-      // assigned vs unassigned (excluding leader)
       const assignedCount = assignedEmails.size;
       const unassignedCount = totalMembers - assignedCount;
 
@@ -327,7 +359,7 @@ export async function GET(req) {
         {
           inTeam: true,
           overviewData: {
-            totalMembers, // excludes leader
+            totalMembers,
             totalTasks,
             priorityStats: {
               high: highCount,
@@ -347,20 +379,99 @@ export async function GET(req) {
       );
     }
 
-    // Otherwise, fallback to your normal logic for tasks
+    // If not overview, fetch tasks
     const isLeader = team.leaderEmail === email;
+
     if (isLeader) {
+      // Leader sees all tasks
       const tasks = await tasksCollection
         .find({ teamId: team._id })
         .sort({ createdAt: -1 })
         .toArray();
+
+      // Prepare dependsOn and successors
+      tasks.forEach((t) => {
+        if (!t.dependsOn) t.dependsOn = [];
+        t.successors = [];
+      });
+
+      // Build the "successors" array
+      tasks.forEach((t) => {
+        t.dependsOn.forEach((depId) => {
+          const depTask = tasks.find(
+            (x) => x._id.toString() === depId.toString()
+          );
+          if (depTask) {
+            depTask.successors.push(t._id);
+          }
+        });
+      });
+
       return NextResponse.json({ tasks }, { status: 200 });
     } else {
-      const tasks = await tasksCollection
-        .find({ "assignedTo.email": email })
+      // Non-leader: show assigned tasks *and* any successors of those tasks
+      // 1) Fetch *all* tasks for the team
+      const allTeamTasks = await tasksCollection
+        .find({ teamId: team._id })
         .sort({ createdAt: -1 })
         .toArray();
-      return NextResponse.json({ tasks }, { status: 200 });
+
+      // 2) Make sure each has dependsOn + successors
+      allTeamTasks.forEach((t) => {
+        if (!t.dependsOn) t.dependsOn = [];
+        t.successors = [];
+      });
+
+      // 3) Build successors
+      allTeamTasks.forEach((t) => {
+        t.dependsOn.forEach((depId) => {
+          const depTask = allTeamTasks.find(
+            (x) => x._id.toString() === depId.toString()
+          );
+          if (depTask) {
+            depTask.successors.push(t._id);
+          }
+        });
+      });
+
+      // 4) Figure out which tasks are assigned to this user
+      const assignedToUser = new Set();
+      allTeamTasks.forEach((t) => {
+        if (t.assignedTo.some((a) => a.email === email)) {
+          assignedToUser.add(t._id.toString());
+        }
+      });
+
+      // 5) BFS (or DFS) from each assigned task to gather successors
+      const visited = new Set();
+      const stack = [...assignedToUser];
+
+      // Mark all assigned tasks visited
+      assignedToUser.forEach((id) => visited.add(id));
+
+      while (stack.length) {
+        const currentId = stack.pop();
+        // find the current task
+        const currentTask = allTeamTasks.find(
+          (x) => x._id.toString() === currentId
+        );
+        if (currentTask && currentTask.successors) {
+          for (const succId of currentTask.successors) {
+            const succStr = succId.toString();
+            if (!visited.has(succStr)) {
+              visited.add(succStr);
+              stack.push(succStr);
+            }
+          }
+        }
+      }
+
+      // 6) Now "visited" contains assigned tasks + their successors
+      const finalTasks = allTeamTasks.filter((t) =>
+        visited.has(t._id.toString())
+      );
+
+      return NextResponse.json({ tasks: finalTasks }, { status: 200 });
     }
   } catch (err) {
     console.error(err);

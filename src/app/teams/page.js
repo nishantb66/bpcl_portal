@@ -105,6 +105,23 @@ export default function TeamsPage() {
   // For creating/editing checkpoint
   const [checkpointName, setCheckpointName] = useState("");
 
+  // Important Links state
+  const [showLinksModal, setShowLinksModal] = useState(false);
+  const [importantLinks, setImportantLinks] = useState([]);
+  const [newLinkUrl, setNewLinkUrl] = useState("");
+  const [newLinkTitle, setNewLinkTitle] = useState("");
+  // Controls the second popup for adding a link
+  const [showAddLinkModal, setShowAddLinkModal] = useState(false);
+
+  // For establishing task dependencies (leader-only)
+  const [showDependencyModal, setShowDependencyModal] = useState(false);
+  const [dependencyMainTask, setDependencyMainTask] = useState(null);
+  const [dependencySearchTerm, setDependencySearchTerm] = useState("");
+  const [filteredTasks, setFilteredTasks] = useState([]);
+
+  const token = localStorage.getItem("token");
+  const currentUserEmail = token ? jwt.decode(token)?.email : null;
+
   const checkTokenExpiration = (token) => {
     try {
       const decodedToken = jwt.decode(token);
@@ -847,8 +864,6 @@ export default function TeamsPage() {
     }
   };
 
-
-
   // update team info
   const updateTeamInfo = async () => {
     try {
@@ -883,6 +898,169 @@ export default function TeamsPage() {
     } catch (err) {
       console.error(err);
       toast.error("Failed to update team info.");
+    }
+  };
+
+  // Fetch existing links from the server
+  const fetchImportantLinks = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/teams?links=1", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setImportantLinks(data.importantLinks || []);
+      } else {
+        toast.error(data.message || "Failed to fetch links");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong while fetching links.");
+    }
+  };
+
+  // Add a link (this will be called from the second popup)
+  const handleAddLink = async () => {
+    if (!newLinkUrl.trim() || !newLinkTitle.trim()) {
+      toast.error("Please provide both URL and Title.");
+      return;
+    }
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/teams", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: "add-link",
+          linkUrl: newLinkUrl.trim(),
+          linkTitle: newLinkTitle.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message);
+        // Clear fields
+        setNewLinkUrl("");
+        setNewLinkTitle("");
+        setShowAddLinkModal(false); // close the "Add Link" popup
+        // Refresh the links
+        fetchImportantLinks();
+      } else {
+        toast.error(data.message || "Failed to add link.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to add link.");
+    }
+  };
+
+  // Remove a link
+  const handleRemoveLink = async (url) => {
+    if (!window.confirm("Are you sure you want to remove this link?")) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/teams", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: "remove-link",
+          linkUrl: url,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message);
+        fetchImportantLinks(); // refresh
+      } else {
+        toast.error(data.message || "Failed to remove link.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to remove link.");
+    }
+  };
+
+  // This function calls the backend to link one task to another
+  const handleAddDependency = async (mainTaskId, dependsOnTaskId) => {
+    if (!mainTaskId || !dependsOnTaskId) {
+      toast.error("Please select both tasks to establish a connection.");
+      return;
+    }
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/teams/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: "add-dependency",
+          mainTaskId,
+          dependsOnTaskId,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message);
+        setShowDependencyModal(false);
+        // Refresh tasks so we see the new link
+        fetchTasks();
+      } else {
+        toast.error(data.message || "Failed to establish dependency.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to establish dependency.");
+    }
+  };
+
+  // Add a Task to the user's personal calendar
+  const handleAddToCalendar = async (task) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("No token found. Please log in again.");
+        return;
+      }
+
+      // We'll map urgency => importance
+      let importanceVal = "Low";
+      if (task.urgency === "Medium") importanceVal = "Medium";
+      if (task.urgency === "High") importanceVal = "High";
+
+      const bodyData = {
+        date: task.deadline, // "YYYY-MM-DD" or Date object?
+        // If it's a Date object, convert to string: new Date(task.deadline).toISOString().split("T")[0]
+        plans: task.taskName, // from the instructions
+        importance: importanceVal,
+      };
+
+      const res = await fetch("/api/teams/calendar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(bodyData),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || "Failed to add to calendar");
+        return;
+      }
+      toast.success(data.message || "Added to calendar!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Error adding task to calendar");
     }
   };
 
@@ -932,6 +1110,20 @@ export default function TeamsPage() {
   return (
     <div className="min-h-screen flex bg-gray-100 relative">
       <ToastContainer />
+
+      {/* "Important Link" button in top-right */}
+      <div className="absolute top-4 right-4">
+        <button
+          onClick={() => {
+            setShowLinksModal(true);
+            fetchImportantLinks();
+          }}
+          className="bg-blue-300 hover:bg-blue-200 text-black px-3 py-1 rounded-md"
+        >
+          Important Links
+        </button>
+      </div>
+
 
       {/* Sidebar */}
       <aside className="w-64 bg-gradient-to-b from-white to-gray-50 border-r border-gray-100 px-4 py-4 flex flex-col text-sm text-gray-800 shadow-lg">
@@ -1174,12 +1366,17 @@ export default function TeamsPage() {
           ) : (
             <ul className="space-y-3">
               {tasks.map((task) => {
-                // For the label, if user is leader we see all tasks. If user is member, these are tasks assigned to them
+                const isAssignedToUser = task.assignedTo.some(
+                  (assignee) => assignee.email === currentUserEmail
+                );
+
                 return (
                   <li
                     key={task._id}
                     onClick={() => openTaskDetails(task)}
-                    className="p-3 bg-gray-50 rounded hover:bg-gray-100 cursor-pointer transition-colors duration-150"
+                    className={`p-3 rounded hover:bg-gray-100 cursor-pointer transition-colors duration-150 ${
+                      isAssignedToUser ? "bg-green-100" : "bg-gray-50"
+                    }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-gray-800">
@@ -1447,6 +1644,70 @@ export default function TeamsPage() {
               </div>
             )}
 
+            <div className="mb-4 border-t pt-3">
+              <h3 className="font-semibold mb-2">Dependencies & Successors</h3>
+
+              {/* List tasks that must be done first */}
+              {selectedTask.dependsOn && selectedTask.dependsOn.length > 0 ? (
+                <p className="text-sm text-gray-700 mb-2">
+                  Depends on:{" "}
+                  {selectedTask.dependsOn.map((depId, idx) => {
+                    // find the actual task name from your tasks array
+                    const depTask = tasks.find((t) => t._id === depId);
+                    if (!depTask) return <span key={idx}>Unknown Task</span>;
+                    return (
+                      <span
+                        key={depId}
+                        className="bg-gray-100 px-1 py-0.5 rounded mx-1"
+                      >
+                        {depTask.taskName}
+                      </span>
+                    );
+                  })}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500 mb-2">No dependencies.</p>
+              )}
+
+              {/* List tasks that come after this one */}
+              {selectedTask.successors && selectedTask.successors.length > 0 ? (
+                <p className="text-sm text-gray-700">
+                  Successors:{" "}
+                  {selectedTask.successors.map((succId, idx) => {
+                    const succTask = tasks.find((t) => t._id === succId);
+                    if (!succTask) return <span key={idx}>Unknown Task</span>;
+                    return (
+                      <span
+                        key={succId}
+                        className="bg-gray-100 px-1 py-0.5 rounded mx-1"
+                      >
+                        {succTask.taskName}
+                      </span>
+                    );
+                  })}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500">No successor tasks.</p>
+              )}
+
+              {/* Button to set a new dependency */}
+              {isLeader && (
+                <button
+                  onClick={() => {
+                    setDependencyMainTask(selectedTask);
+                    setDependencySearchTerm("");
+                    setFilteredTasks(
+                      tasks.filter((t) => t._id !== selectedTask._id) // exclude the main task
+                    );
+                    setShowDependencyModal(true);
+                  }}
+                  className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm"
+                >
+                  Set Dependency
+                </button>
+              )}
+            </div>
+
             {/* Discussion Section - visible to everyone assigned + leader */}
             <div className="mb-4">
               <h3 className="font-semibold mb-2 border-b border-gray-200 pb-1">
@@ -1546,6 +1807,16 @@ export default function TeamsPage() {
               >
                 Update Status
               </button>
+            )}
+            {selectedTask && (
+              <div className="mt-4">
+                <button
+                  onClick={() => handleAddToCalendar(selectedTask)}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                  Add to Portal Calendar
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -1904,6 +2175,186 @@ export default function TeamsPage() {
                 Add New Check
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* importamt link model Model */}
+      {showLinksModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4"
+          onClick={() => setShowLinksModal(false)}
+        >
+          <div
+            className="relative bg-white w-full max-w-md rounded-lg shadow-xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowLinksModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-xl font-bold mb-4">Important Links</h2>
+
+            {/* Show existing links */}
+            <ul className="space-y-2 mb-4 max-h-60 overflow-auto">
+              {importantLinks.map((link, idx) => (
+                <li
+                  key={idx}
+                  className="flex items-center justify-between bg-gray-50 p-2 rounded"
+                >
+                  <div>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline"
+                    >
+                      {link.title}
+                    </a>
+                    <p className="text-xs text-gray-500">{link.url}</p>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveLink(link.url)}
+                    className="text-red-500 hover:text-red-700 text-sm"
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            {/* Button that opens the second popup for adding a new link */}
+            <button
+              onClick={() => setShowAddLinkModal(true)}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
+            >
+              Add Link
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showAddLinkModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4"
+          onClick={() => setShowAddLinkModal(false)}
+        >
+          <div
+            className="relative bg-white w-full max-w-sm rounded-lg shadow-xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowAddLinkModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-xl font-bold mb-4">Add New Link</h2>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Link Title
+              </label>
+              <input
+                type="text"
+                value={newLinkTitle}
+                onChange={(e) => setNewLinkTitle(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Link URL
+              </label>
+              <input
+                type="text"
+                value={newLinkUrl}
+                onChange={(e) => setNewLinkUrl(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+            </div>
+
+            <button
+              onClick={handleAddLink}
+              className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+            >
+              Add Link
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Dependency Modal (Leader only) */}
+      {showDependencyModal && dependencyMainTask && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4"
+          onClick={() => setShowDependencyModal(false)}
+        >
+          <div
+            className="relative bg-white w-full max-w-md rounded-lg shadow-xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowDependencyModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-xl font-bold mb-4">
+              Set Dependency for: {dependencyMainTask.taskName}
+            </h2>
+
+            <p className="text-sm text-gray-600 mb-2">
+              Select which existing task must be completed first.
+            </p>
+
+            {/* A quick input to filter tasks */}
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              value={dependencySearchTerm}
+              onChange={(e) => {
+                setDependencySearchTerm(e.target.value);
+                // Filter out the main task itself and show all others
+                const term = e.target.value.toLowerCase();
+                const results = tasks.filter(
+                  (t) =>
+                    t._id !== dependencyMainTask._id &&
+                    t.taskName.toLowerCase().includes(term)
+                );
+                setFilteredTasks(results);
+              }}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2"
+            />
+
+            {/* Show filtered tasks as a list to pick from */}
+            <ul className="max-h-48 overflow-auto border border-gray-200 rounded-lg p-2 mb-4">
+              {filteredTasks.map((t) => (
+                <li
+                  key={t._id}
+                  onClick={() =>
+                    handleAddDependency(dependencyMainTask._id, t._id)
+                  }
+                  className="p-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-700 rounded"
+                >
+                  {t.taskName}
+                </li>
+              ))}
+              {filteredTasks.length === 0 && (
+                <li className="text-sm text-gray-500">
+                  No matching tasks found.
+                </li>
+              )}
+            </ul>
           </div>
         </div>
       )}
