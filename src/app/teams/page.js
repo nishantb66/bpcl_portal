@@ -137,6 +137,15 @@ export default function TeamsPage() {
   const [reminderTask, setReminderTask] = useState(null);
   const [reminderSetForTasks, setReminderSetForTasks] = useState([]);
 
+  // HACKATHON states
+  const [showHackathonModal, setShowHackathonModal] = useState(false);
+  const [hackathonData, setHackathonData] = useState(null); // store fetched hackathon
+  const [hackTopic, setHackTopic] = useState("");
+  const [hackDescription, setHackDescription] = useState("");
+  const [hackStart, setHackStart] = useState("");
+  const [hackEnd, setHackEnd] = useState("");
+  const [hackathonId, setHackathonId] = useState(null);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -215,6 +224,25 @@ export default function TeamsPage() {
       .then((data) => {
         if (data.tasks) {
           setTasks(data.tasks);
+        }
+      })
+      .catch((err) => console.error(err));
+
+    // 3) Fetch hackathon info
+    fetch("/api/hackathons", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.hackathon) {
+          setHackathonData(data.hackathon);
+          setHackathonId(data.hackathon._id);
+        } else {
+          setHackathonData(null);
+          setHackathonId(null);
         }
       })
       .catch((err) => console.error(err));
@@ -1166,6 +1194,116 @@ export default function TeamsPage() {
     }
   };
 
+
+  function isHackathonActive(hackathon) {
+    if (!hackathon) return false;
+    const now = new Date();
+    const start = new Date(hackathon.startDateTime);
+    const end = new Date(hackathon.endDateTime);
+    // Button is shown only if 'now' is >= start AND <= end
+    return now >= start && now <= end;
+  }
+
+
+  // CREATE or UPDATE
+  const handleSaveHackathon = async () => {
+    try {
+      if (
+        !hackTopic.trim() ||
+        !hackDescription.trim() ||
+        !hackStart ||
+        !hackEnd
+      ) {
+        toast.error("Please fill all fields.");
+        return;
+      }
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/hackathons", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: hackathonId ? "update-hackathon" : "create-hackathon",
+          hackathonId,
+          topic: hackTopic.trim(),
+          description: hackDescription.trim(),
+          startDateTime: hackStart,
+          endDateTime: hackEnd,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message);
+        return;
+      }
+      toast.success(data.message);
+
+      // Re-fetch hackathon to update local state
+      await fetchHackathonData();
+      setShowHackathonModal(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong saving hackathon.");
+    }
+  };
+
+  const handleDeleteHackathon = async () => {
+    if (!window.confirm("Are you sure you want to delete the hackathon?"))
+      return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/hackathons", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: "delete-hackathon",
+          hackathonId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message);
+        return;
+      }
+      toast.success(data.message);
+      // Clear local hackathon state
+      setHackathonData(null);
+      setHackathonId(null);
+      setShowHackathonModal(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete hackathon.");
+    }
+  };
+
+  // Helper to fetch hackathon data
+  const fetchHackathonData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/hackathons", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (data.hackathon) {
+        setHackathonData(data.hackathon);
+        setHackathonId(data.hackathon._id);
+      } else {
+        setHackathonData(null);
+        setHackathonId(null);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // If loading, show spinner
   if (loading) {
     return (
@@ -1213,16 +1351,59 @@ export default function TeamsPage() {
     <div className="min-h-screen flex bg-gray-100 relative">
       <ToastContainer />
 
-      {/* "Important Link" button in top-right */}
-      <div className="absolute top-4 right-4">
+      {/* Top-right corner buttons */}
+      <div className="absolute top-4 right-4 flex items-center gap-3">
+        {hackathonData && isHackathonActive(hackathonData) && (
+          <button
+            onClick={() => router.push("/hack")}
+            className="group relative flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+          >
+            <div className="flex items-center gap-1.5">
+              <div className="relative">
+                <div className="absolute -top-1 -right-1 w-2.5 h-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500"></span>
+                </div>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+              </div>
+              <span className="font-medium">Event Live</span>
+            </div>
+          </button>
+        )}
+
         <button
           onClick={() => {
             setShowLinksModal(true);
             fetchImportantLinks();
           }}
-          className="bg-blue-300 hover:bg-blue-200 text-black px-3 py-1 rounded-md"
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg group"
         >
-          Important Links
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+            />
+          </svg>
+          <span className="font-medium">Important Links</span>
         </button>
       </div>
 
@@ -1348,6 +1529,33 @@ export default function TeamsPage() {
               >
                 <span className="text-sm font-medium">Overview</span>
               </button>
+
+              {isLeader && (
+                <button
+                  onClick={() => {
+                    // If there's an existing hackathon, prefill the fields
+                    if (hackathonData) {
+                      setHackTopic(hackathonData.topic);
+                      setHackDescription(hackathonData.description);
+                      setHackStart(hackathonData.startDateTime.split(".")[0]);
+                      setHackEnd(hackathonData.endDateTime.split(".")[0]);
+                      setHackathonId(hackathonData._id);
+                    } else {
+                      setHackTopic("");
+                      setHackDescription("");
+                      setHackStart("");
+                      setHackEnd("");
+                      setHackathonId(null);
+                    }
+                    setShowHackathonModal(true);
+                  }}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  <span className="text-sm font-medium">
+                    Quick Brainstorming
+                  </span>
+                </button>
+              )}
 
               <button
                 onClick={openCheckpoints}
@@ -3767,6 +3975,167 @@ export default function TeamsPage() {
                     />
                   </svg>
                   <span>Set Reminder</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Professional Hackathon Creation Modal */}
+      {showHackathonModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onClick={() => setShowHackathonModal(false)}
+        >
+          <div
+            className="bg-white w-full max-w-xl rounded-2xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="px-8 py-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl">
+                    <svg
+                      className="w-6 h-6 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-800">
+                      {hackathonId ? "Update Event" : "Create Event"}
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Set up an in-house brainstorming session
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowHackathonModal(false)}
+                  className="p-2 hover:bg-gray-50 rounded-full text-gray-400 hover:text-gray-500"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Form Content */}
+            <div className="p-8 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Topic <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={hackTopic}
+                  onChange={(e) => setHackTopic(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                  placeholder="Enter hackathon topic..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={hackDescription}
+                  onChange={(e) => setHackDescription(e.target.value)}
+                  rows={4}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none"
+                  placeholder="Describe the hackathon challenge and objectives..."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Start Date & Time <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={hackStart}
+                    onChange={(e) => setHackStart(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    End Date & Time <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={hackEnd}
+                    onChange={(e) => setHackEnd(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-blue-50 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <svg
+                      className="w-4 h-4 text-blue-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    The event will be visible to all team members once created
+                    according to the session duration.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-8 py-6 bg-gray-50 border-t border-gray-100">
+              <div className="flex items-center justify-end gap-4">
+                {hackathonId && (
+                  <button
+                    onClick={handleDeleteHackathon}
+                    className="px-6 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+                  >
+                    Delete Event
+                  </button>
+                )}
+                <button
+                  onClick={handleSaveHackathon}
+                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2"
+                >
+                  {hackathonId ? "Update Event" : "Create Event"}
                 </button>
               </div>
             </div>

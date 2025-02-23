@@ -107,3 +107,44 @@ export async function POST(req) {
     );
   }
 }
+
+
+  const handleAddIdea = async () => {
+    if (!ideaTitle.trim() || !ideaDescription.trim()) {
+      toast.error("Please fill out both fields.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please login again.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/hackathons", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: "add-idea",
+          ideaTitle,
+          ideaDescription,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || "Failed to add idea.");
+        return;
+      }
+      toast.success(data.message || "Idea added!");
+      setIdeaTitle("");
+      setIdeaDescription("");
+      refreshHackathon();
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong adding idea.");
+    }
+  };
