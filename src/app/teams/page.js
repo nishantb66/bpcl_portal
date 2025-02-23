@@ -131,6 +131,12 @@ export default function TeamsPage() {
   const [aiAnswer, setAiAnswer] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
 
+  // For "Add Reminder"
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [reminderDateTime, setReminderDateTime] = useState("");
+  const [reminderTask, setReminderTask] = useState(null);
+  const [reminderSetForTasks, setReminderSetForTasks] = useState([]);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -1122,6 +1128,44 @@ export default function TeamsPage() {
     }
   };
 
+  // 3) The handleSetReminder function
+  const handleSetReminder = async () => {
+    try {
+      if (!reminderTask || !reminderDateTime) {
+        toast.error("Please select a valid date and time.");
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/teams/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: "set-reminder",
+          taskId: reminderTask._id,
+          reminderDateTime, // for example: "2025-03-29T09:30"
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message);
+      } else {
+        toast.success(data.message);
+        setShowReminderModal(false);
+
+        // 4) Mark this task as having a reminder set
+        setReminderSetForTasks((prev) => [...prev, reminderTask._id]);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to set reminder.");
+    }
+  };
+
   // If loading, show spinner
   if (loading) {
     return (
@@ -1564,6 +1608,65 @@ export default function TeamsPage() {
                                 d="M9 5l7 7-7 7"
                               />
                             </svg>
+                            {/* Add Reminder Button */}
+                            <div className="mt-3">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setReminderTask(task);
+                                  setReminderDateTime("");
+                                  setShowReminderModal(true);
+                                }}
+                                disabled={reminderSetForTasks.includes(
+                                  task._id
+                                )}
+                                className={`
+    inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full 
+    transition-all duration-200 transform hover:scale-105
+    ${
+      reminderSetForTasks.includes(task._id)
+        ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+        : "bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 border border-gray-200 hover:border-blue-200"
+    }
+  `}
+                              >
+                                {reminderSetForTasks.includes(task._id) ? (
+                                  <>
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                    <span>Reminder Set</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                      />
+                                    </svg>
+                                    <span>Set Reminder</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </li>
@@ -3495,6 +3598,177 @@ export default function TeamsPage() {
               <p className="mt-2 text-xs text-gray-500">
                 Press Enter to send, Shift + Enter for new line
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Email Reminder Modal */}
+      {showReminderModal && reminderTask && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onClick={() => setShowReminderModal(false)}
+        >
+          <div
+            className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl">
+                  <svg
+                    className="w-5 h-5 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-800">
+                    Email Reminder
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    Schedule task notification
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowReminderModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+              >
+                <FiX className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-6">
+              <div className="bg-blue-50 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-100 rounded-full mt-1">
+                    <svg
+                      className="w-4 h-4 text-blue-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">
+                      Task Details
+                    </p>
+                    <h3 className="text-base font-semibold text-gray-800 mt-1">
+                      {reminderTask?.taskName}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      You'll receive an email notification at the specified
+                      time.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reminder Date & Time <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="datetime-local"
+                    value={reminderDateTime}
+                    onChange={(e) => setReminderDateTime(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
+                  />
+                  <svg
+                    className="absolute left-3 top-3.5 w-5 h-5 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  Select a date and time when you'd like to receive the reminder
+                  email
+                </p>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <div className="shrink-0">
+                    <svg
+                      className="w-5 h-5 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="flex-1 text-sm text-gray-600">
+                    <p>
+                      The reminder will be sent to your registered email address
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowReminderModal(false)}
+                  className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSetReminder}
+                  disabled={!reminderDateTime}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center gap-2"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span>Set Reminder</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -3,6 +3,8 @@ import { verify } from "jsonwebtoken";
 import { ObjectId } from "mongodb";
 import { connectToDB } from "../../middleware";
 import dotenv from "dotenv";
+import nodemailer from "nodemailer";
+
 dotenv.config();
 
 export async function POST(req) {
@@ -11,6 +13,7 @@ export async function POST(req) {
     if (!token) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+
     let decoded;
     try {
       decoded = verify(token, process.env.JWT_SECRET);
@@ -20,16 +23,17 @@ export async function POST(req) {
         { status: 401 }
       );
     }
+
     const { email } = decoded;
     const db = await connectToDB();
     const teamsCollection = db.collection("teams");
     const tasksCollection = db.collection("tasks");
+
     const body = await req.json();
     const { type } = body;
 
-    // Task Document structure includes "dependsOn" array
-    // We'll also build a "successors" array in memory at GET time
-
+    // ---------------------------------------------------------------------------------
+    // CREATE TASK
     if (type === "create-task") {
       const {
         taskName,
@@ -39,6 +43,7 @@ export async function POST(req) {
         assignToAll,
         specificMembers,
       } = body;
+
       // Verify that the user is a team leader
       const team = await teamsCollection.findOne({ leaderEmail: email });
       if (!team) {
@@ -47,6 +52,7 @@ export async function POST(req) {
           { status: 403 }
         );
       }
+
       // Determine which team members to assign the task to
       let assignedMembers = [];
       if (assignToAll) {
@@ -62,6 +68,7 @@ export async function POST(req) {
           updatedAt: new Date(),
         }));
       }
+
       // Create the new task document
       const newTask = {
         teamId: team._id,
@@ -73,16 +80,21 @@ export async function POST(req) {
         assignedTo: assignedMembers,
         discussion: [],
         dependsOn: [], // no dependencies by default
+        // NEW: optional array for reminders (added for completeness)
+        reminders: [],
         createdAt: new Date(),
         updatedAt: new Date(),
       };
       await tasksCollection.insertOne(newTask);
+
       return NextResponse.json(
         { message: "Task created successfully!" },
         { status: 201 }
       );
     }
 
+    // ---------------------------------------------------------------------------------
+    // UPDATE TASK STATUS
     if (type === "update-status") {
       const { taskId, newStatus } = body;
       if (!taskId || !newStatus) {
@@ -91,6 +103,7 @@ export async function POST(req) {
           { status: 400 }
         );
       }
+
       const task = await tasksCollection.findOne({ _id: new ObjectId(taskId) });
       if (!task) {
         return NextResponse.json(
@@ -98,6 +111,7 @@ export async function POST(req) {
           { status: 404 }
         );
       }
+
       const isAssigned = task.assignedTo.some((a) => a.email === email);
       if (!isAssigned) {
         return NextResponse.json(
@@ -105,6 +119,7 @@ export async function POST(req) {
           { status: 403 }
         );
       }
+
       await tasksCollection.updateOne(
         { _id: task._id, "assignedTo.email": email },
         {
@@ -115,12 +130,15 @@ export async function POST(req) {
           },
         }
       );
+
       return NextResponse.json(
         { message: "Task status updated successfully!" },
         { status: 200 }
       );
     }
 
+    // ---------------------------------------------------------------------------------
+    // ADD IDEA / MESSAGE
     if (type === "add-idea") {
       const { taskId, message } = body;
       if (!taskId || !message) {
@@ -129,6 +147,7 @@ export async function POST(req) {
           { status: 400 }
         );
       }
+
       const task = await tasksCollection.findOne({ _id: new ObjectId(taskId) });
       if (!task) {
         return NextResponse.json(
@@ -136,6 +155,7 @@ export async function POST(req) {
           { status: 404 }
         );
       }
+
       const isAssigned = task.assignedTo.some((a) => a.email === email);
       const isLeader = task.createdBy === email;
       if (!isAssigned && !isLeader) {
@@ -144,7 +164,10 @@ export async function POST(req) {
           { status: 403 }
         );
       }
-      const userName = email; // Or fetch real name from "users" collection
+
+      // For simplicity, use the user's email as name. You could fetch from 'users' collection if desired
+      const userName = email;
+
       await tasksCollection.updateOne(
         { _id: task._id },
         {
@@ -159,12 +182,15 @@ export async function POST(req) {
           $set: { updatedAt: new Date() },
         }
       );
+
       return NextResponse.json(
         { message: "Idea/Message added successfully!" },
         { status: 200 }
       );
     }
 
+    // ---------------------------------------------------------------------------------
+    // DELETE TASK
     if (type === "delete-task") {
       const { taskId } = body;
       if (!taskId) {
@@ -173,6 +199,7 @@ export async function POST(req) {
           { status: 400 }
         );
       }
+
       const task = await tasksCollection.findOne({ _id: new ObjectId(taskId) });
       if (!task) {
         return NextResponse.json(
@@ -180,12 +207,14 @@ export async function POST(req) {
           { status: 404 }
         );
       }
+
       if (task.createdBy !== email) {
         return NextResponse.json(
           { message: "Only the team leader can delete this task." },
           { status: 403 }
         );
       }
+
       await tasksCollection.deleteOne({ _id: task._id });
       return NextResponse.json(
         { message: "Task deleted successfully!" },
@@ -193,6 +222,7 @@ export async function POST(req) {
       );
     }
 
+    // ---------------------------------------------------------------------------------
     // ADD DEPENDENCY
     if (type === "add-dependency") {
       const { mainTaskId, dependsOnTaskId } = body;
@@ -263,6 +293,90 @@ export async function POST(req) {
       );
     }
 
+    // ---------------------------------------------------------------------------------
+    // SET REMINDER
+    if (type === "set-reminder") {
+      const { taskId, reminderDateTime } = body;
+      if (!taskId || !reminderDateTime) {
+        return NextResponse.json(
+          { message: "Missing taskId or reminderDateTime." },
+          { status: 400 }
+        );
+      }
+
+      // Find the task
+      const task = await tasksCollection.findOne({ _id: new ObjectId(taskId) });
+      if (!task) {
+        return NextResponse.json(
+          { message: "Task not found." },
+          { status: 404 }
+        );
+      }
+
+      // Check if user is assigned or the leader
+      const isAssigned = task.assignedTo.some((a) => a.email === email);
+      const isLeader = task.createdBy === email;
+      if (!isAssigned && !isLeader) {
+        return NextResponse.json(
+          { message: "You are not permitted to set reminders on this task." },
+          { status: 403 }
+        );
+      }
+
+      // Push reminder info into the DB (an optional array)
+      const reminderObj = {
+        email,
+        dateTime: new Date(reminderDateTime),
+        createdAt: new Date(),
+      };
+
+      await tasksCollection.updateOne(
+        { _id: task._id },
+        {
+          $push: {
+            reminders: reminderObj,
+          },
+        }
+      );
+
+      // Setup the in-memory timer to send email
+      const timeUntilReminder =
+        new Date(reminderDateTime).getTime() - Date.now();
+      if (timeUntilReminder > 0) {
+        // Create the nodemailer transporter
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: process.env.EMAIL,
+            pass: process.env.APP_PASS,
+          },
+        });
+
+        setTimeout(async () => {
+          try {
+            await transporter.sendMail({
+              from: process.env.EMAIL,
+              to: email,
+              subject: "Task Reminder",
+              text: `This is a reminder for your task: ${task.taskName}. The scheduled reminder time is now.`,
+            });
+            console.log(
+              `Reminder email sent to ${email} for task: ${task.taskName}`
+            );
+          } catch (err) {
+            console.error("Failed to send reminder email:", err);
+          }
+        }, timeUntilReminder);
+      }
+
+      return NextResponse.json(
+        { message: "Reminder set successfully!" },
+        { status: 200 }
+      );
+    }
+
+    // ---------------------------------------------------------------------------------
+    // INVALID REQUEST
     return NextResponse.json(
       { message: "Invalid request type" },
       { status: 400 }
@@ -276,6 +390,8 @@ export async function POST(req) {
   }
 }
 
+// --------------------------------------------------------------------------
+// GET HANDLER
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -451,7 +567,6 @@ export async function GET(req) {
 
       while (stack.length) {
         const currentId = stack.pop();
-        // find the current task
         const currentTask = allTeamTasks.find(
           (x) => x._id.toString() === currentId
         );
@@ -466,7 +581,7 @@ export async function GET(req) {
         }
       }
 
-      // 6) Now "visited" contains assigned tasks + their successors
+      // 6) "visited" now has assigned tasks + their successors
       const finalTasks = allTeamTasks.filter((t) =>
         visited.has(t._id.toString())
       );
