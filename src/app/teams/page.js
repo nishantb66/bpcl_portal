@@ -20,6 +20,7 @@ import {
   FiFlag,
   FiBell,
   FiClipboard,
+  FiPlus,
 } from "react-icons/fi";
 import jwt from "jsonwebtoken";
 import { Pie, Bar, Doughnut } from "react-chartjs-2";
@@ -1180,416 +1181,543 @@ export default function TeamsPage() {
       </div>
 
       {/* Sidebar */}
-      <aside className="w-64 bg-gradient-to-b from-white to-gray-50 border-r border-gray-100 px-4 py-4 flex flex-col text-sm text-gray-800 shadow-lg">
-        {/* Team Info Header */}
-        <div className="mb-4">
-          {isLeader ? (
-            <h2
-              className="font-semibold text-gray-900 cursor-pointer hover:text-indigo-600 transition-colors duration-150"
-              onClick={() => {
-                setTempTeamName(teamInfo?.teamName || "");
-                setTempDescription(teamInfo?.teamDescription || "");
-                setShowTeamInfoModal(true);
-              }}
-              title="Click to edit team name & description"
-            >
-              {teamInfo?.teamName || "Your Team"}
-            </h2>
-          ) : (
-            <h2 className="font-semibold text-gray-900">
-              {teamInfo?.teamName || "Your Team"}
-            </h2>
-          )}
+      <aside className="w-72 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 text-sm">
+        {/* Fixed Header Section */}
+        <div className="p-6 border-b border-gray-100 bg-white shrink-0">
+          <div className="flex items-center justify-between mb-4">
+            {isLeader ? (
+              <h2
+                className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-indigo-600 transition-colors duration-150"
+                onClick={() => {
+                  setTempTeamName(teamInfo?.teamName || "");
+                  setTempDescription(teamInfo?.teamDescription || "");
+                  setShowTeamInfoModal(true);
+                }}
+                title="Click to edit team name & description"
+              >
+                {teamInfo?.teamName || "Your Team"}
+              </h2>
+            ) : (
+              <h2 className="text-lg font-semibold text-gray-900">
+                {teamInfo?.teamName || "Your Team"}
+              </h2>
+            )}
+          </div>
 
-          {/* Team Description (if any) */}
           {teamInfo?.teamDescription && (
-            <p className="mt-1 text-xs italic text-gray-600">
+            <p className="text-sm text-gray-600 mb-3">
               {teamInfo.teamDescription}
             </p>
           )}
 
-          {/* Leader or joined info */}
           {isLeader ? (
-            <p className="mt-1 text-xs text-gray-700">You are the Leader</p>
+            <div className="inline-flex items-center px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm">
+              Team Leader
+            </div>
           ) : (
-            <p className="mt-1 text-xs text-gray-700">
-              You joined {teamInfo?.leaderName}&apos;s Team
-              {teamInfo?.members?.find((m) => m.email === teamInfo.leaderEmail)
-                ?.invitedAt
-                ? ` since ${new Date(
-                    teamInfo.members.find(
-                      (m) => m.email === teamInfo.leaderEmail
-                    )?.invitedAt
-                  ).toLocaleDateString()}`
-                : ""}
-            </p>
+            <p className="text-sm text-gray-600">Member</p>
           )}
         </div>
 
-        {/* Members List */}
-        <div
-          className={`flex-1 overflow-auto ${
-            teamInfo?.members?.length > 4 ? "max-h-48" : ""
-          }`}
-        >
-          <ul className="space-y-2">
-            {/* Leader always on top */}
-            <li className="font-semibold text-indigo-600 text-xs">
-              Leader: {teamInfo?.leaderName}
-            </li>
-            {/* Then members */}
-            {teamInfo?.members
-              ?.filter((m) => m.email !== teamInfo.leaderEmail)
-              ?.map((member) => (
-                <li
-                  key={member.email}
-                  className="flex items-center justify-between text-xs space-x-2 p-2 rounded-md hover:bg-gray-50 transition-colors duration-150"
-                >
-                  {/* Show 'Cap' tag if canAddMembers is true */}
-                  <div className="flex items-center space-x-1">
-                    <span className="text-gray-800">{member.name}</span>
-                    {member.canAddMembers && (
-                      <span className="bg-indigo-100 text-indigo-600 px-1 py-0.5 rounded font-medium">
-                        Cap
-                      </span>
-                    )}
+        {/* Scrollable Content Section */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6 space-y-6">
+            {/* Members Section */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-4">
+                Team Members
+              </h3>
+              <div className="space-y-3">
+                {/* Leader */}
+                <div className="flex items-center space-x-3 p-2 bg-indigo-50 rounded-lg">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                    <span className="text-sm font-medium text-indigo-700">
+                      {teamInfo?.leaderName?.[0]}
+                    </span>
                   </div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {teamInfo?.leaderName}
+                    <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                      Owner
+                    </span>
+                  </p>
+                </div>
 
-                  <div className="flex items-center space-x-2">
-                    {/* If you're the leader, show a button to toggle that member's canAddMembers */}
-                    {isLeader && (
-                      <button
-                        onClick={() => confirmUpdateAccess(member)}
-                        className="text-blue-500 hover:text-blue-700 transition-colors duration-150"
-                      >
-                        {member.canAddMembers
-                          ? "Revoke Access"
-                          : "Grant Access"}
-                      </button>
-                    )}
-                    {/* Remove Member button (leader or 'cap' user can remove) */}
-                    {(isLeader || userHasCap) && (
-                      <button
-                        onClick={() => handleRemoveMember(member.email)}
-                        className="text-red-500 hover:text-red-700 transition-colors duration-150"
-                      >
-                        <FiTrash2 />
-                      </button>
-                    )}
+                {/* Other Members */}
+                {teamInfo?.members
+                  ?.filter((m) => m.email !== teamInfo.leaderEmail)
+                  ?.map((member) => (
+                    <div
+                      key={member.email}
+                      className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-150"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                          <span className="text-sm font-medium text-gray-600">
+                            {member.name[0]}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">
+                            {member.name}
+                          </p>
+                          {member.canAddMembers && (
+                            <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                              Admin
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        {isLeader && (
+                          <button
+                            onClick={() => confirmUpdateAccess(member)}
+                            className="text-sm text-gray-600 hover:text-indigo-600"
+                          >
+                            {member.canAddMembers
+                              ? "Revoke Access"
+                              : "Grant Access"}
+                          </button>
+                        )}
+                        {(isLeader || userHasCap) && (
+                          <button
+                            onClick={() => handleRemoveMember(member.email)}
+                            className="p-1 text-gray-400 hover:text-red-500 rounded"
+                          >
+                            <FiTrash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <button
+                onClick={openOverview}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                <span className="text-sm font-medium">Overview</span>
+              </button>
+
+              <button
+                onClick={openCheckpoints}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                <span className="text-sm font-medium">Checkpoints</span>
+              </button>
+
+              <button
+                onClick={() => setShowAIModal(true)}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                <span className="text-sm font-medium">AI Assistant (Beta)</span>
+              </button>
+            </div>
+
+            {/* Notice Section */}
+            {teamInfo?.notice && (
+              <div className="border-t border-gray-100 pt-6">
+                <div
+                  className={`rounded-lg border ${
+                    teamInfo.notice.importance === "High"
+                      ? "border-red-200 bg-red-50"
+                      : "border-green-200 bg-green-50"
+                  } p-4`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        teamInfo.notice.importance === "High"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-green-100 text-green-800"
+                      }`}
+                    >
+                      {teamInfo.notice.importance} Priority
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(teamInfo.notice.updatedAt).toLocaleDateString()}
+                    </span>
                   </div>
-                </li>
-              ))}
-          </ul>
+                  <h3 className="text-sm font-medium text-gray-900 mb-2">
+                    {teamInfo.notice.topic}
+                  </h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    {teamInfo.notice.message}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Overview button (for all members) */}
-        <button
-          onClick={openOverview}
-          className="mt-4 flex items-center justify-center space-x-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-150"
-        >
-          <FiPlusCircle className="text-xs" />
-          <span className="text-xs">Overview</span>
-        </button>
+        {/* Fixed Footer Section */}
+        {isLeader && (
+          <div className="p-6 border-t border-gray-100 bg-white shrink-0">
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setNoticeTopic(teamInfo.notice?.topic || "");
+                  setNoticeMessage(teamInfo.notice?.message || "");
+                  setNoticeImportance(teamInfo.notice?.importance || "Low");
+                  setShowNoticeModal(true);
+                }}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              >
+                <FiPlusCircle className="w-4 h-4" />
+                <span className="text-sm font-medium">Create Notice</span>
+              </button>
 
-        {/* CheckPoints button (for leader or cap) */}
-        <button
-          onClick={openCheckpoints}
-          className="mt-3 flex items-center justify-center space-x-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md transition-colors duration-150"
-        >
-          <FiPlusCircle className="text-xs" />
-          <span className="text-xs">CheckPoints</span>
-        </button>
-
-        {/* Ask AI Button (Sidebar) */}
-        <button
-          onClick={() => setShowAIModal(true)}
-          className="mt-3 flex items-center justify-center space-x-2 px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors duration-150"
-        >
-          Ask AI (Under Development)
-        </button>
-
-        {/* Notice Display */}
-        {teamInfo?.notice && (
-          <div
-            className={`p-3 mt-3 rounded-md ${
-              teamInfo.notice.importance === "High"
-                ? "bg-red-100"
-                : "bg-green-100"
-            }`}
-          >
-            <h3 className="text-sm font-bold text-gray-800">
-              Notice: {teamInfo.notice.topic}
-            </h3>
-            <p className="text-xs text-gray-700 mt-1">
-              {teamInfo.notice.message}
-            </p>
-            <p className="text-[10px] text-gray-500 mt-1">
-              Updated on {new Date(teamInfo.notice.updatedAt).toLocaleString()}
-            </p>
+              <button
+                onClick={openAssignTaskModal}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                <FiPlusCircle className="w-4 h-4" />
+                <span className="text-sm font-medium">Assign Tasks</span>
+              </button>
+            </div>
           </div>
-        )}
-
-        {/* Notice for Members button (Leader only) */}
-        {isLeader && (
-          <button
-            onClick={() => {
-              setNoticeTopic(teamInfo.notice?.topic || "");
-              setNoticeMessage(teamInfo.notice?.message || "");
-              setNoticeImportance(teamInfo.notice?.importance || "Low");
-              setShowNoticeModal(true);
-            }}
-            className="mt-3 flex items-center justify-center space-x-2 px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-md transition-colors duration-150"
-          >
-            <FiPlusCircle className="text-xs" />
-            <span className="text-xs">Notice for Members</span>
-          </button>
-        )}
-
-        {/* Button: Assign Tasks (leader only) */}
-        {isLeader && (
-          <button
-            onClick={openAssignTaskModal}
-            className="mt-3 flex items-center justify-center space-x-2 px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors duration-150"
-          >
-            <FiPlusCircle className="text-xs" />
-            <span className="text-xs">Assign Tasks</span>
-          </button>
         )}
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 p-6 space-y-6 bg-gradient-to-br from-gray-50 to-white min-h-screen">
+      <div className="flex-1 p-8 bg-white min-h-screen">
         {isLeader || userHasCap ? (
-          <>
-            <h2 className="text-xl font-semibold text-gray-800 border-b pb-2 border-gray-200">
-              Add Members
-            </h2>
-            <div className="relative mb-6 max-w-sm">
-              <input
-                type="text"
-                placeholder="Search by email or username..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  handleSearch(e.target.value);
-                }}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-150"
-              />
-              <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
-              {searchLoading && (
-                <FiLoader className="absolute right-3 top-2.5 text-gray-400 animate-spin" />
-              )}
-              {/* Search Results */}
-              {searchTerm && searchResults.length > 0 && (
-                <div className="absolute mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-md z-10 max-h-56 overflow-auto">
-                  {searchResults.map((user) => (
-                    <div
-                      key={user._id}
-                      className="flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer transition-colors duration-150"
-                    >
-                      <span className="text-sm text-gray-700">
-                        {user.name} ({user.email})
-                      </span>
-                      <button
-                        className="text-indigo-600 hover:text-indigo-800"
-                        onClick={() => handleAddMember(user.email)}
-                      >
-                        <FiUserPlus />
-                      </button>
+          <div className="max-w-5xl mx-auto">
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+                Team Management
+              </h2>
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-lg font-medium text-gray-700 mb-4">
+                  Add Members
+                </h3>
+                <div className="relative mb-4 max-w-md">
+                  <input
+                    type="text"
+                    placeholder="Search by email or username..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      handleSearch(e.target.value);
+                    }}
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-200"
+                  />
+                  <FiSearch className="absolute left-4 top-3.5 text-gray-400" />
+                  {searchLoading && (
+                    <FiLoader className="absolute right-4 top-3.5 text-gray-400 animate-spin" />
+                  )}
+
+                  {/* Search Results Dropdown */}
+                  {searchTerm && searchResults.length > 0 && (
+                    <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-64 overflow-auto">
+                      {searchResults.map((user) => (
+                        <div
+                          key={user._id}
+                          className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                              <span className="text-sm font-medium text-gray-600">
+                                {user.name[0].toUpperCase()}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-800">
+                                {user.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {user.email}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            className="flex items-center space-x-2 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors duration-150"
+                            onClick={() => handleAddMember(user.email)}
+                          >
+                            <FiUserPlus className="w-4 h-4" />
+                            <span>Add</span>
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
+                <p className="text-sm text-gray-500">
+                  Type to find users and add them to your team. A user can only
+                  belong to one team.
+                </p>
+              </div>
             </div>
-            <p className="text-sm text-gray-500">
-              Type to find users and add them to your team. A user can only
-              belong to one team.
-            </p>
-          </>
+          </div>
         ) : (
-          <div className="bg-white rounded-lg p-4 shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Welcome to {teamInfo?.teamName}
-            </h2>
-            <p className="text-gray-600">
-              You are part of {teamInfo?.leaderName}&apos;s team. Collaborations
-              and assignments will appear here soon.
-            </p>
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-3">
+                Welcome to {teamInfo?.teamName}
+              </h2>
+              <p className="text-gray-600">
+                You are part of {teamInfo?.leaderName}&apos;s team.
+                Collaborations and assignments will appear here soon.
+              </p>
+            </div>
           </div>
         )}
 
-        {/* TASK LIST for both leader & member */}
-        <div className="bg-white rounded-lg p-4 shadow-md">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Tasks</h3>
-          {tasks.length === 0 ? (
-            <p className="text-gray-600 text-sm">
-              No tasks assigned or created yet.
-            </p>
-          ) : (
-            <ul className="space-y-3">
-              {tasks.map((task) => {
-                const isAssignedToUser = task.assignedTo.some(
-                  (assignee) => assignee.email === currentUserEmail
-                );
+        {/* Tasks Section */}
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-white rounded-xl border border-gray-200">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Tasks Overview
+                </h3>
+                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">
+                  {tasks.length} {tasks.length === 1 ? "Task" : "Tasks"}
+                </span>
+              </div>
+            </div>
 
-                return (
-                  <li
-                    key={task._id}
-                    onClick={() => openTaskDetails(task)}
-                    className={`p-3 rounded hover:bg-gray-100 cursor-pointer transition-colors duration-150 ${
-                      isAssignedToUser ? "bg-green-100" : "bg-gray-50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-gray-800">
-                        {task.taskName} (
-                        <span className="text-xs text-gray-500">
-                          {task.urgency} Priority
-                        </span>
-                        )
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        Due: {new Date(task.deadline).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+            <div className="p-6">
+              {tasks.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="mb-3">
+                    <svg
+                      className="w-12 h-12 text-gray-300 mx-auto"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-gray-500 text-sm">
+                    No tasks assigned or created yet.
+                  </p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {tasks.map((task) => {
+                    const isAssignedToUser = task.assignedTo.some(
+                      (assignee) => assignee.email === currentUserEmail
+                    );
+
+                    return (
+                      <li
+                        key={task._id}
+                        onClick={() => openTaskDetails(task)}
+                        className={`p-4 hover:bg-gray-50 cursor-pointer rounded-lg transition-colors duration-150 ${
+                          isAssignedToUser
+                            ? "bg-blue-50 hover:bg-blue-50/80"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="flex-shrink-0">
+                              <div
+                                className={`w-3 h-3 rounded-full ${
+                                  task.urgency === "High"
+                                    ? "bg-red-400"
+                                    : task.urgency === "Medium"
+                                    ? "bg-yellow-400"
+                                    : "bg-green-400"
+                                }`}
+                              />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-900">
+                                {task.taskName}
+                              </h4>
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                {task.urgency} Priority
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            <div className="text-right">
+                              <p className="text-xs text-gray-500">Due Date</p>
+                              <p className="text-sm font-medium text-gray-900">
+                                {new Date(task.deadline).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <svg
+                              className="w-5 h-5 text-gray-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M9 5l7 7-7 7"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* --- MODALS --- */}
 
-      {/* Assign Task Modal (Leader only) */}
+      {/* Assign Task Modal */}
       {showAssignTaskModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
           onClick={() => setShowAssignTaskModal(false)}
         >
           <div
-            className="relative bg-white w-full max-w-lg rounded-lg shadow-xl p-6"
+            className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
-            <button
-              onClick={() => setShowAssignTaskModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-            >
-              <FiX />
-            </button>
-
-            <h2 className="text-xl font-bold mb-4 border-b pb-2 text-gray-800">
-              Assign New Task
-            </h2>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Task Name
-              </label>
-              <input
-                type="text"
-                value={taskNameField}
-                onChange={(e) => setTaskNameField(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Description
-              </label>
-              <textarea
-                value={descriptionField}
-                onChange={(e) => setDescriptionField(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Deadline
-              </label>
-              <input
-                type="date"
-                value={deadlineField}
-                onChange={(e) => setDeadlineField(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Urgency
-              </label>
-              <select
-                value={urgencyField}
-                onChange={(e) => setUrgencyField(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              >
-                <option>Low</option>
-                <option>Medium</option>
-                <option>High</option>
-              </select>
-            </div>
-
-            {/* Assign to all or specific */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Assign To
-              </label>
-              <div className="flex items-center space-x-4 mt-2">
-                <div>
-                  <input
-                    type="radio"
-                    id="assignAll"
-                    name="assignType"
-                    checked={assignToAll}
-                    onChange={() => setAssignToAll(true)}
-                  />
-                  <label
-                    htmlFor="assignAll"
-                    className="ml-1 text-sm text-gray-700"
-                  >
-                    All Members
-                  </label>
+            {/* Header */}
+            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-800">
+                    Assign New Task
+                  </h2>
                 </div>
-                <div>
-                  <input
-                    type="radio"
-                    id="assignSpecific"
-                    name="assignType"
-                    checked={!assignToAll}
-                    onChange={() => setAssignToAll(false)}
-                  />
-                  <label
-                    htmlFor="assignSpecific"
-                    className="ml-1 text-sm text-gray-700"
-                  >
-                    Specific Members
-                  </label>
-                </div>
+                <button
+                  onClick={() => setShowAssignTaskModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition"
+                >
+                  <FiX className="w-5 h-5 text-gray-500" />
+                </button>
               </div>
             </div>
 
-            {/* Search & Select specific members */}
-            {!assignToAll && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Search &amp; Select Members
-                </label>
-                <input
-                  type="text"
-                  placeholder="Start typing to see team members..."
-                  value={memberSearchTerm}
-                  onChange={(e) => setMemberSearchTerm(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                />
+            {/* Scrollable Content */}
+            <div className="overflow-y-auto p-6 space-y-4">
+              {/* Two Column Layout for Basic Info */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Task Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={taskNameField}
+                    onChange={(e) => setTaskNameField(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                    placeholder="Enter task name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Deadline <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={deadlineField}
+                    onChange={(e) => setDeadlineField(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                  />
+                </div>
+              </div>
 
-                {/* Only show results if user typed something */}
-                {memberSearchTerm.trim() !== "" && (
-                  <div className="max-h-32 overflow-auto border border-gray-200 rounded-lg p-2">
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={descriptionField}
+                  onChange={(e) => setDescriptionField(e.target.value)}
+                  rows="3"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none"
+                  placeholder="Describe the task"
+                />
+              </div>
+
+              {/* Urgency & Assignment Type in one row */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Urgency
+                  </label>
+                  <select
+                    value={urgencyField}
+                    onChange={(e) => setUrgencyField(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent bg-white"
+                  >
+                    <option>Low</option>
+                    <option>Medium</option>
+                    <option>High</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Assign To
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        checked={assignToAll}
+                        onChange={() => setAssignToAll(true)}
+                        className="text-indigo-600 focus:ring-indigo-400"
+                      />
+                      <span className="ml-2 text-sm">All Members</span>
+                    </label>
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        checked={!assignToAll}
+                        onChange={() => setAssignToAll(false)}
+                        className="text-indigo-600 focus:ring-indigo-400"
+                      />
+                      <span className="ml-2 text-sm">Specific Members</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Member Selection */}
+              {!assignToAll && (
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="relative mb-2">
+                    <input
+                      type="text"
+                      placeholder="Search members..."
+                      value={memberSearchTerm}
+                      onChange={(e) => setMemberSearchTerm(e.target.value)}
+                      className="w-full px-3 py-2 pr-10 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                    />
+                    <FiSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  </div>
+                  <div className="max-h-32 overflow-y-auto">
                     {teamInfo?.members
                       ?.filter((member) =>
                         member.name
@@ -1597,13 +1725,12 @@ export default function TeamsPage() {
                           .includes(memberSearchTerm.toLowerCase())
                       )
                       .map((member) => (
-                        <div
+                        <label
                           key={member.email}
-                          className="flex items-center mb-1"
+                          className="flex items-center p-2 hover:bg-gray-100 rounded"
                         >
                           <input
                             type="checkbox"
-                            id={member.email}
                             checked={checkedMembers.includes(member.email)}
                             onChange={(e) => {
                               if (e.target.checked) {
@@ -1617,401 +1744,616 @@ export default function TeamsPage() {
                                 );
                               }
                             }}
+                            className="text-indigo-600 rounded focus:ring-indigo-400"
                           />
-                          <label
-                            htmlFor={member.email}
-                            className="ml-2 text-sm text-gray-700"
-                          >
-                            {member.name}
-                          </label>
-                        </div>
+                          <span className="ml-2 text-sm">{member.name}</span>
+                        </label>
                       ))}
-
-                    {/* If typed but no matches */}
-                    {teamInfo?.members &&
-                      teamInfo.members.filter((member) =>
-                        member.name
-                          .toLowerCase()
-                          .includes(memberSearchTerm.toLowerCase())
-                      ).length === 0 && (
-                        <p className="text-sm text-gray-500">
-                          No matching members found.
-                        </p>
-                      )}
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
 
-            <button
-              onClick={handleCreateTask}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold tracking-wide focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            >
-              Assign Task
-            </button>
+            {/* Footer */}
+            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-100">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowAssignTaskModal(false)}
+                  className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateTask}
+                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>Create Task</span>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 5l7 7-7 7M5 12h15"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Task Details Modal (for both leader & members) */}
+      {/* Modern Task Details Modal */}
       {showTaskDetailsModal && selectedTask && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
           onClick={() => setShowTaskDetailsModal(false)}
         >
           <div
-            className="relative bg-white w-full max-w-lg rounded-lg shadow-xl p-6 max-h-[90vh] overflow-y-auto"
+            className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
-            <button
-              onClick={() => setShowTaskDetailsModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-            >
-              <FiX />
-            </button>
-
-            <h2 className="text-xl font-bold mb-4 border-b border-gray-200 pb-2 text-gray-800">
-              {selectedTask.taskName}
-            </h2>
-
-            <p className="text-sm text-gray-500 mb-2">
-              Urgency: {selectedTask.urgency}
-            </p>
-            <p className="text-sm text-gray-500 mb-2">
-              Deadline: {new Date(selectedTask.deadline).toLocaleDateString()}
-            </p>
-            <p className="text-gray-700 mb-4">{selectedTask.description}</p>
-
-            {/* Show assignedTo list with statuses if user is the leader */}
-            {isLeader && (
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2 border-b border-gray-200 pb-1">
-                  Assignees:
-                </h3>
-                <ul
-                  className={`space-y-1 ${
-                    selectedTask.assignedTo.length > 3
-                      ? "max-h-32 overflow-y-auto pr-2"
-                      : ""
-                  }`}
-                >
-                  {selectedTask.assignedTo.map((assignee) => (
-                    <li key={assignee.email} className="text-sm text-gray-700">
-                      {assignee.email} -{" "}
-                      <span className="italic">{assignee.status}</span>
-                    </li>
-                  ))}
-                </ul>
+            {/* Header Section */}
+            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-indigo-50 rounded-xl">
+                  <svg
+                    className="w-6 h-6 text-indigo-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-semibold text-gray-800">
+                  {selectedTask.taskName}
+                </h2>
               </div>
-            )}
+              <button
+                onClick={() => setShowTaskDetailsModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+              >
+                <FiX className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
 
-            <div className="mb-4 border-t pt-3">
-              <h3 className="font-semibold mb-2">Dependencies & Successors</h3>
+            {/* Content Section */}
+            <div className="p-6 space-y-6">
+              {/* Task Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm font-medium text-gray-600">Urgency</p>
+                  <p
+                    className={`text-lg mt-1 ${
+                      selectedTask.urgency === "High"
+                        ? "text-red-600"
+                        : selectedTask.urgency === "Medium"
+                        ? "text-yellow-600"
+                        : "text-green-600"
+                    }`}
+                  >
+                    {selectedTask.urgency}
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm font-medium text-gray-600">Deadline</p>
+                  <p className="text-lg mt-1 text-gray-800">
+                    {new Date(selectedTask.deadline).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
 
-              {/* List tasks that must be done first */}
-              {selectedTask.dependsOn && selectedTask.dependsOn.length > 0 ? (
-                <p className="text-sm text-gray-700 mb-2">
-                  Depends on:{" "}
-                  {selectedTask.dependsOn.map((depId, idx) => {
-                    // find the actual task name from your tasks array
-                    const depTask = tasks.find((t) => t._id === depId);
-                    if (!depTask) return <span key={idx}>Unknown Task</span>;
-                    return (
-                      <span
-                        key={depId}
-                        className="bg-gray-100 px-1 py-0.5 rounded mx-1"
-                      >
-                        {depTask.taskName}
-                      </span>
-                    );
-                  })}
-                </p>
-              ) : (
-                <p className="text-sm text-gray-500 mb-2">No dependencies.</p>
-              )}
+              {/* Description */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h3 className="font-medium text-gray-700 mb-2">Description</h3>
+                <p className="text-gray-600">{selectedTask.description}</p>
+              </div>
 
-              {/* List tasks that come after this one */}
-              {selectedTask.successors && selectedTask.successors.length > 0 ? (
-                <p className="text-sm text-gray-700">
-                  Successors:{" "}
-                  {selectedTask.successors.map((succId, idx) => {
-                    const succTask = tasks.find((t) => t._id === succId);
-                    if (!succTask) return <span key={idx}>Unknown Task</span>;
-                    return (
-                      <span
-                        key={succId}
-                        className="bg-gray-100 px-1 py-0.5 rounded mx-1"
-                      >
-                        {succTask.taskName}
-                      </span>
-                    );
-                  })}
-                </p>
-              ) : (
-                <p className="text-sm text-gray-500">No successor tasks.</p>
-              )}
-
-              {/* Button to set a new dependency */}
+              {/* Assignees Section */}
               {isLeader && (
-                <button
-                  onClick={() => {
-                    setDependencyMainTask(selectedTask);
-                    setDependencySearchTerm("");
-                    setFilteredTasks(
-                      tasks.filter((t) => t._id !== selectedTask._id) // exclude the main task
-                    );
-                    setShowDependencyModal(true);
-                  }}
-                  className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm"
-                >
-                  Set Dependency
-                </button>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <h3 className="font-medium text-gray-700 mb-3">Assignees</h3>
+                  <div
+                    className={`space-y-2 ${
+                      selectedTask.assignedTo.length > 3
+                        ? "max-h-40 overflow-y-auto pr-2"
+                        : ""
+                    }`}
+                  >
+                    {selectedTask.assignedTo.map((assignee) => (
+                      <div
+                        key={assignee.email}
+                        className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm"
+                      >
+                        <span className="text-sm text-gray-700">
+                          {assignee.email}
+                        </span>
+                        <span
+                          className={`text-sm px-2 py-1 rounded-full ${
+                            assignee.status === "Done"
+                              ? "bg-green-100 text-green-700"
+                              : assignee.status === "In Progress"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-gray-100 text-gray-700"
+                          }`}
+                        >
+                          {assignee.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
-            </div>
 
-            {/* Discussion Section - visible to everyone assigned + leader */}
-            <div className="mb-4">
-              <h3 className="font-semibold mb-2 border-b border-gray-200 pb-1">
-                Discussion / Ideas:
-              </h3>
-              {selectedTask.discussion && selectedTask.discussion.length > 0 ? (
-                <ul
-                  className={`space-y-1 ${
-                    selectedTask.discussion.length > 2
-                      ? "max-h-40 overflow-y-auto pr-2"
+              {/* Dependencies Section */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-medium text-gray-700">
+                    Dependencies & Successors
+                  </h3>
+                  {isLeader && (
+                    <button
+                      onClick={() => {
+                        setDependencyMainTask(selectedTask);
+                        setDependencySearchTerm("");
+                        setFilteredTasks(
+                          tasks.filter((t) => t._id !== selectedTask._id)
+                        );
+                        setShowDependencyModal(true);
+                      }}
+                      className="flex items-center space-x-1 text-sm text-indigo-600 hover:text-indigo-800"
+                    >
+                      <FiPlus className="w-4 h-4" />
+                      <span>Add Dependency</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  {/* Dependencies */}
+                  <div>
+                    <p className="text-sm text-gray-600 mb-2">Depends on:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTask.dependsOn &&
+                      selectedTask.dependsOn.length > 0 ? (
+                        selectedTask.dependsOn.map((depId) => {
+                          const depTask = tasks.find((t) => t._id === depId);
+                          return depTask ? (
+                            <span
+                              key={depId}
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-indigo-50 text-indigo-700"
+                            >
+                              {depTask.taskName}
+                            </span>
+                          ) : null;
+                        })
+                      ) : (
+                        <span className="text-sm text-gray-500">
+                          No dependencies
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Successors */}
+                  <div>
+                    <p className="text-sm text-gray-600 mb-2">Successors:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTask.successors &&
+                      selectedTask.successors.length > 0 ? (
+                        selectedTask.successors.map((succId) => {
+                          const succTask = tasks.find((t) => t._id === succId);
+                          return succTask ? (
+                            <span
+                              key={succId}
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-50 text-green-700"
+                            >
+                              {succTask.taskName}
+                            </span>
+                          ) : null;
+                        })
+                      ) : (
+                        <span className="text-sm text-gray-500">
+                          No successors
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Discussion Section */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h3 className="font-medium text-gray-700 mb-3">Discussion</h3>
+                <div
+                  className={`space-y-3 ${
+                    selectedTask.discussion?.length > 2
+                      ? "max-h-60 overflow-y-auto pr-2"
                       : ""
                   }`}
                 >
-                  {selectedTask.discussion.map((item, idx) => (
-                    <li
-                      key={idx}
-                      className="text-sm text-gray-700 border-b border-gray-200 pb-1 mb-1"
+                  {selectedTask.discussion &&
+                  selectedTask.discussion.length > 0 ? (
+                    selectedTask.discussion.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-white rounded-lg p-3 shadow-sm"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                              <span className="text-sm font-medium text-indigo-700">
+                                {item.name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-800">
+                                {item.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {item.email}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {new Date(item.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-gray-700 text-sm">{item.message}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      No discussions yet
+                    </p>
+                  )}
+                </div>
+
+                {/* Add Message Form */}
+                {(selectedTask.assignedTo.some(
+                  (a) =>
+                    a.email === jwt.decode(localStorage.getItem("token"))?.email
+                ) ||
+                  selectedTask.createdBy ===
+                    jwt.decode(localStorage.getItem("token"))?.email) && (
+                  <div className="mt-4">
+                    <textarea
+                      value={newIdea}
+                      onChange={(e) => setNewIdea(e.target.value)}
+                      placeholder="Share your thoughts..."
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                      rows={3}
+                    />
+                    <button
+                      onClick={handleAddIdea}
+                      className="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
                     >
-                      <strong>{item.name}</strong> ({item.email})
-                      <span className="text-xs text-gray-500 ml-2">
-                        {new Date(item.createdAt).toLocaleString()}
-                      </span>
-                      <div className="ml-4 text-gray-800">{item.message}</div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-gray-500">No ideas yet.</p>
-              )}
+                      Post Message
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* If user is assigned or is the leader, they can post an idea */}
-            {(selectedTask.assignedTo.some(
-              (a) =>
-                a.email === jwt.decode(localStorage.getItem("token"))?.email
-            ) ||
-              selectedTask.createdBy ===
-                jwt.decode(localStorage.getItem("token"))?.email) && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Propose an Idea or Message
-                </label>
-                <textarea
-                  value={newIdea}
-                  onChange={(e) => setNewIdea(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-2 mb-2"
-                  rows={2}
-                />
-                <button
-                  onClick={handleAddIdea}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
-                >
-                  Post Idea
-                </button>
-              </div>
-            )}
+            {/* Footer Actions */}
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 p-6 space-y-3">
+              {selectedTask.assignedTo.some(
+                (a) =>
+                  a.email === jwt.decode(localStorage.getItem("token"))?.email
+              ) && (
+                <div className="flex items-center space-x-3">
+                  <select
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                    className="flex-1 border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                  >
+                    <option>Not Started</option>
+                    <option>In Progress</option>
+                    <option>Done</option>
+                  </select>
+                  <button
+                    onClick={handleUpdateStatus}
+                    className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200"
+                  >
+                    Update Status
+                  </button>
+                </div>
+              )}
 
-            {selectedTask.createdBy ===
-              jwt.decode(localStorage.getItem("token"))?.email && (
-              <button
-                onClick={handleDeleteTask}
-                className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded mb-4"
-              >
-                Delete Task
-              </button>
-            )}
-
-            {/* If user is assigned, let them update status */}
-            {selectedTask.assignedTo.some(
-              (a) =>
-                a.email === jwt.decode(localStorage.getItem("token"))?.email
-            ) && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Update Your Status
-                </label>
-                <select
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-2"
-                >
-                  <option>Not Started</option>
-                  <option>In Progress</option>
-                  <option>Done</option>
-                </select>
-              </div>
-            )}
-
-            {/* Update Status button if assigned */}
-            {selectedTask.assignedTo.some(
-              (a) =>
-                a.email === jwt.decode(localStorage.getItem("token"))?.email
-            ) && (
-              <button
-                onClick={handleUpdateStatus}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
-              >
-                Update Status
-              </button>
-            )}
-            {selectedTask && (
-              <div className="mt-4">
+              <div className="flex space-x-3">
                 <button
                   onClick={() => handleAddToCalendar(selectedTask)}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
                 >
-                  Add to Portal Calendar
+                  Add to Calendar
                 </button>
+
+                {selectedTask.createdBy ===
+                  jwt.decode(localStorage.getItem("token"))?.email && (
+                  <button
+                    onClick={handleDeleteTask}
+                    className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                  >
+                    Delete Task
+                  </button>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}
 
       {showOverviewModal && overviewData && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
           onClick={() => setShowOverviewModal(false)}
         >
           <div
-            className="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl relative overflow-y-auto"
-            style={{ maxHeight: "90vh" }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
-            <button
-              onClick={() => setShowOverviewModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-            >
-              <FiX />
-            </button>
-
-            <h2 className="text-2xl font-bold mb-4">Team Overview</h2>
-
-            {/* KPI row */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="p-4 bg-gray-100 rounded-lg text-center">
-                <p className="text-sm text-gray-600">
-                  Number of Members (Excl. Leader)
-                </p>
-                <h3 className="text-xl font-bold text-gray-800">
-                  {overviewData.totalMembers}
-                </h3>
-              </div>
-              <div className="p-4 bg-gray-100 rounded-lg text-center">
-                <p className="text-sm text-gray-600">Total Tasks</p>
-                <h3 className="text-xl font-bold text-gray-800">
-                  {overviewData.totalTasks}
-                </h3>
-              </div>
-            </div>
-
-            {/* Priority Distribution (Pie Chart) */}
-            <div className="mb-6">
-              <h4 className="text-lg font-semibold mb-2">
-                Priority Distribution
-              </h4>
-              <div className="w-full" style={{ height: "300px" }}>
-                <Pie
-                  data={{
-                    labels: ["High", "Medium", "Low"],
-                    datasets: [
-                      {
-                        label: "Priority",
-                        data: [
-                          overviewData.priorityStats.high,
-                          overviewData.priorityStats.medium,
-                          overviewData.priorityStats.low,
-                        ],
-                        backgroundColor: ["#EF4444", "#F59E0B", "#10B981"], // red, amber, green
-                      },
-                    ],
-                  }}
-                  options={{
-                    maintainAspectRatio: false,
-                    responsive: true,
-                    plugins: {
-                      legend: { position: "bottom" },
-                    },
-                  }}
-                />
+            {/* Header Section */}
+            <div className="px-8 py-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl">
+                    <svg
+                      className="w-6 h-6 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      Team Overview
+                    </h2>
+                    <p className="text-gray-500">
+                      Analytics and Insights Dashboard
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowOverviewModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                >
+                  <FiX className="w-6 h-6 text-gray-500" />
+                </button>
               </div>
             </div>
 
-            {/* Task Status (Bar Chart) */}
-            <div className="mb-6">
-              <h4 className="text-lg font-semibold mb-2">Task Status</h4>
-              <div className="w-full" style={{ height: "300px" }}>
-                <Bar
-                  data={{
-                    labels: ["Not Started", "In Progress", "Done"],
-                    datasets: [
-                      {
-                        label: "Assignments",
-                        data: [
-                          overviewData.statusStats.notStarted,
-                          overviewData.statusStats.inProgress,
-                          overviewData.statusStats.done,
-                        ],
-                        backgroundColor: ["#9CA3AF", "#3B82F6", "#10B981"],
-                      },
-                    ],
-                  }}
-                  options={{
-                    maintainAspectRatio: false,
-                    responsive: true,
-                    scales: {
-                      y: { beginAtZero: true },
-                    },
-                    plugins: {
-                      legend: { display: false },
-                    },
-                  }}
-                />
-              </div>
-            </div>
+            {/* Content Area */}
+            <div className="p-8 max-h-[calc(90vh-120px)] overflow-y-auto">
+              {/* KPI Cards */}
+              <div className="grid grid-cols-2 gap-6 mb-8">
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-blue-500 rounded-xl">
+                      <svg
+                        className="w-6 h-6 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-blue-600">
+                        Team Members
+                      </p>
+                      <h3 className="text-3xl font-bold text-gray-800 mt-1">
+                        {overviewData.totalMembers}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Excluding Team Leader
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Assigned vs Unassigned (Doughnut Chart) */}
-            <div className="mb-6">
-              <h4 className="text-lg font-semibold mb-2">Member Assignments</h4>
-              <div className="w-full" style={{ height: "300px" }}>
-                <Doughnut
-                  data={{
-                    labels: ["Assigned", "Unassigned"],
-                    datasets: [
-                      {
-                        data: [
-                          overviewData.assignedCount,
-                          overviewData.unassignedCount,
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-purple-500 rounded-xl">
+                      <svg
+                        className="w-6 h-6 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-purple-600">
+                        Total Tasks
+                      </p>
+                      <h3 className="text-3xl font-bold text-gray-800 mt-1">
+                        {overviewData.totalTasks}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Active Projects
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Charts Grid */}
+              <div className="grid grid-cols-2 gap-8">
+                {/* Priority Distribution */}
+                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-6">
+                    Priority Distribution
+                  </h4>
+                  <div className="w-full" style={{ height: "300px" }}>
+                    <Pie
+                      data={{
+                        labels: ["High", "Medium", "Low"],
+                        datasets: [
+                          {
+                            label: "Priority",
+                            data: [
+                              overviewData.priorityStats.high,
+                              overviewData.priorityStats.medium,
+                              overviewData.priorityStats.low,
+                            ],
+                            backgroundColor: [
+                              "rgba(239, 68, 68, 0.9)",
+                              "rgba(245, 158, 11, 0.9)",
+                              "rgba(16, 185, 129, 0.9)",
+                            ],
+                            borderWidth: 0,
+                          },
                         ],
-                        backgroundColor: ["#3B82F6", "#E5E7EB"], // blue & gray
-                      },
-                    ],
-                  }}
-                  options={{
-                    maintainAspectRatio: false,
-                    responsive: true,
-                    plugins: {
-                      legend: { position: "bottom" },
-                    },
-                  }}
-                />
+                      }}
+                      options={{
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        plugins: {
+                          legend: {
+                            position: "bottom",
+                            labels: {
+                              padding: 20,
+                              usePointStyle: true,
+                            },
+                          },
+                        },
+                        animation: {
+                          duration: 2000,
+                        },
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Task Status */}
+                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-6">
+                    Task Completion Status
+                  </h4>
+                  <div className="w-full" style={{ height: "300px" }}>
+                    <Bar
+                      data={{
+                        labels: ["Not Started", "In Progress", "Done"],
+                        datasets: [
+                          {
+                            label: "Tasks",
+                            data: [
+                              overviewData.statusStats.notStarted,
+                              overviewData.statusStats.inProgress,
+                              overviewData.statusStats.done,
+                            ],
+                            backgroundColor: [
+                              "rgba(156, 163, 175, 0.9)",
+                              "rgba(59, 130, 246, 0.9)",
+                              "rgba(16, 185, 129, 0.9)",
+                            ],
+                            borderRadius: 8,
+                          },
+                        ],
+                      }}
+                      options={{
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            grid: {
+                              display: true,
+                              color: "rgba(0,0,0,0.05)",
+                            },
+                          },
+                          x: {
+                            grid: {
+                              display: false,
+                            },
+                          },
+                        },
+                        plugins: {
+                          legend: {
+                            display: false,
+                          },
+                        },
+                        animation: {
+                          duration: 2000,
+                        },
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Assignment Distribution */}
+                <div className="bg-white rounded-2xl border border-gray-200 p-6 col-span-2">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-6">
+                    Team Assignment Distribution
+                  </h4>
+                  <div className="w-full" style={{ height: "300px" }}>
+                    <Doughnut
+                      data={{
+                        labels: ["Assigned Tasks", "Unassigned Tasks"],
+                        datasets: [
+                          {
+                            data: [
+                              overviewData.assignedCount,
+                              overviewData.unassignedCount,
+                            ],
+                            backgroundColor: [
+                              "rgba(59, 130, 246, 0.9)",
+                              "rgba(229, 231, 235, 0.9)",
+                            ],
+                            borderWidth: 0,
+                          },
+                        ],
+                      }}
+                      options={{
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        cutout: "70%",
+                        plugins: {
+                          legend: {
+                            position: "bottom",
+                            labels: {
+                              padding: 20,
+                              usePointStyle: true,
+                            },
+                          },
+                        },
+                        animation: {
+                          duration: 2000,
+                        },
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -2021,334 +2363,870 @@ export default function TeamsPage() {
       {/* Notice Modal */}
       {showNoticeModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
           onClick={() => setShowNoticeModal(false)}
         >
           <div
-            className="relative bg-white w-full max-w-md rounded-lg shadow-xl p-6"
+            className="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
-            <button
-              onClick={() => setShowNoticeModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-            >
-              <FiX />
-            </button>
-
-            <h2 className="text-xl font-bold mb-4 border-b border-gray-200 pb-2 text-gray-800">
-              Notice for Members
-            </h2>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Topic
-              </label>
-              <input
-                type="text"
-                value={noticeTopic}
-                onChange={(e) => setNoticeTopic(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              />
+            {/* Header */}
+            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Create Notice
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      Share important updates with your team
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowNoticeModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                >
+                  <FiX className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Message
-              </label>
-              <textarea
-                value={noticeMessage}
-                onChange={(e) => setNoticeMessage(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                rows={3}
-              />
+            {/* Form Content */}
+            <div className="p-6 space-y-6">
+              {/* Topic Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Notice Topic <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={noticeTopic}
+                  onChange={(e) => setNoticeTopic(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-200"
+                  placeholder="Enter notice topic..."
+                />
+              </div>
+
+              {/* Message Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Message Content <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={noticeMessage}
+                  onChange={(e) => setNoticeMessage(e.target.value)}
+                  rows="4"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-200 resize-none"
+                  placeholder="Type your notice message here..."
+                />
+              </div>
+
+              {/* Importance Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Importance Level
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex-1">
+                    <input
+                      type="radio"
+                      name="importance"
+                      checked={noticeImportance === "Low"}
+                      onChange={() => setNoticeImportance("Low")}
+                      className="hidden"
+                    />
+                    <div
+                      className={`p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
+                        noticeImportance === "Low"
+                          ? "border-green-500 bg-green-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <div
+                          className={`w-3 h-3 rounded-full ${
+                            noticeImportance === "Low"
+                              ? "bg-green-500"
+                              : "bg-gray-300"
+                          }`}
+                        />
+                        <span
+                          className={`font-medium ${
+                            noticeImportance === "Low"
+                              ? "text-green-700"
+                              : "text-gray-600"
+                          }`}
+                        >
+                          Low Priority
+                        </span>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="flex-1">
+                    <input
+                      type="radio"
+                      name="importance"
+                      checked={noticeImportance === "High"}
+                      onChange={() => setNoticeImportance("High")}
+                      className="hidden"
+                    />
+                    <div
+                      className={`p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
+                        noticeImportance === "High"
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <div
+                          className={`w-3 h-3 rounded-full ${
+                            noticeImportance === "High"
+                              ? "bg-red-500"
+                              : "bg-gray-300"
+                          }`}
+                        />
+                        <span
+                          className={`font-medium ${
+                            noticeImportance === "High"
+                              ? "text-red-700"
+                              : "text-gray-600"
+                          }`}
+                        >
+                          High Priority
+                        </span>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Importance
-              </label>
-              <select
-                value={noticeImportance}
-                onChange={(e) => setNoticeImportance(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              >
-                <option>Low</option>
-                <option>High</option>
-              </select>
+            {/* Footer */}
+            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-100">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowNoticeModal(false)}
+                  className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveNotice}
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors duration-200 flex items-center justify-center gap-2"
+                >
+                  <span>Post Notice</span>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
-
-            <button
-              onClick={saveNotice}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            >
-              Save Notice
-            </button>
           </div>
         </div>
       )}
 
+      {/* Checkpoints Modal */}
       {showCheckpointsModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
           onClick={() => setShowCheckpointsModal(false)}
         >
           <div
-            className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative"
+            className="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={() => setShowCheckpointsModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-            >
-              <FiX />
-            </button>
-            <h2 className="text-xl font-bold mb-4">CheckPoints</h2>
-
-            {/* List existing checkpoints */}
-            <ul className="space-y-2 mb-4">
-              {checkpoints.map((cp) => (
-                <li
-                  key={cp._id}
-                  className="flex items-center justify-between bg-gray-50 rounded p-2 cursor-pointer hover:bg-gray-100"
+            {/* Header */}
+            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Checkpoints
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      Track project milestones
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowCheckpointsModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
                 >
-                  <span
-                    onClick={() => openCheckpointDetails(cp)}
-                    className="text-sm font-medium text-gray-800 flex-1"
-                  >
-                    {cp.name}
-                  </span>
-                  {/* If leader or cap, show edit/delete icons */}
-                  {(isLeader || userHasCap) && (
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          editCheckpointName(cp);
-                        }}
-                        className="text-blue-500 hover:text-blue-700 text-xs"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteCheckpoint(cp._id);
-                        }}
-                        className="text-red-500 hover:text-red-700 text-xs"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
+                  <FiX className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+            </div>
 
-            {/* Button to create a new checkpoint (leader/cap) */}
+            {/* Content */}
+            <div className="p-6">
+              {/* Checkpoints List */}
+              <div className="space-y-3 mb-6 max-h-[60vh] overflow-y-auto pr-2">
+                {checkpoints.map((cp) => (
+                  <div
+                    key={cp._id}
+                    className="group bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors duration-200"
+                  >
+                    <div className="flex items-center justify-between p-4">
+                      <div
+                        onClick={() => openCheckpointDetails(cp)}
+                        className="flex items-center gap-3 flex-1 cursor-pointer"
+                      >
+                        <div className="w-2 h-2 bg-emerald-400 rounded-full" />
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-800 group-hover:text-emerald-600 transition-colors duration-200">
+                            {cp.name}
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            {cp.checks?.length || 0} items
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      {(isLeader || userHasCap) && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              editCheckpointName(cp);
+                            }}
+                            className="p-2 text-gray-400 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteCheckpoint(cp._id);
+                            }}
+                            className="p-2 text-gray-400 hover:text-red-600 rounded-lg transition-colors duration-200"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {checkpoints.length === 0 && (
+                  <div className="text-center py-8">
+                    <div className="mb-3">
+                      <svg
+                        className="w-12 h-12 text-gray-300 mx-auto"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 text-sm">
+                      No checkpoints created yet
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
             {(isLeader || userHasCap) && (
-              <button
-                onClick={() => createCheckpoint()}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
-              >
-                Create New Checkpoint
-              </button>
+              <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-100">
+                <button
+                  onClick={() => createCheckpoint()}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors duration-200"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
+                  </svg>
+                  <span className="font-medium">Create New Checkpoint</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
       )}
 
-      {/* checkpoint show Model */}
+      {/* Checkpoint Details Modal */}
       {showCheckpointDetailsModal && selectedCheckpoint && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
           onClick={() => setShowCheckpointDetailsModal(false)}
         >
           <div
-            className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative"
+            className="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={() => setShowCheckpointDetailsModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-            >
-              <FiX />
-            </button>
-            <h2 className="text-xl font-bold mb-4">
-              {selectedCheckpoint.name}
-            </h2>
+            {/* Header */}
+            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      {selectedCheckpoint.name}
+                    </h2>
+                    <p className="text-sm text-gray-500">Track your progress</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowCheckpointDetailsModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                >
+                  <FiX className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+            </div>
 
-            {/* List of checks */}
-            <ul className="space-y-2 mb-4">
-              {selectedCheckpoint.checks.map((ch) => {
-                // Determine if current user is done
-                const currentUserEmail = jwt.decode(
-                  localStorage.getItem("token")
-                )?.email;
-                const isUserDone = ch.doneBy?.includes(currentUserEmail);
+            {/* Content Area */}
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+              {/* Checks List */}
+              <div className="space-y-3">
+                {selectedCheckpoint.checks.map((ch) => {
+                  const currentUserEmail = jwt.decode(
+                    localStorage.getItem("token")
+                  )?.email;
+                  const isUserDone = ch.doneBy?.includes(currentUserEmail);
+                  const totalMembers = ch.doneBy?.length || 0;
 
-                return (
-                  <li key={ch._id} className="bg-gray-50 p-2 rounded">
-                    {/* Check description */}
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p
-                          className={`text-sm ${
+                  return (
+                    <div
+                      key={ch._id}
+                      className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors duration-200"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                                isUserDone ? "bg-green-500" : "bg-gray-300"
+                              }`}
+                            />
+                            <p
+                              className={`text-sm font-medium ${
+                                isUserDone
+                                  ? "text-gray-500 line-through"
+                                  : "text-gray-800"
+                              }`}
+                            >
+                              {ch.description}
+                            </p>
+                          </div>
+                          {ch.doneBy && ch.doneBy.length > 0 && (
+                            <div className="mt-2 flex items-center gap-2">
+                              <div className="flex -space-x-2">
+                                {ch.doneBy.slice(0, 3).map((email, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="w-6 h-6 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center"
+                                  >
+                                    <span className="text-xs font-medium text-blue-600">
+                                      {email[0].toUpperCase()}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                {totalMembers}{" "}
+                                {totalMembers === 1 ? "member" : "members"}{" "}
+                                completed
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() =>
+                            toggleCheckDone(selectedCheckpoint._id, ch._id)
+                          }
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
                             isUserDone
-                              ? "line-through text-gray-500"
-                              : "text-gray-800"
+                              ? "bg-green-100 text-green-700 hover:bg-green-200"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                           }`}
                         >
-                          {ch.description}
-                        </p>
-                        {/* Show who is done */}
-                        {ch.doneBy && ch.doneBy.length > 0 && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Done by: {ch.doneBy.join(", ")}
-                          </p>
-                        )}
+                          {isUserDone ? (
+                            <span className="flex items-center gap-1">
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              Done
+                            </span>
+                          ) : (
+                            "Mark Done"
+                          )}
+                        </button>
                       </div>
-
-                      {/* Button to toggle done for the current user */}
-                      <button
-                        onClick={() =>
-                          toggleCheckDone(selectedCheckpoint._id, ch._id)
-                        }
-                        className={`text-xs px-2 py-1 rounded ${
-                          isUserDone
-                            ? "bg-green-200 text-green-700"
-                            : "bg-gray-200 text-gray-700"
-                        }`}
-                      >
-                        {isUserDone ? "Unmark" : "Mark Done"}
-                      </button>
                     </div>
-                  </li>
-                );
-              })}
-            </ul>
+                  );
+                })}
+              </div>
+            </div>
 
-            {/* Add new check if leader/cap */}
+            {/* Footer */}
             {(isLeader || userHasCap) && (
-              <button
-                onClick={() => addCheck(selectedCheckpoint._id)}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm"
-              >
-                Add New Check
-              </button>
+              <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-100">
+                <button
+                  onClick={() => addCheck(selectedCheckpoint._id)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
+                  </svg>
+                  <span className="font-medium">Add New Check</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
       )}
 
-      {/* importamt link model Model */}
       {showLinksModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
           onClick={() => setShowLinksModal(false)}
         >
           <div
-            className="relative bg-white w-full max-w-md rounded-lg shadow-xl p-6"
+            className="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
-            <button
-              onClick={() => setShowLinksModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
-
-            <h2 className="text-xl font-bold mb-4">Important Links</h2>
-
-            {/* Show existing links */}
-            <ul className="space-y-2 mb-4 max-h-60 overflow-auto">
-              {importantLinks.map((link, idx) => (
-                <li
-                  key={idx}
-                  className="flex items-center justify-between bg-gray-50 p-2 rounded"
-                >
-                  <div>
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline"
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      {link.title}
-                    </a>
-                    <p className="text-xs text-gray-500">{link.url}</p>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                      />
+                    </svg>
                   </div>
-                  <button
-                    onClick={() => handleRemoveLink(link.url)}
-                    className="text-red-500 hover:text-red-700 text-sm"
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Important Links
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      Manage your team's important resources
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowLinksModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                >
+                  <svg
+                    className="w-5 h-5 text-gray-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
 
-            {/* Button that opens the second popup for adding a new link */}
-            <button
-              onClick={() => setShowAddLinkModal(true)}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
-            >
-              Add Link
-            </button>
+            {/* Content */}
+            <div className="p-6">
+              {/* Links List */}
+              <div className="space-y-3 mb-6 max-h-[60vh] overflow-y-auto pr-2">
+                {importantLinks.length > 0 ? (
+                  importantLinks.map((link, idx) => (
+                    <div
+                      key={idx}
+                      className="group bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 p-4 transition-all duration-200"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-700 font-medium block truncate transition-colors duration-200"
+                          >
+                            {link.title}
+                          </a>
+                          <p className="text-xs text-gray-500 mt-1 truncate">
+                            {link.url}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveLink(link.url)}
+                          className="p-2 text-gray-400 hover:text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="mb-3">
+                      <svg
+                        className="w-12 h-12 text-gray-300 mx-auto"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 text-sm">
+                      No important links added yet
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
+              <button
+                onClick={() => setShowAddLinkModal(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                <span className="font-medium">Add New Link</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {showAddLinkModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
           onClick={() => setShowAddLinkModal(false)}
         >
           <div
-            className="relative bg-white w-full max-w-sm rounded-lg shadow-xl p-6"
+            className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
-            <button
-              onClick={() => setShowAddLinkModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
-
-            <h2 className="text-xl font-bold mb-4">Add New Link</h2>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Link Title
-              </label>
-              <input
-                type="text"
-                value={newLinkTitle}
-                onChange={(e) => setNewLinkTitle(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              />
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Add New Link
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      Add an important resource
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAddLinkModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                >
+                  <svg
+                    className="w-5 h-5 text-gray-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Link URL
-              </label>
-              <input
-                type="text"
-                value={newLinkUrl}
-                onChange={(e) => setNewLinkUrl(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              />
+            {/* Form Content */}
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Link Title <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={newLinkTitle}
+                    onChange={(e) => setNewLinkTitle(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
+                    placeholder="Enter link title..."
+                  />
+                  <svg
+                    className="absolute left-3 top-3.5 w-5 h-5 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                    />
+                  </svg>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  Give your link a descriptive title
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Link URL <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={newLinkUrl}
+                    onChange={(e) => setNewLinkUrl(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
+                    placeholder="https://..."
+                  />
+                  <svg
+                    className="absolute left-3 top-3.5 w-5 h-5 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                    />
+                  </svg>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  Include the complete URL starting with http:// or https://
+                </p>
+              </div>
+
+              {/* Info Box */}
+              <div className="bg-blue-50 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <svg
+                      className="w-4 h-4 text-blue-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    This link will be visible to all team members
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <button
-              onClick={handleAddLink}
-              className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-            >
-              Add Link
-            </button>
+            {/* Footer */}
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowAddLinkModal(false)}
+                  className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddLink}
+                  disabled={!newLinkTitle.trim() || !newLinkUrl.trim()}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center gap-2"
+                >
+                  <span>Add Link</span>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -2421,130 +3299,343 @@ export default function TeamsPage() {
         </div>
       )}
 
-      {/* --- AI Chat Modal --- */}
+      {/* Modern AI Chat Assistant Modal */}
       {showAIModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
           onClick={() => setShowAIModal(false)}
         >
           <div
-            className="relative bg-white w-full max-w-md rounded-lg shadow-xl p-6"
+            className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
-            <button
-              onClick={() => setShowAIModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
-
-            <h2 className="text-xl font-bold mb-4">AI Assistant</h2>
-
-            {/* Question Input */}
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Your Question
-            </label>
-            <textarea
-              className="w-full border border-gray-300 rounded px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              rows={3}
-              value={aiQuestion}
-              onChange={(e) => setAiQuestion(e.target.value)}
-            />
-
-            {/* Answer Display */}
-            {aiAnswer && (
-              <div className="bg-gray-50 p-3 rounded mb-3 text-sm text-gray-800">
-                {aiAnswer}
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    AI Assistant
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    Powered by Advanced AI
+                  </p>
+                </div>
               </div>
-            )}
-
-            {/* Loading Spinner */}
-            {aiLoading && (
-              <div className="flex items-center space-x-2 text-gray-600 mb-3">
+              <button
+                onClick={() => setShowAIModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+              >
                 <svg
-                  className="animate-spin h-5 w-5 text-indigo-600"
+                  className="w-5 h-5 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
                   <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8z"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
-                <span>Thinking...</span>
-              </div>
-            )}
+              </button>
+            </div>
 
-            {/* Submit Button */}
-            <button
-              onClick={handleAskAI}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-              disabled={!aiQuestion.trim() || aiLoading}
-            >
-              Ask
-            </button>
+            {/* Chat Area */}
+            <div className="h-96 overflow-y-auto p-6 space-y-4">
+              {/* Welcome Message */}
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                  <svg
+                    className="w-5 h-5 text-indigo-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div className="bg-gray-50 rounded-2xl rounded-tl-none p-4 max-w-[80%]">
+                  <p className="text-gray-700">
+                    Hello! I'm your AI assistant. How can I help you today?
+                  </p>
+                </div>
+              </div>
+
+              {/* User's Question (if any) */}
+              {aiQuestion && (
+                <div className="flex items-start justify-end space-x-3">
+                  <div className="bg-indigo-600 rounded-2xl rounded-tr-none p-4 max-w-[80%]">
+                    <p className="text-white">{aiQuestion}</p>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              )}
+
+              {/* AI's Answer (if any) */}
+              {aiAnswer && (
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                    <svg
+                      className="w-5 h-5 text-indigo-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="bg-gray-50 rounded-2xl rounded-tl-none p-4 max-w-[80%]">
+                    <p className="text-gray-700 leading-relaxed">{aiAnswer}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Loading Animation */}
+              {aiLoading && (
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                    <svg
+                      className="w-5 h-5 text-indigo-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="bg-gray-50 rounded-2xl rounded-tl-none p-4">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Input Area */}
+            <div className="p-6 border-t border-gray-100">
+              <div className="relative">
+                <textarea
+                  className="w-full pl-4 pr-20 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none"
+                  rows={3}
+                  placeholder="Type your question here..."
+                  value={aiQuestion}
+                  onChange={(e) => setAiQuestion(e.target.value)}
+                />
+                <button
+                  onClick={handleAskAI}
+                  disabled={!aiQuestion.trim() || aiLoading}
+                  className="absolute right-2 bottom-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center space-x-2"
+                >
+                  <span>Ask</span>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M14 5l7 7m0 0l-7 7m7-7H3"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-gray-500">
+                Press Enter to send, Shift + Enter for new line
+              </p>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Team info Model */}
+      {/* Team Info Modal */}
       {showTeamInfoModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
           onClick={() => setShowTeamInfoModal(false)}
         >
           <div
-            className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative"
+            className="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={() => setShowTeamInfoModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-            >
-              <FiX />
-            </button>
-            <h2 className="text-xl font-bold mb-4">Update Team Info</h2>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Team Name
-              </label>
-              <input
-                type="text"
-                value={tempTeamName}
-                onChange={(e) => setTempTeamName(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              />
+            {/* Header */}
+            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Team Details
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      Update your team information
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowTeamInfoModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                >
+                  <FiX className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Description
-              </label>
-              <textarea
-                value={tempDescription}
-                onChange={(e) => setTempDescription(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-                rows={3}
-              />
+            {/* Form Content */}
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Team Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={tempTeamName}
+                  onChange={(e) => setTempTeamName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200"
+                  placeholder="Enter team name..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Team Description
+                </label>
+                <textarea
+                  value={tempDescription}
+                  onChange={(e) => setTempDescription(e.target.value)}
+                  rows="4"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200 resize-none"
+                  placeholder="Describe your team's purpose and goals..."
+                />
+                <p className="mt-2 text-xs text-gray-500">
+                  A clear description helps team members understand their roles
+                  and objectives.
+                </p>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-indigo-100 rounded-full">
+                    <svg
+                      className="w-5 h-5 text-indigo-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">
+                      Team Visibility
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Team details are visible to all members
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <button
-              onClick={updateTeamInfo}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
-            >
-              Save
-            </button>
+            {/* Footer */}
+            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-100">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowTeamInfoModal(false)}
+                  className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={updateTeamInfo}
+                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors duration-200 flex items-center justify-center gap-2"
+                >
+                  <span>Save Changes</span>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

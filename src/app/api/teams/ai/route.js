@@ -43,30 +43,44 @@ export async function POST(req) {
     const teamsCollection = db.collection("teams");
     const tasksCollection = db.collection("tasks");
 
-    // Fetch the user’s team(s) or tasks if needed
+    // Fetch the user’s team
     const userTeam = await teamsCollection.findOne({
       $or: [{ leaderEmail: email }, { "members.email": email }],
     });
 
-    // Maybe fetch tasks for that team
+    // We’ll decide which tasks to show based on user’s question
     let userTasks = [];
-    if (userTeam) {
+
+    // If the user specifically asks about "my tasks" or "my assigned tasks",
+    // then only fetch tasks where assignedTo.email == user’s email
+    if (
+      /\bmy tasks\b/i.test(question) ||
+      /\bmy assigned tasks\b/i.test(question)
+    ) {
       userTasks = await tasksCollection
-        .find({ teamId: userTeam._id })
+        .find({
+          "assignedTo.email": email,
+        })
+        .toArray();
+    } else if (userTeam) {
+      // Otherwise, show tasks that belong to the user’s team
+      userTasks = await tasksCollection
+        .find({
+          teamId: userTeam._id,
+        })
         .toArray();
     }
 
-    // Build some big context message or system prompt with your team & tasks
-    // For a simple example, we’ll just store them in a string:
+    // Build some context message (system prompt) about the user’s team/tasks
     const systemContext = `
       You have knowledge of the user's team and tasks:
       Team: ${userTeam?.teamName || "No team"}
-      Tasks: ${userTasks.map((t) => t.taskName).join(", ")}
+      Tasks: ${userTasks.map((t) => t.taskName).join(", ") || "None"}
       The user is: ${email}.
     `;
 
     // 4) Call the GROQ AI endpoint
-    // Here’s a simple single-turn approach (no streaming in this snippet)
+    // Single-turn approach (no streaming in this snippet)
     const completion = await groq.chat.completions.create({
       messages: [
         { role: "system", content: systemContext },

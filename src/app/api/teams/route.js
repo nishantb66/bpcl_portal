@@ -16,7 +16,7 @@ export async function POST(req) {
       decoded = verify(token, process.env.JWT_SECRET);
     } catch (err) {
       return NextResponse.json(
-        { message: "Token expired or invalid" },
+        { message: "Session expired, please re-login" },
         { status: 401 }
       );
     }
