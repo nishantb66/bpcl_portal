@@ -1314,37 +1314,120 @@ export default function TeamsPage() {
   }
 
   // If user is not in a team
-  if (!inTeam) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-        <ToastContainer />
-        <div className="bg-white shadow-xl rounded-lg p-8 max-w-md w-full">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            You are not in any team
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Start your own team and invite others to join you!
-          </p>
-          <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="Team Name"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded"
-            />
-            <button
-              onClick={handleCreateTeam}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
-              disabled={!teamName.trim()}
+if (!inTeam) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4">
+      <ToastContainer />
+      <div className="bg-white shadow-2xl rounded-2xl p-8 max-w-md w-full transform transition-all hover:scale-[1.02] border border-gray-100">
+        <div className="text-center mb-8">
+          <div className="bg-indigo-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg
+              className="w-8 h-8 text-indigo-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              Create Team
-            </button>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+              />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Create Your Team
+          </h2>
+          <p className="text-gray-600">
+            Start collaborating with others by creating your own team
+          </p>
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <label
+              htmlFor="teamName"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Team Name <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <input
+                id="teamName"
+                type="text"
+                placeholder="Enter your team name"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-200"
+              />
+              {teamName && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <svg
+                    className="w-5 h-5 text-green-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <button
+            onClick={handleCreateTeam}
+            disabled={!teamName.trim()}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl transition-all duration-200 transform hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          >
+            <span className="font-medium">Create Team</span>
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 5l7 7-7 7M5 12h15"
+              />
+            </svg>
+          </button>
+
+          <div className="bg-blue-50 rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-full">
+                <svg
+                  className="w-4 h-4 text-blue-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <p className="text-sm text-blue-700">
+                Once created, you can invite team members to join your workspace
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   // If user is in a team
   return (
