@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import useAuth from "../../utils/token";
 import {
   FiLoader,
   FiSearch,
@@ -46,6 +47,8 @@ ChartJS.register(
 );
 
 export default function TeamsPage() {
+  useAuth(); // This checks the auth state and handles redirection if necessary
+  console.log("useAuth hook called");
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [inTeam, setInTeam] = useState(false);
@@ -1118,7 +1121,6 @@ export default function TeamsPage() {
       setAiLoading(false);
     }
   };
-
 
   // If loading, show spinner
   if (loading) {
