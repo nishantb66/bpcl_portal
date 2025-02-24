@@ -77,6 +77,8 @@ export async function POST(req) {
       Team: ${userTeam?.teamName || "No team"}
       Tasks: ${userTasks.map((t) => t.taskName).join(", ") || "None"}
       The user is: ${email}.
+      Answer the user's question in a formatted manner and with proper markdown.
+      The output you provide should be formatted not always in a whole paragraph.
     `;
 
     // 4) Call the GROQ AI endpoint
