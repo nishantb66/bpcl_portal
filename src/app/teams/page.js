@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -146,6 +146,30 @@ export default function TeamsPage() {
   const [hackEnd, setHackEnd] = useState("");
   const [hackathonId, setHackathonId] = useState(null);
 
+  const [currentMessage, setCurrentMessage] = useState("");
+  const [conversations, setConversations] = useState([
+    {
+      role: "assistant",
+      content: "Hello! I'm your AI assistant. How can I help you today?",
+    },
+  ]);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef(null);
+  const chatAreaRef = useRef(null);
+
+  // Scroll to bottom whenever messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [conversations]);
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -153,6 +177,135 @@ export default function TeamsPage() {
       setCurrentUserEmail(decoded?.email ?? null);
     }
   }, []);
+
+
+    const handleSendMessage = async () => {
+      if (!currentMessage.trim()) return;
+
+      // Add user message to conversation
+      const userMessage = { role: "user", content: currentMessage };
+      setConversations([...conversations, userMessage]);
+      setCurrentMessage("");
+      setIsLoading(true);
+
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast.error("No token found. Please log in again.");
+          setIsLoading(false);
+          return;
+        }
+
+        // Get conversation history for context (limit to last 10 messages)
+        const recentMessages = conversations.slice(-10);
+        const conversationHistory = recentMessages.map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        }));
+
+        // Call the AI route with conversation history
+        const res = await fetch("/api/teams/ai", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            question: currentMessage,
+            history: conversationHistory,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data.message || "AI request failed");
+          setIsLoading(false);
+          return;
+        }
+
+        // Add AI response to conversation
+        setConversations((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: data.aiAnswer,
+          },
+        ]);
+      } catch (err) {
+        console.error(err);
+        toast.error("Something went wrong with the AI.");
+
+        // Add error message to conversation
+        setConversations((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "Sorry, I encountered an error. Please try again.",
+          },
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Function to render message content with Markdown formatting
+    const renderFormattedMessage = (content) => {
+      // This is a simple regex-based Markdown formatter
+      // For production, consider using a proper Markdown library
+      let formattedContent = content
+        // Bold text
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+        // Italic text
+        .replace(/\*(.*?)\*/g, "<em>$1</em>")
+        // Headers
+        .replace(/^### (.*?)$/gm, "<h3>$1</h3>")
+        .replace(/^## (.*?)$/gm, "<h2>$1</h2>")
+        .replace(/^# (.*?)$/gm, "<h1>$1</h1>")
+        // Lists
+        .replace(/^\- (.*?)$/gm, "<li>$1</li>")
+        .replace(/^\d\. (.*?)$/gm, "<li>$1</li>")
+        // Links
+        .replace(
+          /\[(.*?)\]\((.*?)\)/g,
+          '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">$1</a>'
+        );
+
+      // Convert consecutive list items to lists
+      formattedContent = formattedContent
+        .replace(/<li>(.*?)<\/li>\s*<li>/g, "<ul><li>$1</li><li>")
+        .replace(/<li>(.*?)<\/li>\s*(?!<li>)/g, "<ul><li>$1</li></ul>");
+
+      // Handle code blocks
+      formattedContent = formattedContent.replace(
+        /```(.*?)```/gs,
+        '<pre class="bg-gray-100 p-2 rounded overflow-x-auto my-2"><code>$1</code></pre>'
+      );
+
+      // Handle paragraphs
+      const paragraphs = formattedContent.split("\n\n");
+      formattedContent = paragraphs
+        .map((p) => {
+          if (!p.trim()) return "";
+          if (
+            p.includes("<h1>") ||
+            p.includes("<h2>") ||
+            p.includes("<h3>") ||
+            p.includes("<ul>") ||
+            p.includes("<pre>")
+          ) {
+            return p;
+          }
+          return `<p>${p}</p>`;
+        })
+        .join("");
+
+      return (
+        <div
+          className="text-gray-700 leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: formattedContent }}
+        />
+      );
+    };
 
   const checkTokenExpiration = (token) => {
     try {
@@ -1194,7 +1347,6 @@ export default function TeamsPage() {
     }
   };
 
-
   function isHackathonActive(hackathon) {
     if (!hackathon) return false;
     const now = new Date();
@@ -1203,7 +1355,6 @@ export default function TeamsPage() {
     // Button is shown only if 'now' is >= start AND <= end
     return now >= start && now <= end;
   }
-
 
   // CREATE or UPDATE
   const handleSaveHackathon = async () => {
@@ -1314,56 +1465,98 @@ export default function TeamsPage() {
   }
 
   // If user is not in a team
-if (!inTeam) {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4">
-      <ToastContainer />
-      <div className="bg-white shadow-2xl rounded-2xl p-8 max-w-md w-full transform transition-all hover:scale-[1.02] border border-gray-100">
-        <div className="text-center mb-8">
-          <div className="bg-indigo-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg
-              className="w-8 h-8 text-indigo-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-              />
-            </svg>
+  if (!inTeam) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4">
+        <ToastContainer />
+        <div className="bg-white shadow-2xl rounded-2xl p-8 max-w-md w-full transform transition-all hover:scale-[1.02] border border-gray-100">
+          <div className="text-center mb-8">
+            <div className="bg-indigo-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-8 h-8 text-indigo-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              Create Your Team
+            </h2>
+            <p className="text-gray-600">
+              Start collaborating with others by creating your own team
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            Create Your Team
-          </h2>
-          <p className="text-gray-600">
-            Start collaborating with others by creating your own team
-          </p>
-        </div>
 
-        <div className="space-y-6">
-          <div>
-            <label
-              htmlFor="teamName"
-              className="block text-sm font-medium text-gray-700 mb-2"
+          <div className="space-y-6">
+            <div>
+              <label
+                htmlFor="teamName"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Team Name <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  id="teamName"
+                  type="text"
+                  placeholder="Enter your team name"
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-200"
+                />
+                {teamName && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <svg
+                      className="w-5 h-5 text-green-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={handleCreateTeam}
+              disabled={!teamName.trim()}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl transition-all duration-200 transform hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              Team Name <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <input
-                id="teamName"
-                type="text"
-                placeholder="Enter your team name"
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-200"
-              />
-              {teamName && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <span className="font-medium">Create Team</span>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 5l7 7-7 7M5 12h15"
+                />
+              </svg>
+            </button>
+
+            <div className="bg-blue-50 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-full">
                   <svg
-                    className="w-5 h-5 text-green-500"
+                    className="w-4 h-4 text-blue-600"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -1372,62 +1565,21 @@ if (!inTeam) {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M5 13l4 4L19 7"
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
                 </div>
-              )}
-            </div>
-          </div>
-
-          <button
-            onClick={handleCreateTeam}
-            disabled={!teamName.trim()}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl transition-all duration-200 transform hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-          >
-            <span className="font-medium">Create Team</span>
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 5l7 7-7 7M5 12h15"
-              />
-            </svg>
-          </button>
-
-          <div className="bg-blue-50 rounded-xl p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-full">
-                <svg
-                  className="w-4 h-4 text-blue-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+                <p className="text-sm text-blue-700">
+                  Once created, you can invite team members to join your
+                  workspace
+                </p>
               </div>
-              <p className="text-sm text-blue-700">
-                Once created, you can invite team members to join your workspace
-              </p>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   // If user is in a team
   return (
@@ -1649,7 +1801,7 @@ if (!inTeam) {
 
               <button
                 onClick={() => setShowAIModal(true)}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-gray-300 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-200"
               >
                 <span className="text-sm font-medium">AI Assistant (Beta)</span>
               </button>
@@ -3702,7 +3854,7 @@ if (!inTeam) {
           onClick={() => setShowAIModal(false)}
         >
           <div
-            className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl"
+            className="relative bg-white w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col h-[80vh]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -3725,40 +3877,29 @@ if (!inTeam) {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-gray-800">
-                    AI Assistant
+                    AI Chat Assistant
                   </h2>
                   <p className="text-sm text-gray-500">
                     Powered by Advanced AI
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => setShowAIModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-              >
-                <svg
-                  className="w-5 h-5 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() =>
+                    setConversations([
+                      {
+                        role: "assistant",
+                        content:
+                          "Hello! I'm your AI assistant. How can I help you today?",
+                      },
+                    ])
+                  }
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 text-gray-500 tooltip"
+                  title="Clear chat history"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {/* Chat Area */}
-            <div className="h-96 overflow-y-auto p-6 space-y-4">
-              {/* Welcome Message */}
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
                   <svg
-                    className="w-5 h-5 text-indigo-600"
+                    className="w-5 h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -3767,67 +3908,97 @@ if (!inTeam) {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth="2"
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                     />
                   </svg>
-                </div>
-                <div className="bg-gray-50 rounded-2xl rounded-tl-none p-4 max-w-[80%]">
-                  <p className="text-gray-700">
-                    Hello! I'm your AI assistant. How can I help you today?
-                  </p>
-                </div>
+                </button>
+                <button
+                  onClick={() => setShowAIModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                >
+                  <svg
+                    className="w-5 h-5 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
               </div>
+            </div>
 
-              {/* User's Question (if any) */}
-              {aiQuestion && (
-                <div className="flex items-start justify-end space-x-3">
-                  <div className="bg-indigo-600 rounded-2xl rounded-tr-none p-4 max-w-[80%]">
-                    <p className="text-white">{aiQuestion}</p>
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              )}
+            {/* Chat Area */}
+            <div
+              ref={chatAreaRef}
+              className="flex-1 overflow-y-auto p-6 space-y-4"
+            >
+              {conversations.map((message, index) => (
+                <div
+                  key={index}
+                  className={`flex items-start ${
+                    message.role === "user" ? "justify-end" : ""
+                  } space-x-3`}
+                >
+                  {message.role === "assistant" && (
+                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                      <svg
+                        className="w-5 h-5 text-indigo-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+                        />
+                      </svg>
+                    </div>
+                  )}
 
-              {/* AI's Answer (if any) */}
-              {aiAnswer && (
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                    <svg
-                      className="w-5 h-5 text-indigo-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
-                      />
-                    </svg>
+                  <div
+                    className={`${
+                      message.role === "user"
+                        ? "bg-indigo-600 text-white rounded-2xl rounded-tr-none"
+                        : "bg-gray-50 text-gray-700 rounded-2xl rounded-tl-none"
+                    } p-4 max-w-[80%]`}
+                  >
+                    {message.role === "user" ? (
+                      <p>{message.content}</p>
+                    ) : (
+                      renderFormattedMessage(message.content)
+                    )}
                   </div>
-                  <div className="bg-gray-50 rounded-2xl rounded-tl-none p-4 max-w-[80%]">
-                    <p className="text-gray-700 leading-relaxed">{aiAnswer}</p>
-                  </div>
+
+                  {message.role === "user" && (
+                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                    </div>
+                  )}
                 </div>
-              )}
+              ))}
 
               {/* Loading Animation */}
-              {aiLoading && (
+              {isLoading && (
                 <div className="flex items-start space-x-3">
                   <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
                     <svg
@@ -3853,6 +4024,7 @@ if (!inTeam) {
                   </div>
                 </div>
               )}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Input Area */}
@@ -3861,16 +4033,17 @@ if (!inTeam) {
                 <textarea
                   className="w-full pl-4 pr-20 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none"
                   rows={3}
-                  placeholder="Type your question here..."
-                  value={aiQuestion}
-                  onChange={(e) => setAiQuestion(e.target.value)}
+                  placeholder="Type your message here..."
+                  value={currentMessage}
+                  onChange={(e) => setCurrentMessage(e.target.value)}
+                  onKeyDown={handleKeyPress}
                 />
                 <button
-                  onClick={handleAskAI}
-                  disabled={!aiQuestion.trim() || aiLoading}
+                  onClick={handleSendMessage}
+                  disabled={!currentMessage.trim() || isLoading}
                   className="absolute right-2 bottom-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center space-x-2"
                 >
-                  <span>Ask</span>
+                  <span>Send</span>
                   <svg
                     className="w-4 h-4"
                     fill="none"
@@ -3886,9 +4059,14 @@ if (!inTeam) {
                   </svg>
                 </button>
               </div>
-              <p className="mt-2 text-xs text-gray-500">
-                Press Enter to send, Shift + Enter for new line
-              </p>
+              <div className="flex justify-between mt-2">
+                <p className="text-xs text-gray-500">
+                  Press Enter to send, Shift + Enter for new line
+                </p>
+                <p className="text-xs text-gray-500">
+                  {currentMessage.length} characters
+                </p>
+              </div>
             </div>
           </div>
         </div>

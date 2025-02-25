@@ -637,18 +637,26 @@ export default function Home() {
 
       {/* AI Chat Popup */}
       {showChat && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-black/60 backdrop-blur-sm animate-[fadeIn_0.3s_ease-out]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+          {/* Backdrop with modern blur */}
           <div
-            className="relative w-full max-w-3xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-[slideUp_0.4s_ease-out]"
-            style={{ maxHeight: "90vh" }}
+            className="absolute inset-0 bg-gray-800/40 backdrop-blur-[6px]"
+            onClick={() => setShowChat(false)}
+          />
+
+          {/* Main Chat Container */}
+          <div
+            className="relative w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden animate-[slideUp_0.3s_ease-out]"
+            style={{ maxHeight: "85vh" }}
           >
-            {/* Close Button - unchanged */}
+            {/* Close Button - Redesigned */}
             <button
               onClick={() => setShowChat(false)}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-all duration-200 z-10"
+              className="absolute top-6 right-6 p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-all duration-200 z-10 group"
+              aria-label="Close chat"
             >
               <svg
-                className="w-6 h-6"
+                className="w-5 h-5 transform group-hover:rotate-90 transition-transform duration-200"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -662,48 +670,55 @@ export default function Home() {
               </svg>
             </button>
 
-            {/* Chat Header - made slightly bigger */}
-            <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-8 flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                <svg
-                  className="w-7 h-7 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-white">AI Assistant</h3>
-                <p className="text-base text-blue-100 opacity-90">
-                  How can I help you today?
-                </p>
+            {/* Chat Header - Modern Design */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-8">
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                    <svg
+                      className="w-8 h-8 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.8"
+                        d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4-4-4z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-white" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-white tracking-tight">
+                    AI Assistant
+                  </h3>
+                  <p className="text-blue-100 text-[15px] mt-0.5">
+                    Ready to help you with any questions
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Messages Container - increased padding and text size */}
+            {/* Messages Container - Enhanced */}
             <div
               ref={messageListRef}
-              className="flex-1 overflow-y-auto px-8 py-6 space-y-6 scroll-smooth"
-              style={{ maxHeight: "calc(90vh - 200px)" }}
+              className="flex-1 overflow-y-auto px-6 py-8 space-y-6 scroll-smooth"
+              style={{ maxHeight: "calc(85vh - 230px)" }}
             >
               {messages.map((msg, idx) => (
                 <div
                   key={idx}
                   className={`flex ${
                     msg.role === "assistant" ? "justify-start" : "justify-end"
-                  } animate-[slideUp_0.3s_ease-out]`}
+                  } animate-[fadeIn_0.3s_ease-out]`}
                 >
                   {msg.role === "assistant" && (
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center mr-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mr-4 mt-2">
                       <svg
-                        className="w-6 h-6 text-indigo-600 dark:text-indigo-400"
+                        className="w-6 h-6 text-blue-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -722,12 +737,12 @@ export default function Home() {
                 max-w-[85%] px-6 py-4 rounded-2xl shadow-sm
                 ${
                   msg.role === "assistant"
-                    ? "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200"
-                    : "bg-indigo-600 text-white ml-auto"
+                    ? "bg-white border border-gray-100 text-gray-700"
+                    : "bg-blue-600 text-white ml-auto"
                 }
               `}
                   >
-                    <p className="text-base leading-relaxed whitespace-pre-wrap">
+                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap">
                       {msg.content}
                     </p>
                   </div>
@@ -735,8 +750,8 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Input Box - increased size and padding */}
-            <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+            {/* Input Box - Modern Design */}
+            <div className="p-6 bg-gray-50 border-t border-gray-100">
               <div className="flex items-center space-x-4">
                 <input
                   type="text"
@@ -749,11 +764,10 @@ export default function Home() {
                       handleSendMessage();
                     }
                   }}
-                  className="flex-1 px-6 py-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 
-              focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-              text-base placeholder-gray-400 dark:placeholder-gray-500 
-              text-gray-900 dark:text-gray-100
-              transition-all duration-200"
+                  className="flex-1 px-6 py-4 rounded-xl bg-white border border-gray-200 
+              focus:ring-2 focus:ring-blue-500 focus:border-transparent
+              text-[15px] placeholder-gray-400 text-gray-700
+              transition-all duration-200 shadow-sm"
                 />
                 <button
                   onClick={handleSendMessage}
@@ -762,16 +776,16 @@ export default function Home() {
               flex items-center justify-center p-4 rounded-xl transition-all duration-200
               ${
                 isLoadingAI
-                  ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
-                  : "bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white"
+                  ? "bg-gray-100 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 active:scale-95 shadow-sm hover:shadow"
               }
             `}
                 >
                   {isLoadingAI ? (
-                    <div className="w-6 h-6 border-2 border-gray-400 border-t-gray-600 rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
                   ) : (
                     <svg
-                      className="w-6 h-6 transform rotate-90"
+                      className="w-5 h-5 text-white transform rotate-90"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
