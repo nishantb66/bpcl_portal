@@ -25,6 +25,8 @@ import {
 import { FaGoogle } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import jwt from "jsonwebtoken";
 
 export default function Home() {
@@ -321,29 +323,85 @@ export default function Home() {
                     <span>Forum</span>
                   </Link>
 
-                  {/* Button to open AI Assistant */}
-                  <button
-                    onClick={() => setShowChat(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg shadow-md hover:shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all"
-                  >
-                    <span className="flex items-center gap-2">
-                      <svg
-                        className="w-4 h-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M9 12L11 14L15 10M12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3Z"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <span>AI Assistant</span>
-                    </span>
-                  </button>
+                  {/* AI Assistant Button with Tooltip */}
+                  <div className="relative group">
+                    <button
+                      onClick={() => setShowChat(true)}
+                      className="px-5 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 text-white rounded-xl 
+    shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 
+    border border-blue-500/20 hover:border-blue-500/30"
+                      aria-label="Open AI Assistant"
+                    >
+                      <span className="flex items-center gap-3">
+                        <div className="relative">
+                          <svg
+                            className="w-5 h-5 animate-pulse"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3Z"
+                              className="stroke-current"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                            />
+                            <path
+                              d="M9 12L11 14L15 10"
+                              className="stroke-current"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          {/* <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-white" /> */}
+                        </div>
+                        <span className="font-medium tracking-wide">
+                          AI Assistant
+                        </span>
+                      </span>
+                    </button>
+
+                    {/* Modern Hover Description Tooltip - Now appears below the button */}
+                    <div
+                      className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-72 opacity-0 group-hover:opacity-100 
+    transition-opacity duration-200 pointer-events-none z-50"
+                    >
+                      <div className="bg-gray-900 text-white p-4 rounded-xl shadow-xl">
+                        <div className="flex items-start gap-3">
+                          <div className="p-1.5 bg-blue-500/20 rounded-lg">
+                            <svg
+                              className="w-4 h-4 text-blue-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-white/90">
+                              Advanced AI Assistant
+                            </p>
+                            <p className="text-xs text-white/70 mt-1 leading-relaxed">
+                              Powered by advanced AI, capable of handling
+                              complex questions with detailed reasoning and
+                              explanations.
+                            </p>
+                          </div>
+                        </div>
+                        {/* Tooltip Arrow - Now points upward */}
+                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                          <div className="w-3 h-3 bg-gray-900 transform rotate-45" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
                   <button
                     onClick={() => router.push("/profile")}
@@ -677,45 +735,44 @@ export default function Home() {
       {/* AI Chat Popup */}
       {showChat && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-          {/* Backdrop with modern blur */}
+          {/* Backdrop with glass morphism effect */}
           <div
-            className="absolute inset-0 bg-gray-800/40 backdrop-blur-[6px]"
+            className="absolute inset-0 bg-gradient-to-br from-gray-900/60 to-blue-900/30 backdrop-blur-[8px]"
             onClick={() => setShowChat(false)}
           />
 
           {/* Main Chat Container */}
-          <div
-            className="relative w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden animate-[slideUp_0.3s_ease-out]"
-            style={{ maxHeight: "85vh" }}
-          >
-            {/* Close Button - Redesigned */}
-            <button
-              onClick={() => setShowChat(false)}
-              className="absolute top-6 right-6 p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-all duration-200 z-10 group"
-              aria-label="Close chat"
-            >
-              <svg
-                className="w-5 h-5 transform group-hover:rotate-90 transition-transform duration-200"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-
-            {/* Chat Header - Modern Design */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-8">
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+          <div className="relative w-full max-w-4xl mx-auto bg-white/95 backdrop-blur-[12px] rounded-[1.75rem] shadow-2xl shadow-blue-900/20 flex flex-col overflow-hidden">
+            <div className="flex flex-col h-[85vh] max-h-[800px]">
+              {/* Header Section */}
+              <div className="px-6 py-4 border-b border-gray-100/50 bg-gradient-to-r from-blue-600 to-indigo-600">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2.5 bg-white/10 rounded-xl backdrop-blur-sm">
+                      <svg
+                        className="w-6 h-6 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="1.8"
+                          d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4-4-4z"
+                        />
+                      </svg>
+                    </div>
+                    <h2 className="text-xl font-semibold text-white">
+                      Enterprise AI Assistant
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setShowChat(false)}
+                    className="p-2 text-white/80 hover:text-white rounded-full hover:bg-white/10"
+                  >
                     <svg
-                      className="w-8 h-8 text-white"
+                      className="w-5 h-5"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -723,115 +780,191 @@ export default function Home() {
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth="1.8"
-                        d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4-4-4z"
+                        strokeWidth="2"
+                        d="M6 18L18 6M6 6l12 12"
                       />
                     </svg>
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-white" />
+                  </button>
                 </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-white tracking-tight">
-                    AI Assistant
-                  </h3>
-                  <p className="text-blue-100 text-[15px] mt-0.5">
-                    Ready to help you with any questions
-                  </p>
-                </div>
+                <p className="mt-1 text-sm text-blue-100/90">
+                  Advanced multi-model AI with enterprise-grade security
+                </p>
               </div>
-            </div>
 
-            {/* Messages Container - Enhanced */}
-            <div
-              ref={messageListRef}
-              className="flex-1 overflow-y-auto px-6 py-8 space-y-6 scroll-smooth"
-              style={{ maxHeight: "calc(85vh - 230px)" }}
-            >
-              {messages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`flex ${
-                    msg.role === "assistant" ? "justify-start" : "justify-end"
-                  } animate-[fadeIn_0.3s_ease-out]`}
-                >
-                  {msg.role === "assistant" && (
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mr-4 mt-2">
-                      <svg
-                        className="w-6 h-6 text-blue-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
-                    </div>
-                  )}
+              {/* Messages Container */}
+              <div
+                ref={messageListRef}
+                className="flex-1 overflow-y-auto px-4 py-6 space-y-4 scroll-smooth"
+              >
+                {messages.map((msg, idx) => (
                   <div
-                    className={`
-                max-w-[85%] px-6 py-4 rounded-2xl shadow-sm
-                ${
-                  msg.role === "assistant"
-                    ? "bg-white border border-gray-100 text-gray-700"
-                    : "bg-blue-600 text-white ml-auto"
-                }
-              `}
+                    key={idx}
+                    className={`flex ${
+                      msg.role === "assistant" ? "justify-start" : "justify-end"
+                    }`}
                   >
-                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap">
-                      {msg.content}
-                    </p>
+                    <div
+                      className={`max-w-[85%] rounded-[1.25rem] p-4 ${
+                        msg.role === "assistant"
+                          ? "bg-white shadow-sm border border-gray-100/70 ml-2"
+                          : "bg-blue-600 text-white shadow-md mr-2"
+                      }`}
+                    >
+                      <div className="prose prose-sm break-words">
+                        <ReactMarkdown
+                          components={{
+                            h1: ({ node, ...props }) => (
+                              <h3
+                                className="text-lg font-semibold mb-2"
+                                {...props}
+                              />
+                            ),
+                            h2: ({ node, ...props }) => (
+                              <h4
+                                className="text-base font-medium mb-2"
+                                {...props}
+                              />
+                            ),
+                            ul: ({ children }) => (
+                              <ul className="list-disc pl-5 space-y-1.5 mb-2">
+                                {children}
+                              </ul>
+                            ),
+                            ol: ({ children }) => (
+                              <ol className="list-decimal pl-5 space-y-1.5 mb-2">
+                                {children}
+                              </ol>
+                            ),
+                            code: ({ inline, className, children, ...props }) =>
+                              inline ? (
+                                <code className="bg-gray-100/80 px-1.5 py-0.5 rounded text-sm font-mono">
+                                  {children}
+                                </code>
+                              ) : (
+                                <pre className="bg-gray-50 p-3 rounded-lg overflow-x-auto text-sm my-2">
+                                  <code className="font-mono">{children}</code>
+                                </pre>
+                              ),
+                            table: ({ children }) => (
+                              <div className="overflow-x-auto">
+                                <table className="min-w-full border-collapse border-spacing-0 my-2">
+                                  {children}
+                                </table>
+                              </div>
+                            ),
+                            th: ({ children }) => (
+                              <th className="px-3 py-2 bg-gray-100/50 text-left text-sm font-semibold border-b-2 border-gray-200">
+                                {children}
+                              </th>
+                            ),
+                            td: ({ children }) => (
+                              <td className="px-3 py-2 text-sm border-b border-gray-100/50">
+                                {children}
+                              </td>
+                            ),
+                            strong: ({ children }) => (
+                              <strong className="font-semibold">
+                                {children}
+                              </strong>
+                            ),
+                            a: ({ href, children }) => (
+                              <a
+                                href={href}
+                                className="text-blue-600 hover:text-blue-700 underline"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {children}
+                              </a>
+                            ),
+                          }}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Input Section with Disclaimer */}
+              <div className="border-t border-gray-100/50 bg-gray-50/30 px-4 py-4">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-1 relative">
+                    <textarea
+                      value={userInput}
+                      onChange={(e) => setUserInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                      placeholder="Ask me anything about enterprise operations..."
+                      className="w-full px-4 py-3 pr-12 text-sm rounded-[1rem] border border-gray-200/80 focus:border-blue-500 focus:ring-2 focus:ring-blue-200/50 resize-none"
+                      rows="1"
+                    />
+                    <button
+                      onClick={handleSendMessage}
+                      disabled={isLoadingAI}
+                      className={`absolute right-3 top-3 p-1.5 rounded-full ${
+                        isLoadingAI
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "text-blue-600 hover:bg-blue-100/50"
+                      }`}
+                    >
+                      {isLoadingAI ? (
+                        <svg
+                          className="w-5 h-5 animate-spin"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            fill="none"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-5 h-5"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {/* Input Box - Modern Design */}
-            <div className="p-6 bg-gray-50 border-t border-gray-100">
-              <div className="flex items-center space-x-4">
-                <input
-                  type="text"
-                  placeholder="Type your message..."
-                  value={userInput}
-                  onChange={(e) => setUserInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  className="flex-1 px-6 py-4 rounded-xl bg-white border border-gray-200 
-              focus:ring-2 focus:ring-blue-500 focus:border-transparent
-              text-[15px] placeholder-gray-400 text-gray-700
-              transition-all duration-200 shadow-sm"
-                />
-                <button
-                  onClick={handleSendMessage}
-                  disabled={isLoadingAI}
-                  className={`
-              flex items-center justify-center p-4 rounded-xl transition-all duration-200
-              ${
-                isLoadingAI
-                  ? "bg-gray-100 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 active:scale-95 shadow-sm hover:shadow"
-              }
-            `}
-                >
-                  {isLoadingAI ? (
-                    <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-                  ) : (
-                    <svg
-                      className="w-5 h-5 text-white transform rotate-90"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                    </svg>
-                  )}
-                </button>
+                <div className="mt-2 flex items-center space-x-2 px-2">
+                  <svg
+                    className="w-4 h-4 text-gray-400/80"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="text-xs text-gray-500/80">
+                    AI-powered responses - May occasionally generate
+                    inaccuracies. Verify critical information through official
+                    channels.
+                  </span>
+                </div>
               </div>
             </div>
           </div>

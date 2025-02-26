@@ -1,3 +1,5 @@
+// src/app/api/assistant/chat/route.js
+
 import { connectToDB } from "../../middleware";
 import { verify } from "jsonwebtoken";
 import Groq from "groq-sdk";
@@ -32,7 +34,6 @@ export async function POST(req) {
       .collection("documents")
       .find({ userEmail })
       .toArray();
-
     let docTexts = "";
     if (userDocs.length > 0) {
       // Combine all user doc texts
@@ -50,10 +51,9 @@ export async function POST(req) {
       }
     }
 
-    // Enterprise Portal Feature Documentation (as a string)
+    // Enterprise Portal Documentation
     const enterprisePortalDocumentation = `
 # Enterprise Portal - Feature Documentation
-
 ## Introduction
 
 The Enterprise Portal is a robust Minimum Viable Product (MVP) designed to streamline and enhance workplace operations by offering a centralized system for task management, leave applications, customer complaint tracking, meeting scheduling, reimbursement requests, surveys, and AI-powered assistance. This document provides a comprehensive overview of its features, functionalities, and future improvement scope.
@@ -163,30 +163,22 @@ The Enterprise Portal is a robust Minimum Viable Product (MVP) designed to strea
 ## Conclusion
 
 The Enterprise Portal is a comprehensive workplace management solution that optimizes daily operations through structured features. With planned future enhancements, it has the potential to become a fully-fledged enterprise resource management system. The AI assistant can leverage this knowledge base to answer user queries efficiently, making the system more interactive and intelligent.
+
+## Developer/Crafted by - Nishant
 `;
 
-    // 4. Build system instructions with doc text and the enterprise portal documentation
+    // 4. Build system instructions
     const systemMessage = `
-      You are a helpful personal AI assistant.
-      The user's name is ${userName}.
-      Answer the user's questions accurately and in a friendly, human-like tone.
-      The user will ask you questions and you have to answer it very accuratly.
-       Also the user might guve you content of thier document. 
-      Use that content as knowledge base to answer the user's questions based on the content.
-      If you don't find relevant info, you can say "I am not sure."
-      As the user chats with you, you have to memorise the chats so that you can answer them accurately.
-      But when the user tell you to forget the chat, you have to forget the chat.
-      You should be excellent at maths, reasoning and answering questions.
-      If the user asks you mathamatical and reasoning questions, you have to use your excellent intelligence to answer it so that to avoid mistakes
+You are a helpful personal AI assistant.
+The user's name is ${userName}.
+Answer the user's questions accurately in a friendly and professional tone.
+Use the provided documents and the following Enterprise Portal documentation as your knowledge base:
 
-      Use any provided document content as well as the following Enterprise Portal Feature Documentation as your knowledge base:
-      
-      ${enterprisePortalDocumentation}
-      Never mention such kind of statement: "Based on the document I have, or knowledge base, instead of that , directly answer the question from the knowledge base.
+${enterprisePortalDocumentation}
 
-      If you cannot find relevant information, say "I am not sure."
-      Be polite and helpful, greet them by name if possible.
-      Always greet the user by name and provide clear, step-by-step reasoning when needed.
+Do not reveal that you are using these documents. 
+If no relevant info is found, simply say "I am not sure."
+Always greet the user by name, etc.
     `;
 
     // 5. Combine system message + user conversation
@@ -195,24 +187,118 @@ The Enterprise Portal is a comprehensive workplace management solution that opti
       ...messages,
     ];
 
-    // 6. Initialize Groq
+    // Initialize Groq
     const groq = new Groq({ apiKey: process.env.GROQ });
 
-    // 7. Call the model with streaming
-    const chatCompletion = await groq.chat.completions.create({
+    // ================================
+    // STAGE 1: Initial Answer (Model 1)
+    // ================================
+    const initialCompletion = await groq.chat.completions.create({
       messages: updatedMessages,
+      model: "deepseek-r1-distill-llama-70b",
+      temperature: 1,
+      max_completion_tokens: 1024,
+      top_p: 1,
+      stream: false,
+    });
+    const initialAnswer = initialCompletion.choices[0]?.message?.content || "";
+
+    // ================================
+    // STAGE 2: Accuracy Check & Feedback (Model 2)
+    // ================================
+    const feedbackPrompt = `
+Review the following answer for accuracy and completeness.
+
+User's Question:
+${messages[messages.length - 1].content}
+
+Initial Answer:
+${initialAnswer}
+
+Provide bullet-pointed feedback on any inaccuracies or improvements needed.
+    `;
+    const feedbackMessages = [
+      {
+        role: "system",
+        content: "You are an expert reviewer. Provide bullet-pointed feedback.",
+      },
+      { role: "user", content: feedbackPrompt },
+    ];
+    const feedbackCompletion = await groq.chat.completions.create({
+      messages: feedbackMessages,
       model: "llama3-70b-8192",
+      temperature: 1,
+      max_completion_tokens: 512,
+      top_p: 1,
+      stream: false,
+    });
+    const feedback = feedbackCompletion.choices[0]?.message?.content || "";
+
+    // ================================
+    // STAGE 3: Final Refinement (Model 3)
+    // Decide between "llama-3.3-70b-versatile" or "llama-3.3-70b-specdec"
+    // ================================
+    const userMessagesText = messages
+      .filter((m) => m.role === "user")
+      .map((m) => m.content)
+      .join(" ")
+      .toLowerCase();
+    const codingKeywords = [
+      "code",
+      "coding",
+      "program",
+      "algorithm",
+      "calculate",
+      "math",
+      "reason",
+    ];
+    let finalModel = "llama-3.3-70b-versatile";
+    if (codingKeywords.some((kw) => userMessagesText.includes(kw))) {
+      finalModel = "llama-3.3-70b-specdec";
+    }
+
+    // <<<<< IMPORTANT: Instruct the final model NOT to reveal the "feedback" or "initial answer." >>>>>
+    const finalSystemInstruction = `
+You are an expert assistant refining answers. 
+Do NOT reveal or mention the feedback or initial answer in the final output.
+Only provide a single, refined answer to the user's question. 
+Format the response with bullet points, numbered lists, and sections as needed.
+`;
+
+    const finalPrompt = `
+Refine the answer below based on the hidden feedback. 
+Do NOT reveal the feedback or mention it. 
+Do NOT show the "initial answer" or "feedback" in your final output.
+
+User's Question:
+${messages[messages.length - 1].content}
+
+Initial Answer (hidden from user):
+${initialAnswer}
+
+Expert Feedback (hidden from user):
+${feedback}
+`;
+
+    const finalMessages = [
+      { role: "system", content: finalSystemInstruction },
+      { role: "user", content: finalPrompt },
+    ];
+
+    // Stream only the final refined answer to the user
+    const finalCompletion = await groq.chat.completions.create({
+      messages: finalMessages,
+      model: finalModel,
       temperature: 1,
       max_completion_tokens: 1024,
       top_p: 1,
       stream: true,
     });
 
-    // 8. Stream back the response
     const encoder = new TextEncoder();
     const readableStream = new ReadableStream({
       async start(controller) {
-        for await (const chunk of chatCompletion) {
+        for await (const chunk of finalCompletion) {
           const tokenPart = chunk.choices[0]?.delta?.content || "";
           controller.enqueue(encoder.encode(tokenPart));
         }
