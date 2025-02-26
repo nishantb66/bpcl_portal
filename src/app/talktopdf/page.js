@@ -256,7 +256,7 @@ export default function TalkToPDFPage() {
               <FiFileText className="w-5 h-5" />
             </div>
             <h1 className="text-xl font-semibold tracking-tight">
-              Talk to PDF
+              Talk to PDF (Beta)
             </h1>
           </div>
         </div>
