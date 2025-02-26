@@ -7,11 +7,11 @@ import "react-toastify/dist/ReactToastify.css";
 import { FiLogIn } from "react-icons/fi";
 
 export default function Login() {
-  // State & Logic
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // Handle login
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -43,6 +43,36 @@ export default function Login() {
     }
   };
 
+  // Example logout (could be placed in a NavBar or separate button)
+  const handleLogout = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.warn("You're not logged in!");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "logout", token }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success("Logged out successfully!");
+        localStorage.removeItem("token");
+        localStorage.removeItem("name");
+        router.push("/login");
+      } else {
+        toast.error(data.message);
+      }
+    } catch (err) {
+      toast.error("Logout failed. Please try again.");
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-gray-50 to-white">
       {/* Header */}
@@ -61,6 +91,13 @@ export default function Login() {
               className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
             >
               Signup
+            </button>
+            {/* Example Logout button */}
+            <button
+              onClick={handleLogout}
+              className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+            >
+              Logout
             </button>
           </nav>
         </div>

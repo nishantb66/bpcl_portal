@@ -3,6 +3,7 @@ import { connectToDB } from "../middleware";
 import { sign, verify } from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+
 dotenv.config();
 
 // Input validation helpers
@@ -25,8 +26,8 @@ const isValidUsername = (name) => {
 };
 
 export async function POST(req) {
-  // Destructure all needed fields including role and emp_id
-  const { type, name, email, password, otp, role, emp_id } = await req.json();
+  const { type, name, email, password, otp, role, emp_id, token } =
+    await req.json();
   const db = await connectToDB();
   const usersCollection = db.collection("users");
   const otpCollection = db.collection("otps");
@@ -40,11 +41,12 @@ export async function POST(req) {
   // Ensure indexes for uniqueness
   await usersCollection.createIndex({ email: 1 }, { unique: true });
   await usersCollection.createIndex({ name: 1 }, { unique: true });
-  // Ensure employee id uniqueness as well
   await usersCollection.createIndex({ emp_id: 1 }, { unique: true });
 
+  // ---------------------------
+  // 1) SIGNUP
+  // ---------------------------
   if (type === "signup") {
-    // Validate required fields
     if (!name || !email || !password || !role || !emp_id) {
       return new Response(
         JSON.stringify({ message: "All fields are required" }),
@@ -52,7 +54,6 @@ export async function POST(req) {
       );
     }
 
-    // Validate role selection
     const allowedRoles = [
       "Executive",
       "Staff grade 1",
@@ -152,8 +153,10 @@ export async function POST(req) {
     });
   }
 
+  // ---------------------------
+  // 2) VERIFY SIGNUP OTP
+  // ---------------------------
   if (type === "verify-signup-otp") {
-    // Verify OTP and create user
     const otpDoc = await otpCollection.findOne({
       email: email.toLowerCase(),
       otp,
@@ -174,6 +177,9 @@ export async function POST(req) {
     });
   }
 
+  // ---------------------------
+  // 3) LOGIN (Single-Session Logic)
+  // ---------------------------
   if (type === "login") {
     if (!email || !password) {
       return new Response(JSON.stringify({ message: "Missing fields" }), {
@@ -181,7 +187,8 @@ export async function POST(req) {
       });
     }
 
-    const user = await usersCollection.findOne({ email });
+    // Make sure to compare emails in lowercase
+    const user = await usersCollection.findOne({ email: email.toLowerCase() });
     if (!user || !(await compare(password, user.password))) {
       return new Response(
         JSON.stringify({ message: "Invalid email or password" }),
@@ -189,8 +196,8 @@ export async function POST(req) {
       );
     }
 
-    // Include role and emp_id in the JWT payload
-    const token = sign(
+    // Generate new token
+    const newToken = sign(
       {
         email: user.email,
         name: user.name,
@@ -200,12 +207,53 @@ export async function POST(req) {
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
-    console.log("Generated Token:", token);
+
+    // Store new token in DB so old token is invalidated
+    await usersCollection.updateOne(
+      { _id: user._id },
+      { $set: { activeToken: newToken } }
+    );
 
     return new Response(
-      JSON.stringify({ message: "Login successful", token, name: user.name }),
+      JSON.stringify({
+        message: "Login successful",
+        token: newToken,
+        name: user.name,
+      }),
       { status: 200 }
     );
+  }
+
+  // ---------------------------
+  // 4) LOGOUT (Invalidate Current Session)
+  // ---------------------------
+  if (type === "logout") {
+    // We expect the client to send the token (stored in localStorage) in the request body
+    if (!token) {
+      return new Response(JSON.stringify({ message: "No token provided" }), {
+        status: 400,
+      });
+    }
+
+    try {
+      // Verify the token to extract user info
+      const decoded = verify(token, process.env.JWT_SECRET);
+      const { email: userEmail } = decoded;
+
+      // Set activeToken to null (or any invalid value) in DB
+      await usersCollection.updateOne(
+        { email: userEmail.toLowerCase() },
+        { $set: { activeToken: null } }
+      );
+
+      return new Response(JSON.stringify({ message: "Logout successful" }), {
+        status: 200,
+      });
+    } catch (error) {
+      return new Response(JSON.stringify({ message: "Invalid token" }), {
+        status: 401,
+      });
+    }
   }
 
   return new Response(JSON.stringify({ message: "Invalid request type" }), {
