@@ -1594,8 +1594,8 @@ export default function Home() {
 
       <footer className="border-t border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div className="flex space-x-6 justify-center md:order-2">
+          <div className="flex flex-col sm:flex-row items-center justify-between">
+            <div className="flex flex-wrap justify-center gap-4 sm:order-2">
               {/* Existing Links */}
               <a
                 href="https://nishantb66.github.io/MyPortfolio"
@@ -1622,17 +1622,26 @@ export default function Home() {
                 <FiGithub className="w-5 h-5" />
               </a>
 
-              {/* New 'Message me' Link */}
+              {/* New Links */}
               <Link
                 href="/contact"
-                className="text-gray-400 hover:text-gray-500"
+                className="text-gray-500 hover:text-gray-600"
               >
                 Message me
               </Link>
+              <Link href="#" className="text-gray-500 hover:text-gray-600">
+                About
+              </Link>
+              <Link
+                href="#"
+                className="text-gray-500 hover:text-gray-600"
+              >
+                Privacy Policy
+              </Link>
             </div>
-            <div className="mt-4 md:mt-0 md:order-1">
+            <div className="mt-4 sm:mt-0 sm:order-1">
               <p className="text-center text-sm text-gray-500">
-                &copy; {new Date().getFullYear()} Portal. Crafted by Nishant.
+                &copy; {new Date().getFullYear()} Portal. Crafted by Nishant Baruah.
               </p>
             </div>
           </div>
