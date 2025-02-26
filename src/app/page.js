@@ -52,6 +52,14 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
+  // for in-person message
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState([]);
+  const [showMessagesPopup, setShowMessagesPopup] = useState(false);
+
+  const [employeeMessage, setEmployeeMessage] = useState("");
+
+
   const router = useRouter();
 
   // Auto-scroll
@@ -233,6 +241,50 @@ export default function Home() {
     }
   }
 
+  // Function to fetch unread messages count (and data)
+  const fetchUnreadMessages = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await fetch("/api/messages", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadMessages(data.messages);
+        setUnreadCount(data.messages.length);
+      }
+    } catch (error) {
+      console.error("Error fetching unread messages:", error);
+    }
+  };
+
+  // Call fetchUnreadMessages on component mount (and optionally at intervals)
+  useEffect(() => {
+    if (userName) {
+      fetchUnreadMessages();
+      // Optionally, you could poll every few minutes:
+      // const interval = setInterval(fetchUnreadMessages, 60000);
+      // return () => clearInterval(interval);
+    }
+  }, [userName]);
+
+  // Function to open the Messages popup and mark them as read
+  const handleOpenMessages = async () => {
+    setShowMessagesPopup(true);
+    // Call PATCH to mark messages as read
+    const token = localStorage.getItem("token");
+    try {
+      await fetch("/api/messages", {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
+  };
+
   // Dashboard cards array
   const dashboardCards = [
     {
@@ -303,7 +355,7 @@ export default function Home() {
     {
       path: "/employee-directory",
       icon: <FiUsers className="w-6 h-6" />,
-      title: "Employee Directory",
+      title: "Employee Directory and Messaging",
       description: "Search and view employee details",
       requiresExecutive: true,
     },
@@ -382,6 +434,20 @@ export default function Home() {
                     <FiMessageSquare className="text-indigo-300" />
                     <span>Forum</span>
                   </Link>
+
+                  {/* New Messages Nav Item */}
+                  <button
+                    onClick={handleOpenMessages}
+                    className="flex items-center space-x-2 px-3 py-1.5 text-sm font-medium text-slate-300 rounded-lg hover:bg-slate-700/50 transition-colors"
+                  >
+                    <FiMessageSquare className="text-indigo-300" />
+                    <span>Messages</span>
+                    {unreadCount > 0 && (
+                      <span className="ml-1 bg-red-500 text-white rounded-full px-2 text-xs">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
 
                   {/* AI Assistant Button with Tooltip */}
                   <div className="relative group">
@@ -535,6 +601,23 @@ export default function Home() {
                     <FiMessageSquare className="text-indigo-300" />
                     <span>Forum</span>
                   </Link>
+
+                  {/* Mobile Messages Nav Item */}
+                  <button
+                    onClick={() => {
+                      handleOpenMessages();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="flex items-center space-x-2 px-3 py-2.5 text-sm font-medium text-slate-300 rounded-lg bg-slate-700/40 hover:bg-slate-700/60 transition-colors"
+                  >
+                    <FiMessageSquare className="text-indigo-300" />
+                    <span>Messages</span>
+                    {unreadCount > 0 && (
+                      <span className="ml-1 bg-red-500 text-white rounded-full px-2 text-xs">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
 
                   {/* Button to open AI Assistant */}
                   <button
@@ -1062,9 +1145,9 @@ export default function Home() {
       {/* Employee Directory Popup */}
       {showDirectoryPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-          {/* Backdrop */}
+          {/* Backdrop with blur effect */}
           <div
-            className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-gray-900/70 backdrop-blur-md transition-opacity duration-300"
             onClick={() => {
               setShowDirectoryPopup(false);
               setEmployeeSearch("");
@@ -1072,57 +1155,60 @@ export default function Home() {
               setSelectedEmployee(null);
             }}
           />
+
           {/* Popup Container */}
-          <div className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden transition-all">
+          <div className="relative w-full max-w-xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden transition-all transform duration-300 ease-out">
             {/* Header Section */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white flex items-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-white flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 mr-2 text-indigo-200"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Employee Directory
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowDirectoryPopup(false);
+                    setEmployeeSearch("");
+                    setSearchResults([]);
+                    setSelectedEmployee(null);
+                  }}
+                  className="p-1.5 rounded-full text-white hover:bg-white/20 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/40"
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Employee Directory
-              </h2>
-              <button
-                onClick={() => {
-                  setShowDirectoryPopup(false);
-                  setEmployeeSearch("");
-                  setSearchResults([]);
-                  setSelectedEmployee(null);
-                }}
-                className="p-1 rounded-full bg-blue-500/30 text-white hover:bg-blue-500/50"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <div className="p-6">
               {/* Search Bar */}
               {!selectedEmployee && (
                 <>
-                  <div className="mb-5">
+                  <div className="mb-6">
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                         <svg
                           className="h-5 w-5 text-gray-400"
                           xmlns="http://www.w3.org/2000/svg"
@@ -1151,17 +1237,17 @@ export default function Home() {
                           }
                         }}
                         placeholder="Search by name or email..."
-                        className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full pl-10 pr-4 py-3.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
                       />
                     </div>
                   </div>
 
                   {/* Search Results */}
-                  <div className="flex-1 overflow-y-auto space-y-3 max-h-64 pb-2">
+                  <div className="flex-1 overflow-y-auto space-y-1.5 max-h-64 pb-2 -mx-2 px-2 custom-scrollbar">
                     {employeeSearch.length > 0 && searchResults.length === 0 ? (
-                      <div className="text-center py-8">
+                      <div className="text-center py-10">
                         <svg
-                          className="mx-auto h-12 w-12 text-gray-300"
+                          className="mx-auto h-14 w-14 text-gray-300 dark:text-gray-600"
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
                           viewBox="0 0 24 24"
@@ -1174,36 +1260,36 @@ export default function Home() {
                             d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                           />
                         </svg>
-                        <p className="mt-4 text-gray-500 text-sm font-medium">
+                        <p className="mt-4 text-gray-500 dark:text-gray-400 text-sm font-medium">
                           No matching employees found
                         </p>
                       </div>
                     ) : searchResults.length > 0 ? (
-                      <div className="divide-y divide-gray-100">
+                      <div className="space-y-1.5">
                         {searchResults.map((emp, idx) => (
                           <div
                             key={idx}
                             onClick={() => setSelectedEmployee(emp)}
-                            className="p-4 hover:bg-blue-50 rounded-lg cursor-pointer group transition-colors"
+                            className="p-3.5 hover:bg-indigo-50 dark:hover:bg-gray-700/60 rounded-xl cursor-pointer group transition-colors duration-150 border border-transparent hover:border-indigo-100 dark:hover:border-gray-700"
                           >
                             <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm">
+                              <div className="flex-shrink-0 h-11 w-11 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold text-sm shadow-sm">
                                 {emp.name
                                   .split(" ")
                                   .map((n) => n[0])
                                   .join("")}
                               </div>
                               <div className="ml-4 flex-1">
-                                <p className="text-sm font-medium text-gray-800 group-hover:text-blue-700">
+                                <p className="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-indigo-700 dark:group-hover:text-indigo-400">
                                   {emp.name}
                                 </p>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
                                   {emp.email}
                                 </p>
                               </div>
                               <div className="ml-2">
                                 <svg
-                                  className="h-5 w-5 text-gray-400 group-hover:text-blue-500"
+                                  className="h-5 w-5 text-gray-400 group-hover:text-indigo-500"
                                   xmlns="http://www.w3.org/2000/svg"
                                   viewBox="0 0 20 20"
                                   fill="currentColor"
@@ -1228,43 +1314,102 @@ export default function Home() {
               {selectedEmployee && (
                 <div className="flex-1 flex flex-col">
                   <div className="text-center mb-6">
-                    <div className="inline-flex h-20 w-20 rounded-full bg-blue-100 items-center justify-center text-blue-600 text-xl font-bold mb-4">
+                    <div className="inline-flex h-24 w-24 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 items-center justify-center text-indigo-600 dark:text-indigo-400 text-2xl font-bold mb-4 shadow-md">
                       {selectedEmployee.name
                         .split(" ")
                         .map((n) => n[0])
                         .join("")}
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-800">
+                    <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
                       {selectedEmployee.name}
                     </h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {selectedEmployee.email}
                     </p>
                   </div>
 
-                  <div className="bg-gray-50 rounded-xl p-5 mb-6">
+                  <div className="bg-gray-50 dark:bg-gray-700/30 rounded-2xl p-5 mb-6 shadow-inner">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
-                        <p className="text-xs text-gray-500 mb-1">Role</p>
-                        <p className="text-sm font-medium text-gray-800">
+                      <div className="p-4 bg-white dark:bg-gray-700 rounded-xl border border-gray-100 dark:border-gray-600 shadow-sm">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                          Role
+                        </p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
                           {selectedEmployee.role}
                         </p>
                       </div>
-                      <div className="p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
-                        <p className="text-xs text-gray-500 mb-1">
+                      <div className="p-4 bg-white dark:bg-gray-700 rounded-xl border border-gray-100 dark:border-gray-600 shadow-sm">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                           Employee ID
                         </p>
-                        <p className="text-sm font-medium text-gray-800">
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
                           {selectedEmployee.emp_id}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-auto flex justify-between">
+                  {/* Send Message Section */}
+                  <div className="mt-6">
+                    <h4 className="text-md font-medium text-gray-800 dark:text-gray-200 mb-3">
+                      Send a Message:
+                    </h4>
+                    <textarea
+                      value={employeeMessage}
+                      onChange={(e) => setEmployeeMessage(e.target.value)}
+                      placeholder="Type your message..."
+                      className="w-full border border-gray-200 dark:border-gray-600 rounded-lg p-3 text-sm bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                      rows="3"
+                    />
+                    <button
+                      onClick={async () => {
+                        if (!employeeMessage.trim()) return;
+                        const token = localStorage.getItem("token");
+                        try {
+                          const res = await fetch("/api/messages", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                              recipient: selectedEmployee.email,
+                              content: employeeMessage,
+                            }),
+                          });
+                          if (res.ok) {
+                            // Optionally, show a toast or alert message
+                            toast.success("Message sent!");
+                            setEmployeeMessage("");
+                          } else {
+                            const data = await res.json();
+                            toast.error(
+                              data.message || "Failed to send message"
+                            );
+                          }
+                        } catch (error) {
+                          console.error("Send message error:", error);
+                          toast.error("Failed to send message");
+                        }
+                      }}
+                      className="mt-3 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow flex items-center justify-center"
+                    >
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                      </svg>
+                      Send Message
+                    </button>
+                  </div>
+
+                  <div className="mt-6 flex justify-between">
                     <button
                       onClick={() => setSelectedEmployee(null)}
-                      className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 flex items-center"
+                      className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center transition-colors duration-200"
                     >
                       <svg
                         className="h-4 w-4 mr-2"
@@ -1283,6 +1428,151 @@ export default function Home() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Messages Popup Modal */}
+      {showMessagesPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+          {/* Backdrop with blur effect */}
+          <div
+            className="absolute inset-0 bg-gradient-to-br from-gray-900/60 to-indigo-900/50 backdrop-blur-[6px]"
+            onClick={() => setShowMessagesPopup(false)}
+          />
+
+          {/* Modal Container */}
+          <div className="relative w-full max-w-lg mx-auto bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl shadow-indigo-500/10 overflow-hidden transform transition-all">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-white">
+                      Messages
+                    </h2>
+                    <p className="text-sm text-blue-100/80">
+                      Your unread notifications
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowMessagesPopup(false)}
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <svg
+                    className="w-5 h-5 text-white/80 hover:text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Messages Content */}
+            <div className="p-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {unreadMessages.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg
+                      className="w-8 h-8 text-indigo-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-gray-500 text-sm">Your inbox is empty</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {unreadMessages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className="group bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md hover:border-indigo-100 transition-all duration-200"
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center text-indigo-600 font-semibold text-sm">
+                          {msg.sender.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {msg.sender.name}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {msg.content}
+                          </p>
+                          <div className="flex items-center mt-2 space-x-2">
+                            <svg
+                              className="w-4 h-4 text-gray-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <p className="text-xs text-gray-400">
+                              {new Date(msg.timestamp).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+              <p className="text-xs text-gray-500">
+                {unreadMessages.length} message
+                {unreadMessages.length !== 1 ? "s" : ""}
+              </p>
+              <button
+                onClick={() => setShowMessagesPopup(false)}
+                className="px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
