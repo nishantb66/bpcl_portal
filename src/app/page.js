@@ -201,7 +201,7 @@ export default function Home() {
     {
       path: "/schedule-meetings",
       icon: <FiCalendar className="w-6 h-6" />,
-      title: "Schedule Meetings & Manage Your Calendar",
+      title: "Schedule Meetings & Invite",
       description:
         "Plan your meetings, invite colleagues, and keep track of schedules",
       requiresExecutive: true,
@@ -264,13 +264,13 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <ToastContainer position="top-center" autoClose={3000} />
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm dark:bg-gray-900 dark:border-gray-700 transition-colors">
+      <header className="sticky top-0 z-50 bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700/50 shadow-lg transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Top Bar */}
           <div className="flex items-center justify-between h-16">
             {/* Brand Logo */}
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center transform group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center shadow-md transform group-hover:scale-105 transition-transform duration-300">
                 <svg
                   className="w-5 h-5 text-white"
                   viewBox="0 0 24 24"
@@ -289,18 +289,23 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <span className="text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-wide">
-                Portal
+              <span className="text-xl font-semibold text-white tracking-wide">
+                <span className="font-bold">Portal</span>
+                <span className="hidden sm:inline-block ml-1 text-indigo-300 text-sm font-normal">
+                  Enterprise
+                </span>
               </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-6">
+            <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
               {userName ? (
                 <>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                    <FiUser className="text-gray-500 dark:text-gray-400" />
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                  <div className="flex items-center space-x-2 text-sm text-slate-300 border-r border-slate-600 pr-4">
+                    <div className="p-1.5 bg-slate-700 rounded-full">
+                      <FiUser className="text-indigo-300" />
+                    </div>
+                    <span className="font-medium text-slate-100">
                       {userName}
                     </span>
                   </div>
@@ -310,29 +315,45 @@ export default function Home() {
                     href="https://portal-discussion-forum.onrender.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-2 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center space-x-2 px-3 py-1.5 text-sm font-medium text-slate-300 rounded-lg hover:bg-slate-700/50 transition-colors"
                   >
-                    <FiMessageSquare />
+                    <FiMessageSquare className="text-indigo-300" />
                     <span>Forum</span>
                   </Link>
 
                   {/* Button to open AI Assistant */}
                   <button
                     onClick={() => setShowChat(true)}
-                    className="px-4 py-2 bg-blue-900 text-white rounded-lg shadow"
+                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg shadow-md hover:shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all"
                   >
-                    Chat with AI
+                    <span className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M9 12L11 14L15 10M12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3Z"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <span>AI Assistant</span>
+                    </span>
                   </button>
 
                   <button
                     onClick={() => router.push("/profile")}
-                    className="px-4 py-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/10 hover:bg-indigo-100 dark:hover:bg-indigo-800/20 rounded-lg transition-colors"
+                    className="px-4 py-1.5 text-sm font-medium text-indigo-200 bg-indigo-900/30 hover:bg-indigo-800/40 rounded-lg transition-colors"
                   >
                     Profile
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="px-4 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-800/20 rounded-lg transition-colors"
+                    className="px-4 py-1.5 text-sm font-medium text-red-300 bg-red-900/20 hover:bg-red-800/30 rounded-lg transition-colors"
                   >
                     Logout
                   </button>
@@ -341,13 +362,13 @@ export default function Home() {
                 <div className="flex items-center space-x-3">
                   <Link
                     href="/admin"
-                    className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-slate-700/50 rounded-lg transition-colors"
                   >
                     Admin
                   </Link>
                   <Link
                     href="/login"
-                    className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors"
+                    className="px-4 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-lg shadow-md transition-colors"
                   >
                     Login
                   </Link>
@@ -358,7 +379,8 @@ export default function Home() {
             {/* Mobile Navigation Toggle */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              className="md:hidden p-2 text-slate-300 hover:text-white rounded-md bg-slate-700/50 hover:bg-slate-700 transition-colors"
+              aria-label="Toggle menu"
             >
               {isMobileMenuOpen ? (
                 <FiX className="w-5 h-5" />
@@ -371,13 +393,15 @@ export default function Home() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden absolute w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm transition-all">
-            <div className="px-4 py-5 space-y-4">
+          <div className="md:hidden absolute w-full bg-slate-800 border-b border-slate-700 shadow-lg transition-all">
+            <div className="px-4 py-4 space-y-3">
               {userName ? (
                 <>
-                  <div className="flex items-center space-x-2 pb-4 border-b border-gray-200 dark:border-gray-700">
-                    <FiUser className="text-gray-500 dark:text-gray-400" />
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                  <div className="flex items-center space-x-2 pb-3 mb-2 border-b border-slate-700">
+                    <div className="p-1.5 bg-slate-700 rounded-full">
+                      <FiUser className="text-indigo-300" />
+                    </div>
+                    <span className="font-medium text-slate-100">
                       {userName}
                     </span>
                   </div>
@@ -387,21 +411,36 @@ export default function Home() {
                     href="https://portal-discussion-forum.onrender.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center space-x-2 px-3 py-2.5 text-sm font-medium text-slate-300 rounded-lg bg-slate-700/40 hover:bg-slate-700/60 transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    <div className="flex items-center space-x-2">
-                      <FiMessageSquare />
-                      <span>Forum</span>
-                    </div>
+                    <FiMessageSquare className="text-indigo-300" />
+                    <span>Forum</span>
                   </Link>
 
                   {/* Button to open AI Assistant */}
                   <button
-                    onClick={() => setShowChat(true)}
-                    className="px-4 py-2 bg-blue-900 text-white rounded-lg shadow"
+                    onClick={() => {
+                      setShowChat(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg shadow-md hover:from-blue-700 hover:to-indigo-700 transition-all flex items-center justify-center space-x-2"
                   >
-                    Chat with AI
+                    <svg
+                      className="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M9 12L11 14L15 10M12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3Z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <span>Chat with AI Assistant</span>
                   </button>
 
                   <button
@@ -409,7 +448,7 @@ export default function Home() {
                       router.push("/profile");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="w-full px-3 py-2.5 text-center text-sm font-medium text-slate-100 bg-slate-700/50 hover:bg-slate-700/70 rounded-lg transition-colors"
                   >
                     Profile
                   </button>
@@ -418,7 +457,7 @@ export default function Home() {
                       handleLogout();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-sm font-medium text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-800/20 transition-colors"
+                    className="w-full px-3 py-2.5 text-center text-sm font-medium text-red-300 bg-red-900/20 hover:bg-red-900/30 rounded-lg transition-colors"
                   >
                     Logout
                   </button>
@@ -427,14 +466,14 @@ export default function Home() {
                 <div className="space-y-3">
                   <Link
                     href="/admin"
-                    className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                    className="block w-full px-3 py-2.5 text-center text-sm font-medium text-slate-300 bg-slate-700/40 hover:bg-slate-700/60 rounded-lg transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Admin
                   </Link>
                   <Link
                     href="/login"
-                    className="block px-3 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors"
+                    className="block w-full px-3 py-2.5 text-center text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-lg shadow-md transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Login
