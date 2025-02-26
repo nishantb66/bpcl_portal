@@ -59,7 +59,6 @@ export default function Home() {
 
   const [employeeMessage, setEmployeeMessage] = useState("");
 
-
   const router = useRouter();
 
   // Auto-scroll
@@ -846,6 +845,21 @@ export default function Home() {
                   Get Started
                   <FiArrowRight className="ml-2 w-4 h-4" />
                 </Link>
+                {/* Additional Options for Non-Authenticated Users */}
+                <div className="mt-4 flex flex-col items-center space-y-2">
+                  <Link
+                    href="#"
+                    className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                  >
+                    View Documentation
+                  </Link>
+                  <Link
+                    href="#"
+                    className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                  >
+                    Video Guide
+                  </Link>
+                </div>
               </div>
             </div>
           )}
