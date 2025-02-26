@@ -45,6 +45,13 @@ export default function Home() {
   const [userInput, setUserInput] = useState("");
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const messageListRef = useRef(null);
+
+  // For the Employee Directory
+  const [showDirectoryPopup, setShowDirectoryPopup] = useState(false);
+  const [employeeSearch, setEmployeeSearch] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
   const router = useRouter();
 
   // Auto-scroll
@@ -180,6 +187,52 @@ export default function Home() {
     }
   };
 
+  function handleEmployeeDirectory() {
+    // 1. Check if user is logged in
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("You are not logged in. Please log in first.");
+      return;
+    }
+
+    // 2. Check user role
+    if (userRole !== "Executive") {
+      alert(
+        "According to your designation, you cannot view Employee Directory."
+      );
+      return;
+    }
+
+    // 3. If Executive, show the popup
+    setShowDirectoryPopup(true);
+  }
+
+  async function handleSearchEmployees(query) {
+    try {
+      // only if user is Executive, but we already gate that
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      // fetch from /api/employees?q={query}
+      const response = await fetch(
+        `/api/employees?q=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch employees");
+      }
+      const data = await response.json();
+      setSearchResults(data.employees || []);
+    } catch (err) {
+      console.error(err);
+      setSearchResults([]);
+    }
+  }
+
   // Dashboard cards array
   const dashboardCards = [
     {
@@ -246,6 +299,13 @@ export default function Home() {
       icon: <FiFileText className="w-6 h-6" />, // import FiFileText from react-icons
       title: "Talk to PDF",
       description: "Chat with your PDF documents",
+    },
+    {
+      path: "/employee-directory",
+      icon: <FiUsers className="w-6 h-6" />,
+      title: "Employee Directory",
+      description: "Search and view employee details",
+      requiresExecutive: true,
     },
   ];
 
@@ -569,6 +629,34 @@ export default function Home() {
                         </div>
                       </div>
                       <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,_transparent,_transparent_4px,_rgba(255,255,255,0.8)_4px,_rgba(255,255,255,0.8)_6px)] rounded-2xl z-10" />
+                    </div>
+                  );
+                }
+
+                // If the item.path === "/employee-directory", override the behavior:
+                if (item.path === "/employee-directory") {
+                  return (
+                    <div
+                      key={index}
+                      className="group relative bg-white rounded-2xl border border-gray-100 hover:border-indigo-100 shadow-xs hover:shadow-md transition-all p-5 sm:p-6"
+                    >
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+                          {item.icon}
+                        </div>
+                        <div className="flex-1 space-y-1.5">
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                            {item.title}
+                          </h3>
+                          <p className="text-xs sm:text-sm text-gray-600">
+                            {item.description}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleEmployeeDirectory()}
+                        className="absolute inset-0 w-full rounded-2xl z-10"
+                      />
                     </div>
                   );
                 }
@@ -966,6 +1054,235 @@ export default function Home() {
                   </span>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Employee Directory Popup */}
+      {showDirectoryPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+            onClick={() => {
+              setShowDirectoryPopup(false);
+              setEmployeeSearch("");
+              setSearchResults([]);
+              setSelectedEmployee(null);
+            }}
+          />
+          {/* Popup Container */}
+          <div className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden transition-all">
+            {/* Header Section */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-white flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-2"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Employee Directory
+              </h2>
+              <button
+                onClick={() => {
+                  setShowDirectoryPopup(false);
+                  setEmployeeSearch("");
+                  setSearchResults([]);
+                  setSelectedEmployee(null);
+                }}
+                className="p-1 rounded-full bg-blue-500/30 text-white hover:bg-blue-500/50"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6">
+              {/* Search Bar */}
+              {!selectedEmployee && (
+                <>
+                  <div className="mb-5">
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg
+                          className="h-5 w-5 text-gray-400"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <input
+                        type="text"
+                        value={employeeSearch}
+                        onChange={(e) => {
+                          const inputValue = e.target.value;
+                          setEmployeeSearch(inputValue);
+
+                          if (inputValue.trim().length > 0) {
+                            handleSearchEmployees(inputValue);
+                          } else {
+                            // Clear results if the input is empty
+                            setSearchResults([]);
+                          }
+                        }}
+                        placeholder="Search by name or email..."
+                        className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Search Results */}
+                  <div className="flex-1 overflow-y-auto space-y-3 max-h-64 pb-2">
+                    {employeeSearch.length > 0 && searchResults.length === 0 ? (
+                      <div className="text-center py-8">
+                        <svg
+                          className="mx-auto h-12 w-12 text-gray-300"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        <p className="mt-4 text-gray-500 text-sm font-medium">
+                          No matching employees found
+                        </p>
+                      </div>
+                    ) : searchResults.length > 0 ? (
+                      <div className="divide-y divide-gray-100">
+                        {searchResults.map((emp, idx) => (
+                          <div
+                            key={idx}
+                            onClick={() => setSelectedEmployee(emp)}
+                            className="p-4 hover:bg-blue-50 rounded-lg cursor-pointer group transition-colors"
+                          >
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm">
+                                {emp.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </div>
+                              <div className="ml-4 flex-1">
+                                <p className="text-sm font-medium text-gray-800 group-hover:text-blue-700">
+                                  {emp.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {emp.email}
+                                </p>
+                              </div>
+                              <div className="ml-2">
+                                <svg
+                                  className="h-5 w-5 text-gray-400 group-hover:text-blue-500"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </>
+              )}
+
+              {/* Selected Employee Details */}
+              {selectedEmployee && (
+                <div className="flex-1 flex flex-col">
+                  <div className="text-center mb-6">
+                    <div className="inline-flex h-20 w-20 rounded-full bg-blue-100 items-center justify-center text-blue-600 text-xl font-bold mb-4">
+                      {selectedEmployee.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-800">
+                      {selectedEmployee.name}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {selectedEmployee.email}
+                    </p>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-xl p-5 mb-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
+                        <p className="text-xs text-gray-500 mb-1">Role</p>
+                        <p className="text-sm font-medium text-gray-800">
+                          {selectedEmployee.role}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
+                        <p className="text-xs text-gray-500 mb-1">
+                          Employee ID
+                        </p>
+                        <p className="text-sm font-medium text-gray-800">
+                          {selectedEmployee.emp_id}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-auto flex justify-between">
+                    <button
+                      onClick={() => setSelectedEmployee(null)}
+                      className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 flex items-center"
+                    >
+                      <svg
+                        className="h-4 w-4 mr-2"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      Back to Search
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

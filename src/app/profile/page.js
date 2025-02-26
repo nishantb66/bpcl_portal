@@ -10,6 +10,8 @@ import {
   FiHome,
   FiLock,
   FiCheck,
+  FiSave,
+  FiAlertCircle,
 } from "react-icons/fi";
 
 export default function Profile() {
@@ -29,6 +31,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [activeSection, setActiveSection] = useState("personal");
 
   // Auto-dismiss notification after 2 seconds
   useEffect(() => {
@@ -103,16 +106,35 @@ export default function Profile() {
 
   if (loading)
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-100">
-        <p className="text-gray-500 text-lg">Loading...</p>
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-gray-600 mt-4 font-medium">
+            Loading your profile...
+          </p>
+        </div>
       </div>
     );
 
   if (error)
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
-        <div className="bg-red-50 border border-red-400 text-red-700 px-6 py-4 rounded-md max-w-md">
-          {error}
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="bg-white border-l-4 border-red-500 shadow-lg rounded-lg p-6 max-w-md">
+          <div className="flex items-center">
+            <FiAlertCircle className="text-red-500 text-xl mr-4" />
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800">
+                Authentication Error
+              </h3>
+              <p className="text-gray-600 mt-1">{error}</p>
+              <button
+                className="mt-4 px-4 py-2 bg-red-100 text-red-700 rounded-md text-sm font-medium hover:bg-red-200 transition-colors"
+                onClick={() => (window.location.href = "/login")}
+              >
+                Go to Login
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -133,99 +155,219 @@ export default function Profile() {
     return icons[key] || null;
   };
 
-  const formFields = [
+  const personalFields = [
     { key: "name", type: "text", required: true },
     { key: "surname", type: "text", required: true },
     { key: "email", type: "email", required: true, readOnly: true },
+  ];
+
+  const locationFields = [
     { key: "city", type: "text", required: true },
     { key: "localArea", type: "text", required: true },
-    { key: "previousCompany", type: "text" },
     { key: "addressLine1", type: "text", required: true },
     { key: "addressLine2", type: "text" },
+  ];
+
+  const workFields = [
     { key: "designation", type: "text", required: true },
+    { key: "previousCompany", type: "text" },
     { key: "shiftTimings", type: "text", required: true },
   ];
 
+  const renderFields = (fields) => {
+    return fields.map(({ key, type, required, readOnly }) => (
+      <div key={key} className="w-full">
+        <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
+          {key.replace(/([A-Z])/g, " $1")}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+        <div className="relative group">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            {getIcon(key)}
+          </div>
+          <input
+            type={type}
+            value={profile[key]}
+            onChange={(e) =>
+              !readOnly && setProfile({ ...profile, [key]: e.target.value })
+            }
+            required={required}
+            readOnly={readOnly}
+            className={`w-full pl-10 pr-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all ${
+              readOnly
+                ? "bg-gray-50 text-gray-500 cursor-not-allowed"
+                : "hover:border-blue-300"
+            } group-hover:shadow-sm`}
+            placeholder={`Enter ${key
+              .replace(/([A-Z])/g, " $1")
+              .toLowerCase()}`}
+          />
+          {key === "email" && (
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <FiLock className="text-gray-400" />
+            </div>
+          )}
+        </div>
+      </div>
+    ));
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto relative">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto relative">
         {/* Popup Notification for Successful Update */}
         {notification && notification.type === "success" && (
-          <div className="fixed top-5 right-5 bg-white border border-green-500 rounded-md shadow-md p-4 flex items-center space-x-2 z-50">
-            <FiCheck className="text-green-500 text-2xl" />
-            <span className="text-green-700 font-medium">Updated</span>
+          <div className="fixed top-5 right-5 bg-white border-l-4 border-green-500 rounded-lg shadow-lg p-4 flex items-center space-x-3 z-50 animate-fade-in">
+            <div className="flex-shrink-0 bg-green-100 p-2 rounded-full">
+              <FiCheck className="text-green-600 text-xl" />
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-800">Success</h4>
+              <p className="text-sm text-gray-600">{notification.message}</p>
+            </div>
           </div>
         )}
 
         {/* Inline Notification for Errors */}
         {notification && notification.type === "error" && (
-          <div className="mb-4 p-4 rounded-md shadow-sm border-l-4 bg-red-50 border-red-500 text-red-800">
-            {notification.message}
+          <div className="mb-6 p-4 rounded-lg shadow-sm border-l-4 border-red-500 bg-white text-red-800 flex items-center">
+            <FiAlertCircle className="text-red-500 text-xl mr-3" />
+            <div>
+              <p className="font-medium">Update Failed</p>
+              <p className="text-sm text-gray-700 mt-1">
+                {notification.message}
+              </p>
+            </div>
           </div>
         )}
 
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           {/* Header Section */}
-          <div className="p-6 border-b border-gray-200">
-            <h1 className="text-2xl font-semibold text-gray-800">
-              {profile.name} {profile.surname}
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              {profile.designation || "No designation"}
-            </p>
-            <p className="text-sm text-gray-400 mt-2">
-              Member since: {profile.joiningDate || "N/A"}
-            </p>
+          <div className="relative bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-12 sm:py-16 text-white">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+              <div className="flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 bg-white rounded-full flex items-center justify-center border-4 border-white shadow-md">
+                <span className="text-3xl sm:text-4xl font-bold text-blue-600">
+                  {profile.name.charAt(0)}
+                  {profile.surname.charAt(0)}
+                </span>
+              </div>
+              <div className="text-center sm:text-left">
+                <h1 className="text-2xl sm:text-3xl font-bold">
+                  {profile.name} {profile.surname}
+                </h1>
+                <p className="text-blue-100 mt-1 text-lg">
+                  {profile.designation || "No designation"}
+                </p>
+                <div className="mt-3 inline-flex items-center bg-blue-800 bg-opacity-30 px-3 py-1 rounded-full text-sm">
+                  <FiClock className="mr-2" />
+                  Member since: {profile.joiningDate || "N/A"}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tab Navigation */}
+          <div className="border-b border-gray-200">
+            <nav className="flex overflow-x-auto py-4 px-6">
+              <button
+                onClick={() => setActiveSection("personal")}
+                className={`whitespace-nowrap px-5 py-2 text-sm font-medium rounded-lg mr-4 ${
+                  activeSection === "personal"
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                Personal Information
+              </button>
+              <button
+                onClick={() => setActiveSection("location")}
+                className={`whitespace-nowrap px-5 py-2 text-sm font-medium rounded-lg mr-4 ${
+                  activeSection === "location"
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                Location Details
+              </button>
+              <button
+                onClick={() => setActiveSection("work")}
+                className={`whitespace-nowrap px-5 py-2 text-sm font-medium rounded-lg ${
+                  activeSection === "work"
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                Work Information
+              </button>
+            </nav>
           </div>
 
           {/* Form Section */}
-          <form onSubmit={handleSave} className="p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {formFields.map(({ key, type, required, readOnly }) => (
-                <div key={key} className="w-full">
-                  <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
-                    {key.replace(/([A-Z])/g, " $1")}
-                    {required && <span className="text-red-500 ml-1">*</span>}
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      {getIcon(key)}
-                    </div>
-                    <input
-                      type={type}
-                      value={profile[key]}
-                      onChange={(e) =>
-                        !readOnly &&
-                        setProfile({ ...profile, [key]: e.target.value })
-                      }
-                      required={required}
-                      readOnly={readOnly}
-                      className={`w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-600 focus:border-blue-600 focus:outline-none ${
-                        readOnly
-                          ? "bg-gray-50 text-gray-500 cursor-not-allowed"
-                          : ""
-                      }`}
-                      placeholder={`Enter ${key
-                        .replace(/([A-Z])/g, " $1")
-                        .toLowerCase()}`}
-                    />
-                    {key === "email" && (
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <FiLock className="text-gray-400" />
-                      </div>
-                    )}
-                  </div>
+          <form onSubmit={handleSave} className="p-6 sm:p-8">
+            <div className="space-y-8">
+              {/* Personal Information Section */}
+              <div
+                className={activeSection === "personal" ? "block" : "hidden"}
+              >
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    Personal Information
+                  </h2>
+                  <p className="text-gray-500 text-sm mt-1">
+                    Your basic account details
+                  </p>
                 </div>
-              ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {renderFields(personalFields)}
+                </div>
+              </div>
+
+              {/* Location Section */}
+              <div
+                className={activeSection === "location" ? "block" : "hidden"}
+              >
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    Location Details
+                  </h2>
+                  <p className="text-gray-500 text-sm mt-1">
+                    Your address and location information
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {renderFields(locationFields)}
+                </div>
+              </div>
+
+              {/* Work Information Section */}
+              <div className={activeSection === "work" ? "block" : "hidden"}>
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    Work Information
+                  </h2>
+                  <p className="text-gray-500 text-sm mt-1">
+                    Your professional details and schedule
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {renderFields(workFields)}
+                </div>
+              </div>
             </div>
 
-            <div className="mt-8 border-t border-gray-200 pt-6">
-              <button
-                type="submit"
-                className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-              >
-                Save Changes
-              </button>
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:justify-between items-center">
+                <p className="text-sm text-gray-500 mb-4 sm:mb-0">
+                  All fields marked with * are required
+                </p>
+                <button
+                  type="submit"
+                  className="flex items-center justify-center w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors shadow-sm"
+                >
+                  <FiSave className="mr-2" />
+                  Save Changes
+                </button>
+              </div>
             </div>
           </form>
         </div>
