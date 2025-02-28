@@ -1,13 +1,11 @@
-// consumer.js
 const { Kafka } = require("kafkajs");
 
 async function runConsumer() {
   try {
+    // Same ngrok address
     const kafka = new Kafka({
       clientId: "my-consumer",
-      brokers: ["host.docker.internal:9092"],
-      // If on Windows and "localhost" fails, try:
-      // brokers: ['host.docker.internal:9092']
+      brokers: ["0.tcp.in.ngrok.io:13685"],
     });
 
     const consumer = kafka.consumer({ groupId: "login-click-group" });

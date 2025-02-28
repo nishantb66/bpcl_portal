@@ -18,8 +18,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: portal_zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://host.docker.internal:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://0.tcp.in.ngrok.io:13685
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-
-      # The critical piece:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
