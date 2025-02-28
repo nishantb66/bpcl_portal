@@ -3,6 +3,7 @@ import { connectToDB } from "../middleware";
 import { sign, verify } from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import { getKafkaProducer } from "../../../utils/kafkaClient";
 dotenv.config();
 
 // Input validation helpers
@@ -200,6 +201,27 @@ export async function POST(req) {
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
+
+    // **** PRODUCE KAFKA MESSAGE ****
+    try {
+      const producer = await getKafkaProducer();
+      await producer.send({
+        topic: "login-clicks",
+        messages: [
+          {
+            value: JSON.stringify({
+              event: "login-click",
+              userEmail: user.email,
+              timestamp: new Date().toISOString(),
+            }),
+          },
+        ],
+      });
+      console.log("Kafka: login-click event produced");
+    } catch (err) {
+      console.error("Kafka: Failed to produce login-click event", err);
+    }
+    
     console.log("Generated Token:", token);
 
     return new Response(

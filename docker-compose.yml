@@ -1,0 +1,25 @@
+version: '3'
+services:
+  portal_zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: portal_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - '2181:2181'
+
+  portal_kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: portal_kafka
+    depends_on:
+      - portal_zookeeper
+    ports:
+      - '9092:9092'
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: portal_zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://host.docker.internal:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+
+      # The critical piece:
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
