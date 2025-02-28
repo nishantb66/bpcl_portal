@@ -12,6 +12,7 @@ export const getKafkaProducer = async () => {
       brokers: ["host.docker.internal:9092"],
     });
   }
+  
 
   if (!producer) {
     producer = kafka.producer();
