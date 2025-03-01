@@ -18,7 +18,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: portal_zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://0.tcp.in.ngrok.io:17346
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://0.tcp.in.ngrok.io:17102
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
 
       # The critical piece:
