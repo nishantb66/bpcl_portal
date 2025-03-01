@@ -1,3 +1,4 @@
+// src/utils/kafkaClient.js
 import { Kafka } from "kafkajs";
 
 let kafka;
@@ -7,8 +8,8 @@ export const getKafkaProducer = async () => {
   if (!kafka) {
     kafka = new Kafka({
       clientId: "my-nextjs-client",
-      // The broker is your ngrok TCP address
-      brokers: ["0.tcp.in.ngrok.io:14810"],
+      // Make sure this matches your KAFKA_ADVERTISED_LISTENERS
+      brokers: ["0.tcp.in.ngrok.io:17346"],
     });
   }
 
