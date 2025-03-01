@@ -9,7 +9,7 @@ export const getKafkaProducer = async () => {
     kafka = new Kafka({
       clientId: "my-nextjs-client",
       // Make sure this matches your KAFKA_ADVERTISED_LISTENERS
-      brokers: ["0.tcp.in.ngrok.io:17102"],
+      brokers: ["0.tcp.in.ngrok.io:11048"],
     });
   }
 

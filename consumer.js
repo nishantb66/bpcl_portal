@@ -5,7 +5,7 @@ async function runConsumer() {
     // Same ngrok address
     const kafka = new Kafka({
       clientId: "my-consumer",
-      brokers: ["0.tcp.in.ngrok.io:17102"],
+      brokers: ["0.tcp.in.ngrok.io:11048"],
     });
 
     const consumer = kafka.consumer({ groupId: "login-click-group" });
