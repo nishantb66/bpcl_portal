@@ -1,0 +1,31 @@
+version: '3'
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: wurstmeister/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      # A unique integer ID for each broker. If you run a single broker, you can keep it at 1
+      KAFKA_BROKER_ID: 1
+      
+      # Points Kafka to Zookeeper
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      
+      # Where Kafka listens inside the container
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      
+      # How Kafka is advertised to the outside world (e.g., your host machine)
+      # Replace 'localhost' with your machine's IP if you need external access from another device
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      
+      # (Optional) If you get 9092 conflicts, set the host port to something else, but keep the container port at 9092
+      # and update KAFKA_ADVERTISED_LISTENERS accordingly
+    depends_on:
+      - zookeeper
