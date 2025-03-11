@@ -162,6 +162,26 @@ export default function Home() {
     }
   }, [router]);
 
+  // Auto-logout in real time if token expires or is removed
+  useEffect(() => {
+    const checkExpirationAndLogout = () => {
+      const token = localStorage.getItem("token");
+      // If token is missing or expired, log the user out
+      if (!token || checkTokenExpiration(token)) {
+        toast.info("Your session has expired. Logging you out...");
+        localStorage.removeItem("token");
+        localStorage.removeItem("name");
+        router.push("/login");
+      }
+    };
+
+    // Check every minute (60000 milliseconds)
+    const intervalId = setInterval(checkExpirationAndLogout, 60000);
+
+    // Clean up the interval when the component unmounts
+    return () => clearInterval(intervalId);
+  }, [router]);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("name");
@@ -1632,16 +1652,14 @@ export default function Home() {
               <Link href="#" className="text-gray-500 hover:text-gray-600">
                 About
               </Link>
-              <Link
-                href="#"
-                className="text-gray-500 hover:text-gray-600"
-              >
+              <Link href="#" className="text-gray-500 hover:text-gray-600">
                 Privacy Policy
               </Link>
             </div>
             <div className="mt-4 sm:mt-0 sm:order-1">
               <p className="text-center text-sm text-gray-500">
-                &copy; {new Date().getFullYear()} Portal. Crafted by Nishant Baruah.
+                &copy; {new Date().getFullYear()} Portal. Crafted by Nishant
+                Baruah.
               </p>
             </div>
           </div>

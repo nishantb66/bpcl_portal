@@ -57,6 +57,26 @@ export default function CalendarPage() {
     }
   }, [router]);
 
+  // Auto-logout in real time if token expires or is removed
+  useEffect(() => {
+    const checkExpirationAndLogout = () => {
+      const token = localStorage.getItem("token");
+      // If token is missing or expired, log the user out
+      if (!token || checkTokenExpiration(token)) {
+        toast.info("Your session has expired. Logging you out...");
+        localStorage.removeItem("token");
+        localStorage.removeItem("name");
+        router.push("/login");
+      }
+    };
+
+    // Check every minute (60000 milliseconds)
+    const intervalId = setInterval(checkExpirationAndLogout, 60000);
+
+    // Clean up the interval when the component unmounts
+    return () => clearInterval(intervalId);
+  }, [router]);
+
   useEffect(() => {
     if (isFormOpen && formRef.current) {
       setTimeout(() => {
@@ -648,7 +668,9 @@ export default function CalendarPage() {
                   AI Calendar Assistant
                 </h3>
                 <p className="text-base text-blue-100 opacity-90">
-                  Many plans sceduled? don't have time to just look all the scheduled plans? Its ok, I have got this, ask me anything you want to know about all your scheduled tasks
+                  Many plans sceduled? don't have time to just look all the
+                  scheduled plans? Its ok, I have got this, ask me anything you
+                  want to know about all your scheduled tasks
                 </p>
               </div>
             </div>

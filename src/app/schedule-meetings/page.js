@@ -24,6 +24,26 @@ export default function ScheduleMeetings() {
   const [isLoading, setIsLoading] = useState(true);
   const [showInvitedOnly, setShowInvitedOnly] = useState(false);
 
+  // Auto-logout in real time if token expires or is removed
+  useEffect(() => {
+    const checkExpirationAndLogout = () => {
+      const token = localStorage.getItem("token");
+      // If token is missing or expired, log the user out
+      if (!token || checkTokenExpiration(token)) {
+        toast.info("Your session has expired. Logging you out...");
+        localStorage.removeItem("token");
+        localStorage.removeItem("name");
+        router.push("/login");
+      }
+    };
+
+    // Check every minute (60000 milliseconds)
+    const intervalId = setInterval(checkExpirationAndLogout, 60000);
+
+    // Clean up the interval when the component unmounts
+    return () => clearInterval(intervalId);
+  }, [router]);
+
   // Fetch meetings scheduled by or where the user is invited
   const fetchMeetings = async () => {
     const token = localStorage.getItem("token");

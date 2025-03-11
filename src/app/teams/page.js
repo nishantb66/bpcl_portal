@@ -163,6 +163,26 @@ export default function TeamsPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversations]);
 
+  // Auto-logout in real time if token expires or is removed
+  useEffect(() => {
+    const checkExpirationAndLogout = () => {
+      const token = localStorage.getItem("token");
+      // If token is missing or expired, log the user out
+      if (!token || checkTokenExpiration(token)) {
+        toast.info("Your session has expired. Logging you out...");
+        localStorage.removeItem("token");
+        localStorage.removeItem("name");
+        router.push("/login");
+      }
+    };
+
+    // Check every minute (60000 milliseconds)
+    const intervalId = setInterval(checkExpirationAndLogout, 60000);
+
+    // Clean up the interval when the component unmounts
+    return () => clearInterval(intervalId);
+  }, [router]);
+
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -178,134 +198,133 @@ export default function TeamsPage() {
     }
   }, []);
 
+  const handleSendMessage = async () => {
+    if (!currentMessage.trim()) return;
 
-    const handleSendMessage = async () => {
-      if (!currentMessage.trim()) return;
+    // Add user message to conversation
+    const userMessage = { role: "user", content: currentMessage };
+    setConversations([...conversations, userMessage]);
+    setCurrentMessage("");
+    setIsLoading(true);
 
-      // Add user message to conversation
-      const userMessage = { role: "user", content: currentMessage };
-      setConversations([...conversations, userMessage]);
-      setCurrentMessage("");
-      setIsLoading(true);
-
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          toast.error("No token found. Please log in again.");
-          setIsLoading(false);
-          return;
-        }
-
-        // Get conversation history for context (limit to last 10 messages)
-        const recentMessages = conversations.slice(-10);
-        const conversationHistory = recentMessages.map((msg) => ({
-          role: msg.role,
-          content: msg.content,
-        }));
-
-        // Call the AI route with conversation history
-        const res = await fetch("/api/teams/ai", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            question: currentMessage,
-            history: conversationHistory,
-          }),
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-          toast.error(data.message || "AI request failed");
-          setIsLoading(false);
-          return;
-        }
-
-        // Add AI response to conversation
-        setConversations((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content: data.aiAnswer,
-          },
-        ]);
-      } catch (err) {
-        console.error(err);
-        toast.error("Something went wrong with the AI.");
-
-        // Add error message to conversation
-        setConversations((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content: "Sorry, I encountered an error. Please try again.",
-          },
-        ]);
-      } finally {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("No token found. Please log in again.");
         setIsLoading(false);
+        return;
       }
-    };
 
-    // Function to render message content with Markdown formatting
-    const renderFormattedMessage = (content) => {
-      // This is a simple regex-based Markdown formatter
-      // For production, consider using a proper Markdown library
-      let formattedContent = content
-        // Bold text
-        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-        // Italic text
-        .replace(/\*(.*?)\*/g, "<em>$1</em>")
-        // Headers
-        .replace(/^### (.*?)$/gm, "<h3>$1</h3>")
-        .replace(/^## (.*?)$/gm, "<h2>$1</h2>")
-        .replace(/^# (.*?)$/gm, "<h1>$1</h1>")
-        // Lists
-        .replace(/^\- (.*?)$/gm, "<li>$1</li>")
-        .replace(/^\d\. (.*?)$/gm, "<li>$1</li>")
-        // Links
-        .replace(
-          /\[(.*?)\]\((.*?)\)/g,
-          '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">$1</a>'
-        );
+      // Get conversation history for context (limit to last 10 messages)
+      const recentMessages = conversations.slice(-10);
+      const conversationHistory = recentMessages.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }));
 
-      // Convert consecutive list items to lists
-      formattedContent = formattedContent
-        .replace(/<li>(.*?)<\/li>\s*<li>/g, "<ul><li>$1</li><li>")
-        .replace(/<li>(.*?)<\/li>\s*(?!<li>)/g, "<ul><li>$1</li></ul>");
+      // Call the AI route with conversation history
+      const res = await fetch("/api/teams/ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          question: currentMessage,
+          history: conversationHistory,
+        }),
+      });
 
-      // Handle code blocks
-      formattedContent = formattedContent.replace(
-        /```(.*?)```/gs,
-        '<pre class="bg-gray-100 p-2 rounded overflow-x-auto my-2"><code>$1</code></pre>'
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || "AI request failed");
+        setIsLoading(false);
+        return;
+      }
+
+      // Add AI response to conversation
+      setConversations((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: data.aiAnswer,
+        },
+      ]);
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong with the AI.");
+
+      // Add error message to conversation
+      setConversations((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Sorry, I encountered an error. Please try again.",
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Function to render message content with Markdown formatting
+  const renderFormattedMessage = (content) => {
+    // This is a simple regex-based Markdown formatter
+    // For production, consider using a proper Markdown library
+    let formattedContent = content
+      // Bold text
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      // Italic text
+      .replace(/\*(.*?)\*/g, "<em>$1</em>")
+      // Headers
+      .replace(/^### (.*?)$/gm, "<h3>$1</h3>")
+      .replace(/^## (.*?)$/gm, "<h2>$1</h2>")
+      .replace(/^# (.*?)$/gm, "<h1>$1</h1>")
+      // Lists
+      .replace(/^\- (.*?)$/gm, "<li>$1</li>")
+      .replace(/^\d\. (.*?)$/gm, "<li>$1</li>")
+      // Links
+      .replace(
+        /\[(.*?)\]\((.*?)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">$1</a>'
       );
 
-      // Handle paragraphs
-      const paragraphs = formattedContent.split("\n\n");
-      formattedContent = paragraphs
-        .map((p) => {
-          if (!p.trim()) return "";
-          if (
-            p.includes("<h1>") ||
-            p.includes("<h2>") ||
-            p.includes("<h3>") ||
-            p.includes("<ul>") ||
-            p.includes("<pre>")
-          ) {
-            return p;
-          }
-          return `<p>${p}</p>`;
-        })
-        .join("");
+    // Convert consecutive list items to lists
+    formattedContent = formattedContent
+      .replace(/<li>(.*?)<\/li>\s*<li>/g, "<ul><li>$1</li><li>")
+      .replace(/<li>(.*?)<\/li>\s*(?!<li>)/g, "<ul><li>$1</li></ul>");
 
-      return (
-        <div
-          className="text-gray-700 leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: formattedContent }}
-        />
-      );
-    };
+    // Handle code blocks
+    formattedContent = formattedContent.replace(
+      /```(.*?)```/gs,
+      '<pre class="bg-gray-100 p-2 rounded overflow-x-auto my-2"><code>$1</code></pre>'
+    );
+
+    // Handle paragraphs
+    const paragraphs = formattedContent.split("\n\n");
+    formattedContent = paragraphs
+      .map((p) => {
+        if (!p.trim()) return "";
+        if (
+          p.includes("<h1>") ||
+          p.includes("<h2>") ||
+          p.includes("<h3>") ||
+          p.includes("<ul>") ||
+          p.includes("<pre>")
+        ) {
+          return p;
+        }
+        return `<p>${p}</p>`;
+      })
+      .join("");
+
+    return (
+      <div
+        className="text-gray-700 leading-relaxed"
+        dangerouslySetInnerHTML={{ __html: formattedContent }}
+      />
+    );
+  };
 
   const checkTokenExpiration = (token) => {
     try {
