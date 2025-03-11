@@ -368,7 +368,7 @@ export default function Home() {
     {
       path: "/talktopdf",
       icon: <FiFileText className="w-6 h-6" />, // import FiFileText from react-icons
-      title: "Talk to PDF",
+      title: "Talk to PDF (Beta)",
       description: "Chat with your PDF documents",
     },
     {
@@ -759,6 +759,95 @@ export default function Home() {
                         onClick={() => handleEmployeeDirectory()}
                         className="absolute inset-0 w-full rounded-2xl z-10"
                       />
+                    </div>
+                  );
+                }
+
+                // TEAMS & ASSIGNMENTS CARD with a hover tooltip
+                if (item.path === "/teams") {
+                  return (
+                    <div
+                      key={index}
+                      className="group relative bg-white rounded-2xl border border-gray-100 
+        hover:border-indigo-100 shadow-xs hover:shadow-md transition-all p-5 sm:p-6"
+                    >
+                      {/* Card Content */}
+                      <div className="flex items-start space-x-4">
+                        <div
+                          className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 
+          bg-indigo-50 text-indigo-600 rounded-xl flex items-center 
+          justify-center shadow-sm"
+                        >
+                          {item.icon}
+                        </div>
+                        <div className="flex-1 space-y-1.5">
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                            {item.title}
+                          </h3>
+                          <p className="text-xs sm:text-sm text-gray-600">
+                            {item.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Enhanced HOVER TOOLTIP with animation and better styling */}
+                      <div
+                        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 w-64 
+  opacity-0 pointer-events-none scale-95 
+  group-hover:opacity-100 group-hover:pointer-events-auto group-hover:scale-100
+  transition-all duration-300 ease-in-out z-20"
+                      >
+                        <div
+                          className="bg-gradient-to-b from-gray-900 to-gray-800 p-4 rounded-xl 
+  shadow-lg shadow-gray-900/20 border border-gray-700 backdrop-blur-sm"
+                        >
+                          <div className="flex items-start space-x-3">
+                            <div className="text-amber-400 flex-shrink-0 mt-0.5">
+                              <svg
+                                className="w-5 h-5"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-white mb-1 text-sm">
+                                Desktop Recommended
+                              </h4>
+                              <p className="text-gray-300 text-xs leading-relaxed">
+                                This feature is optimized for PC, desktop or
+                                laptop devices for the best experience.
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Improved tooltip arrow with subtle shadow */}
+                          <div className="absolute left-1/2 bottom-0 w-4 h-4 -translate-x-1/2 translate-y-1/2">
+                            <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-gray-900 rotate-45 rounded-sm border-r border-b border-gray-700 shadow-sm"></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Invisible Button to make the card clickable */}
+                      <button
+                        onClick={() => handleNavigation(item.path, item.api)}
+                        className="absolute inset-0 w-full rounded-2xl z-10"
+                      />
+
+                      {/* Loading Overlay if needed */}
+                      {loadingCard === item.path && (
+                        <div
+                          className="absolute inset-0 bg-white/90 flex items-center justify-center 
+          rounded-2xl backdrop-blur-sm"
+                        >
+                          <FiLoader className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-indigo-600" />
+                        </div>
+                      )}
                     </div>
                   );
                 }
