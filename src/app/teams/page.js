@@ -174,6 +174,9 @@ export default function TeamsPage() {
   // After the line: const [bookingForm, setBookingForm] = useState({ ... });
   const [showBookingSuccessModal, setShowBookingSuccessModal] = useState(false);
 
+  // For tasks loading indicator
+  const [tasksLoading, setTasksLoading] = useState(false);
+
   // Scroll to bottom whenever messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -755,6 +758,7 @@ export default function TeamsPage() {
   // 3) Fetch tasks
   const fetchTasks = () => {
     const token = localStorage.getItem("token");
+    setTasksLoading(true); // Start loading
     fetch("/api/teams/tasks", {
       method: "GET",
       headers: {
@@ -767,7 +771,8 @@ export default function TeamsPage() {
           setTasks(data.tasks);
         }
       })
-      .catch((err) => console.error(err));
+      .catch((err) => console.error(err))
+      .finally(() => setTasksLoading(false)); // End loading
   };
 
   // 4) Open Task details modal
@@ -2110,7 +2115,12 @@ export default function TeamsPage() {
             </div>
 
             <div className="p-6">
-              {tasks.length === 0 ? (
+              {tasksLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <FiLoader className="animate-spin w-8 h-8 text-indigo-600" />
+                  <span className="ml-2 text-gray-600">Loading tasks...</span>
+                </div>
+              ) : tasks.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="mb-3">
                     <svg
