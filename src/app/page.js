@@ -445,7 +445,7 @@ export default function Home() {
 
                   {/* Forum Link - always visible */}
                   <Link
-                    href="https://portal-discussion-forum.onrender.com"
+                    href="https://portal-discussion-forum-keng.onrender.com"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center space-x-2 px-3 py-1.5 text-sm font-medium text-slate-300 rounded-lg hover:bg-slate-700/50 transition-colors"
@@ -611,7 +611,7 @@ export default function Home() {
 
                   {/* Forum Link in Mobile Menu */}
                   <Link
-                    href="https://portal-discussion-forum.onrender.com"
+                    href="https://portal-discussion-forum-keng.onrender.com"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center space-x-2 px-3 py-2.5 text-sm font-medium text-slate-300 rounded-lg bg-slate-700/40 hover:bg-slate-700/60 transition-colors"
