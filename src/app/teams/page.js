@@ -158,6 +158,22 @@ export default function TeamsPage() {
   const messagesEndRef = useRef(null);
   const chatAreaRef = useRef(null);
 
+  // 1) For booking a conference room
+  const [showBookRoomModal, setShowBookRoomModal] = useState(false);
+  const [availableRooms, setAvailableRooms] = useState([]); // list of vacant rooms
+  const [bookingForm, setBookingForm] = useState({
+    roomId: "",
+    meetingStart: "",
+    meetingEnd: "",
+    topic: "",
+    department: "",
+    numEmployees: "",
+    hostDesignation: "",
+  });
+
+  // After the line: const [bookingForm, setBookingForm] = useState({ ... });
+  const [showBookingSuccessModal, setShowBookingSuccessModal] = useState(false);
+
   // Scroll to bottom whenever messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1474,6 +1490,98 @@ export default function TeamsPage() {
     }
   };
 
+  // Fetch only vacant (unbooked) rooms
+  // Example: fetch rooms that are not in the DB at all
+  const fetchVacantRooms = async () => {
+    try {
+      const res = await fetch("/api/checkroom");
+      if (!res.ok) {
+        toast.error("Failed to fetch rooms");
+        return;
+      }
+      const data = await res.json(); // e.g. ["R2", "R3", ...]
+      setAvailableRooms(data);
+    } catch (error) {
+      console.error(error);
+      toast.error("Error fetching vacant rooms");
+    }
+  };
+
+  // Book the selected vacant room
+  const handleBookRoomFromTeams = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("No token found. Please log in again.");
+      return;
+    }
+
+    // Basic validation
+    if (Number(bookingForm.numEmployees) > 20) {
+      toast.error("A single room can’t exceed 20 participants.");
+      return;
+    }
+
+    const startLocal = new Date(bookingForm.meetingStart);
+    const endLocal = new Date(bookingForm.meetingEnd);
+
+    if (endLocal <= startLocal) {
+      toast.error("Meeting End Time must be after the Start Time.");
+      return;
+    }
+
+    // Convert to UTC for the DB
+    const meetingStartUTC = startLocal.toISOString();
+    const meetingEndUTC = endLocal.toISOString();
+
+    try {
+      const res = await fetch("/api/meeting", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          roomId: bookingForm.roomId,
+          meetingStart: meetingStartUTC,
+          meetingEnd: meetingEndUTC,
+          topic: bookingForm.topic,
+          department: bookingForm.department,
+          numEmployees: bookingForm.numEmployees,
+          hostDesignation: bookingForm.hostDesignation,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || "Failed to book room.");
+        return;
+      }
+
+      toast.success("Room booked successfully!");
+      setShowBookRoomModal(false);
+
+      setShowBookingSuccessModal(true);
+
+      // Reset the form
+      setBookingForm({
+        roomId: "",
+        meetingStart: "",
+        meetingEnd: "",
+        topic: "",
+        department: "",
+        numEmployees: "",
+        hostDesignation: "",
+      });
+
+      // Optionally: re-fetch tasks or do any refresh needed
+      // fetchTasks(); // if you want to do something else
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred while booking.");
+    }
+  };
+
   // If loading, show spinner
   if (loading) {
     return (
@@ -1816,6 +1924,18 @@ export default function TeamsPage() {
                 className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
               >
                 <span className="text-sm font-medium">Checkpoints</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  fetchVacantRooms();
+                  setShowBookRoomModal(true);
+                }}
+                className="w-full flex items-center justify-center gap-3 px-5 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-indigo-100 text-gray-800 rounded-lg hover:shadow-md hover:from-blue-100 hover:to-indigo-100 transition-all duration-300"
+              >
+                <span className="font-medium tracking-wide text-sm">
+                  Book Conference Room
+                </span>
               </button>
 
               <button
@@ -4418,6 +4538,264 @@ export default function TeamsPage() {
                   {hackathonId ? "Update Event" : "Create Event"}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Book Conference Room Modal */}
+      {showBookRoomModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onClick={() => setShowBookRoomModal(false)}
+        >
+          <div
+            className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl max-h-[90vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-800">
+                Book Conference Room
+              </h2>
+              <button
+                onClick={() => setShowBookRoomModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleBookRoomFromTeams} className="p-6 space-y-4">
+              {/* Room selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Select a Room
+                </label>
+                <select
+                  value={bookingForm.roomId}
+                  onChange={(e) =>
+                    setBookingForm({ ...bookingForm, roomId: e.target.value })
+                  }
+                  required
+                >
+                  <option value="">-- Choose a Room --</option>
+                  {availableRooms.map((roomId) => (
+                    <option key={roomId} value={roomId}>
+                      {roomId}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Start Time */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Time
+                </label>
+                <input
+                  type="datetime-local"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  value={bookingForm.meetingStart}
+                  onChange={(e) =>
+                    setBookingForm({
+                      ...bookingForm,
+                      meetingStart: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+
+              {/* End Time */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  End Time
+                </label>
+                <input
+                  type="datetime-local"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  value={bookingForm.meetingEnd}
+                  onChange={(e) =>
+                    setBookingForm({
+                      ...bookingForm,
+                      meetingEnd: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+
+              {/* Topic */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Meeting Topic
+                </label>
+                <input
+                  type="text"
+                  placeholder="Project kickoff meeting"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  value={bookingForm.topic}
+                  onChange={(e) =>
+                    setBookingForm({ ...bookingForm, topic: e.target.value })
+                  }
+                  required
+                />
+              </div>
+
+              {/* Department */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Department
+                </label>
+                <input
+                  type="text"
+                  placeholder="Engineering"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  value={bookingForm.department}
+                  onChange={(e) =>
+                    setBookingForm({
+                      ...bookingForm,
+                      department: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+
+              {/* Participants */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Number of Participants (max 20)
+                </label>
+                <input
+                  type="number"
+                  max="20"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="0"
+                  value={bookingForm.numEmployees}
+                  onChange={(e) =>
+                    setBookingForm({
+                      ...bookingForm,
+                      numEmployees: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+
+              {/* Host Designation */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Your Role
+                </label>
+                <input
+                  type="text"
+                  placeholder="Team Lead"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  value={bookingForm.hostDesignation}
+                  onChange={(e) =>
+                    setBookingForm({
+                      ...bookingForm,
+                      hostDesignation: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBookRoomModal(false)}
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+                >
+                  Confirm Booking
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Booking Success Modal */}
+      {showBookingSuccessModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onClick={() => setShowBookingSuccessModal(false)}
+        >
+          <div
+            className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">
+                Booking Confirmed
+              </h2>
+              <button
+                onClick={() => setShowBookingSuccessModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Body */}
+            <p className="text-sm text-gray-700">
+              Your room has been booked successfully. You can view your booking
+              status{" "}
+              <a
+                href="https://bpcl-portal.vercel.app/meeting"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-indigo-600 underline"
+              >
+                here
+              </a>
+              .
+            </p>
+
+            {/* Footer */}
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowBookingSuccessModal(false)}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
