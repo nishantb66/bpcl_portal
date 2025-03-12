@@ -3,7 +3,25 @@ import { connectToDB } from "../middleware";
 import { sign, verify } from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+const { dynamoClient, TABLE_NAME } = require("../../../utils/aws");
 dotenv.config();
+
+const jwt = require("jsonwebtoken");
+
+// JWT helper function clearly defined
+const generateJWT = (user) => {
+  return jwt.sign(
+    {
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      emp_id: user.emp_id,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+};
+
 
 // Input validation helpers
 const isValidEmail = (email) => {
@@ -176,11 +194,38 @@ export async function POST(req) {
 
   if (type === "login") {
     if (!email || !password) {
-      return new Response(JSON.stringify({ message: "Missing fields" }), {
-        status: 400,
-      });
+      return new Response(
+        JSON.stringify({ message: "Email and password required" }),
+        { status: 400 }
+      );
     }
 
+    const cacheKey = `user:login:${email}`;
+
+    // 1. Check DynamoDB Cache first
+    const cachedUser = await dynamoClient
+      .get({
+        TableName: TABLE_NAME,
+        Key: { cacheKey },
+      })
+      .promise();
+
+    if (cachedUser.Item) {
+      // Cached user found, compare password
+      if (await compare(password, cachedUser.Item.data.password)) {
+        const token = generateJWT(cachedUser.Item.data);
+        return new Response(
+          JSON.stringify({
+            message: "Login successful (from cache)",
+            token,
+            name: cachedUser.Item.data.name,
+          }),
+          { status: 200 }
+        );
+      }
+    }
+
+    // Cache miss: fetch user from MongoDB
     const user = await usersCollection.findOne({ email });
     if (!user || !(await compare(password, user.password))) {
       return new Response(
@@ -189,20 +234,31 @@ export async function POST(req) {
       );
     }
 
-    // Include role and emp_id in the JWT payload
-    const token = sign(
-      {
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        emp_id: user.emp_id,
-      },
+    // Insert user data to DynamoDB Cache
+    const ttl = Math.floor(Date.now() / 1000) + 3600; // cache for 1 hour
+    await dynamoClient
+      .put({
+        TableName: TABLE_NAME,
+        Item: {
+          cacheKey,
+          data: {
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            emp_id: user.emp_id,
+            password: user.password,
+          },
+          ttl,
+        },
+      })
+      .promise();
+
+    // Generate JWT Token
+    const token = jwt.sign(
+      { email: user.email, role: user.role, emp_id: user.emp_id },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
-
-    
-    console.log("Generated Token:", token);
 
     return new Response(
       JSON.stringify({ message: "Login successful", token, name: user.name }),
