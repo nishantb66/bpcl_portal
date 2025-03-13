@@ -191,8 +191,23 @@ export default function HackathonPage() {
     );
   }
 
-  const startStr = new Date(hackathon.startDateTime).toLocaleString();
-  const endStr = new Date(hackathon.endDateTime).toLocaleString();
+  const options = {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  };
+
+  const startStr = new Date(hackathon.startDateTime).toLocaleString(
+    "en-IN",
+    options
+  );
+  const endStr = new Date(hackathon.endDateTime).toLocaleString(
+    "en-IN",
+    options
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white py-8 px-4 sm:px-6 lg:px-8">
