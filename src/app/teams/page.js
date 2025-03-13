@@ -461,18 +461,21 @@ export default function TeamsPage() {
       })
       .catch((err) => console.error(err));
   }, [router]);
+  
 
 useEffect(() => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token"); // or from a Redux store
   const eventSources = [];
+
   tasks.forEach((task) => {
-    // Only subscribe for tasks that the current user is assigned to,
-    // or if leader, subscribe to all tasks.
+    // If leader => watch all tasks
+    // If normal user => watch only tasks where assignedTo includes currentUserEmail
     if (
       isLeader ||
       (task.assignedTo &&
         task.assignedTo.some((a) => a.email === currentUserEmail))
     ) {
+      // Pass token in query param
       const es = new EventSource(
         `/api/teams/notifications?taskId=${task._id}&token=${token}`
       );
@@ -490,10 +493,12 @@ useEffect(() => {
       eventSources.push(es);
     }
   });
+
   return () => {
     eventSources.forEach((es) => es.close());
   };
 }, [tasks, isLeader, currentUserEmail]);
+
 
 
 
