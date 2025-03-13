@@ -375,6 +375,85 @@ export async function POST(req) {
       );
     }
 
+    // EDIT TASK (Leader only): Update task details and assignments
+    if (type === "edit-task") {
+      const {
+        taskId,
+        taskName,
+        description,
+        urgency,
+        deadline,
+        assignedMembers,
+      } = body;
+      if (
+        !taskId ||
+        !taskName ||
+        !description ||
+        !urgency ||
+        !deadline ||
+        !assignedMembers
+      ) {
+        return NextResponse.json(
+          { message: "Missing required fields for editing task." },
+          { status: 400 }
+        );
+      }
+
+      // Verify that the user is a team leader
+      const team = await teamsCollection.findOne({ leaderEmail: email });
+      if (!team) {
+        return NextResponse.json(
+          { message: "Only the team leader can edit tasks." },
+          { status: 403 }
+        );
+      }
+
+      // Fetch the task to be edited
+      const task = await tasksCollection.findOne({ _id: new ObjectId(taskId) });
+      if (!task) {
+        return NextResponse.json(
+          { message: "Task not found." },
+          { status: 404 }
+        );
+      }
+      if (task.createdBy !== email) {
+        return NextResponse.json(
+          { message: "You are not authorized to edit this task." },
+          { status: 403 }
+        );
+      }
+
+      // Validate that every assigned member is in the team (leader or team member)
+      const validAssignments = assignedMembers.filter(
+        (am) =>
+          team.leaderEmail === am.toLowerCase() ||
+          team.members.some((m) => m.email === am.toLowerCase())
+      );
+
+      // Update the task document with the new details and assignment list
+      await tasksCollection.updateOne(
+        { _id: new ObjectId(taskId) },
+        {
+          $set: {
+            taskName,
+            description,
+            urgency,
+            deadline: new Date(deadline),
+            assignedTo: validAssignments.map((email) => ({
+              email: email.toLowerCase(),
+              status: "Not Started",
+              updatedAt: new Date(),
+            })),
+            updatedAt: new Date(),
+          },
+        }
+      );
+      return NextResponse.json(
+        { message: "Task updated successfully!" },
+        { status: 200 }
+      );
+    }
+
     // ---------------------------------------------------------------------------------
     // INVALID REQUEST
     return NextResponse.json(

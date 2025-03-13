@@ -185,6 +185,18 @@ export default function TeamsPage() {
   const [selectedMember, setSelectedMember] = useState(null); // For leader mode when a member is selected
   const [memberTrackReportText, setMemberTrackReportText] = useState(""); // For leader editing a member's comment
 
+  // State for editing a task (leader only)
+  const [showEditTaskModal, setShowEditTaskModal] = useState(false);
+  const [editTaskData, setEditTaskData] = useState({
+    taskId: "",
+    taskName: "",
+    description: "",
+    urgency: "Low",
+    deadline: "",
+    assignedMembers: [], // array of emails
+  });
+  const [newAssignedQuery, setNewAssignedQuery] = useState("");
+
   // Scroll to bottom whenever messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1595,46 +1607,45 @@ export default function TeamsPage() {
     }
   };
 
-
-const openTrackModal = async (task) => {
-  // Get current user email from state (assumes currentUserEmail is set in useEffect)
-  if (!isLeader) {
-    if (
-      !task.assignedTo ||
-      !task.assignedTo.some(
-        (assignment) => assignment.email === currentUserEmail
-      )
-    ) {
-      toast.error("You are not assigned to this task.");
-      return;
+  const openTrackModal = async (task) => {
+    // Get current user email from state (assumes currentUserEmail is set in useEffect)
+    if (!isLeader) {
+      if (
+        !task.assignedTo ||
+        !task.assignedTo.some(
+          (assignment) => assignment.email === currentUserEmail
+        )
+      ) {
+        toast.error("You are not assigned to this task.");
+        return;
+      }
     }
-  }
-  setTrackTask(task);
-  setSelectedMember(null);
-  try {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`/api/teams/track?taskId=${task._id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setTrackReports(data.tracking);
-      // Pre-fill the text area if a record exists for the current user
-      const userReportObj = data.tracking.find(
-        (r) => r.reporterEmail === currentUserEmail
-      );
-      setTrackReportText(userReportObj ? userReportObj.userReport : "");
-    } else {
-      toast.error(data.message);
+    setTrackTask(task);
+    setSelectedMember(null);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/teams/track?taskId=${task._id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTrackReports(data.tracking);
+        // Pre-fill the text area if a record exists for the current user
+        const userReportObj = data.tracking.find(
+          (r) => r.reporterEmail === currentUserEmail
+        );
+        setTrackReportText(userReportObj ? userReportObj.userReport : "");
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load tracking information.");
     }
-  } catch (error) {
-    console.error(error);
-    toast.error("Failed to load tracking information.");
-  }
-  setShowTrackModal(true);
-};
+    setShowTrackModal(true);
+  };
 
   const handleSaveUserReport = async () => {
     if (!trackTask) return;
@@ -1665,7 +1676,6 @@ const openTrackModal = async (task) => {
     }
   };
 
-
   const openMemberReport = (memberEmail) => {
     const memberReport = trackReports.find(
       (r) => r.reporterEmail === memberEmail
@@ -1673,7 +1683,6 @@ const openTrackModal = async (task) => {
     setSelectedMember(memberEmail);
     setMemberTrackReportText(memberReport ? memberReport.leaderReport : "");
   };
-
 
   const handleSaveLeaderReport = async () => {
     if (!trackTask || !selectedMember) return;
@@ -1706,10 +1715,53 @@ const openTrackModal = async (task) => {
     }
   };
 
+  const openEditTaskModal = (task) => {
+    // Pre-fill the editTaskData using the selected task's details
+    setEditTaskData({
+      taskId: task._id,
+      taskName: task.taskName,
+      description: task.description,
+      urgency: task.urgency,
+      // Format deadline for datetime-local input (YYYY-MM-DDTHH:MM)
+      deadline: new Date(task.deadline).toISOString().slice(0, 16),
+      assignedMembers: task.assignedTo.map((a) => a.email),
+    });
+    setNewAssignedQuery("");
+    setShowEditTaskModal(true);
+  };
 
-
-
-
+  const handleSaveEditTask = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("/api/teams/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: "edit-task",
+          taskId: editTaskData.taskId,
+          taskName: editTaskData.taskName,
+          description: editTaskData.description,
+          urgency: editTaskData.urgency,
+          deadline: editTaskData.deadline,
+          assignedMembers: editTaskData.assignedMembers,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message);
+        setShowEditTaskModal(false);
+        fetchTasks();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update task.");
+    }
+  };
 
   // If loading, show spinner
   if (loading) {
@@ -2911,6 +2963,18 @@ const openTrackModal = async (task) => {
                 >
                   Add to Calendar
                 </button>
+
+                {isLeader && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEditTaskModal(selectedTask);
+                    }}
+                    className="px-3 py-1.5 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700"
+                  >
+                    Edit Task
+                  </button>
+                )}
 
                 {selectedTask.createdBy ===
                   jwt.decode(localStorage.getItem("token"))?.email && (
@@ -5077,6 +5141,211 @@ const openTrackModal = async (task) => {
                 className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditTaskModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="relative w-full max-w-2xl bg-white rounded-lg shadow-xl">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between bg-indigo-600 px-6 py-4">
+              <h2 className="text-lg font-semibold text-white">Edit Task</h2>
+              <button
+                onClick={() => setShowEditTaskModal(false)}
+                className="text-white hover:text-gray-200"
+              >
+                <FiX className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="p-6 overflow-y-auto max-h-[70vh] space-y-5">
+              {/* Task Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Task Name
+                </label>
+                <input
+                  type="text"
+                  value={editTaskData.taskName}
+                  onChange={(e) =>
+                    setEditTaskData({
+                      ...editTaskData,
+                      taskName: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Description
+                </label>
+                <textarea
+                  rows="4"
+                  value={editTaskData.description}
+                  onChange={(e) =>
+                    setEditTaskData({
+                      ...editTaskData,
+                      description: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+
+              {/* Urgency */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Urgency
+                </label>
+                <select
+                  value={editTaskData.urgency}
+                  onChange={(e) =>
+                    setEditTaskData({
+                      ...editTaskData,
+                      urgency: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+
+              {/* Deadline */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Deadline
+                </label>
+                <input
+                  type="datetime-local"
+                  value={editTaskData.deadline}
+                  onChange={(e) =>
+                    setEditTaskData({
+                      ...editTaskData,
+                      deadline: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+
+              {/* Assigned Members */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Assigned Members
+                </label>
+                <div className="mt-2 space-y-2">
+                  {editTaskData.assignedMembers.map((member, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between border border-gray-200 rounded p-2"
+                    >
+                      <span className="text-sm text-gray-700">{member}</span>
+                      <button
+                        onClick={() => {
+                          const updated = editTaskData.assignedMembers.filter(
+                            (m, i) => i !== index
+                          );
+                          setEditTaskData({
+                            ...editTaskData,
+                            assignedMembers: updated,
+                          });
+                        }}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Search & Add New Member */}
+                <div className="mt-3 relative">
+                  <input
+                    type="text"
+                    placeholder="Search team members to add"
+                    value={newAssignedQuery}
+                    onChange={(e) => setNewAssignedQuery(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                  {newAssignedQuery && (
+                    <div className="absolute z-10 bg-white border border-gray-200 rounded-md mt-1 w-full max-h-48 overflow-auto shadow-lg">
+                      {teamInfo?.members
+                        ?.filter((m) => {
+                          // Exclude already assigned
+                          if (editTaskData.assignedMembers.includes(m.email))
+                            return false;
+                          // Match name or email
+                          const query = newAssignedQuery.toLowerCase();
+                          return (
+                            m.name.toLowerCase().includes(query) ||
+                            m.email.toLowerCase().includes(query)
+                          );
+                        })
+                        .map((member) => (
+                          <div
+                            key={member.email}
+                            className="flex items-center justify-between px-2 py-1 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => {
+                              setEditTaskData({
+                                ...editTaskData,
+                                assignedMembers: [
+                                  ...editTaskData.assignedMembers,
+                                  member.email,
+                                ],
+                              });
+                              setNewAssignedQuery("");
+                            }}
+                          >
+                            <span className="text-sm text-gray-700">
+                              {member.name} ({member.email})
+                            </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditTaskData({
+                                  ...editTaskData,
+                                  assignedMembers: [
+                                    ...editTaskData.assignedMembers,
+                                    member.email,
+                                  ],
+                                });
+                                setNewAssignedQuery("");
+                              }}
+                              className="px-2 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
+                            >
+                              Add
+                            </button>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-gray-50 px-6 py-3 flex justify-end space-x-4">
+              <button
+                onClick={() => setShowEditTaskModal(false)}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEditTask}
+                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              >
+                Save Changes
               </button>
             </div>
           </div>
