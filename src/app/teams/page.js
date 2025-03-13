@@ -199,7 +199,6 @@ export default function TeamsPage() {
 
   const [taskNotifications, setTaskNotifications] = useState({});
 
-
   // Scroll to bottom whenever messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -462,45 +461,41 @@ export default function TeamsPage() {
       .catch((err) => console.error(err));
   }, [router]);
 
+  useEffect(() => {
+    const token = localStorage.getItem("token"); // or from a Redux store
+    const eventSources = [];
 
-useEffect(() => {
-  const token = localStorage.getItem("token"); // or from a Redux store
-  const eventSources = [];
+    tasks.forEach((task) => {
+      // If leader => watch all tasks
+      // If normal user => watch only tasks where assignedTo includes currentUserEmail
+      if (
+        isLeader ||
+        (task.assignedTo &&
+          task.assignedTo.some((a) => a.email === currentUserEmail))
+      ) {
+        // Pass token in query param
+        const es = new EventSource(
+          `/api/teams/notifications?taskId=${task._id}&token=${token}`
+        );
+        es.onmessage = (event) => {
+          const parsed = JSON.parse(event.data);
+          setTaskNotifications((prev) => ({
+            ...prev,
+            [task._id]: parsed.notification,
+          }));
+        };
+        es.onerror = (err) => {
+          console.error("SSE error", err);
+          es.close();
+        };
+        eventSources.push(es);
+      }
+    });
 
-  tasks.forEach((task) => {
-    // If leader => watch all tasks
-    // If normal user => watch only tasks where assignedTo includes currentUserEmail
-    if (
-      isLeader ||
-      (task.assignedTo &&
-        task.assignedTo.some((a) => a.email === currentUserEmail))
-    ) {
-      // Pass token in query param
-      const es = new EventSource(
-        `/api/teams/notifications?taskId=${task._id}&token=${token}`
-      );
-      es.onmessage = (event) => {
-        const parsed = JSON.parse(event.data);
-        setTaskNotifications((prev) => ({
-          ...prev,
-          [task._id]: parsed.notification,
-        }));
-      };
-      es.onerror = (err) => {
-        console.error("SSE error", err);
-        es.close();
-      };
-      eventSources.push(es);
-    }
-  });
-
-  return () => {
-    eventSources.forEach((es) => es.close());
-  };
-}, [tasks, isLeader, currentUserEmail]);
-
-
-
+    return () => {
+      eventSources.forEach((es) => es.close());
+    };
+  }, [tasks, isLeader, currentUserEmail]);
 
   //Function to fetch the overview stats
   const fetchOverviewData = async () => {
@@ -1650,54 +1645,53 @@ useEffect(() => {
     }
   };
 
-const openTrackModal = async (task) => {
-  if (!isLeader) {
-    if (
-      !task.assignedTo ||
-      !task.assignedTo.some(
-        (assignment) => assignment.email === currentUserEmail
-      )
-    ) {
-      toast.error("You are not assigned to this task.");
-      return;
+  const openTrackModal = async (task) => {
+    if (!isLeader) {
+      if (
+        !task.assignedTo ||
+        !task.assignedTo.some(
+          (assignment) => assignment.email === currentUserEmail
+        )
+      ) {
+        toast.error("You are not assigned to this task.");
+        return;
+      }
     }
-  }
-  setTrackTask(task);
-  setSelectedMember(null);
-  try {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`/api/teams/track?taskId=${task._id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setTrackReports(data.tracking);
-      const userReportObj = data.tracking.find(
-        (r) => r.reporterEmail === currentUserEmail
-      );
-      setTrackReportText(userReportObj ? userReportObj.userReport : "");
-    } else {
-      toast.error(data.message);
+    setTrackTask(task);
+    setSelectedMember(null);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/teams/track?taskId=${task._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTrackReports(data.tracking);
+        const userReportObj = data.tracking.find(
+          (r) => r.reporterEmail === currentUserEmail
+        );
+        setTrackReportText(userReportObj ? userReportObj.userReport : "");
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load tracking information.");
     }
-  } catch (error) {
-    console.error(error);
-    toast.error("Failed to load tracking information.");
-  }
-  // Clear notification for current user (or for a specific member if leader)
-  if (!isLeader) {
-    await fetch("/api/teams/track", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: JSON.stringify({ type: "clear-notification", taskId: task._id }),
-    });
-    setTaskNotifications((prev) => ({ ...prev, [task._id]: false }));
-  }
-  setShowTrackModal(true);
-};
-
+    // Clear notification for current user (or for a specific member if leader)
+    if (!isLeader) {
+      await fetch("/api/teams/track", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ type: "clear-notification", taskId: task._id }),
+      });
+      setTaskNotifications((prev) => ({ ...prev, [task._id]: false }));
+    }
+    setShowTrackModal(true);
+  };
 
   const handleSaveUserReport = async () => {
     if (!trackTask) return;
@@ -1728,27 +1722,26 @@ const openTrackModal = async (task) => {
     }
   };
 
-const openMemberReport = (memberEmail) => {
-  const memberReport = trackReports.find(
-    (r) => r.reporterEmail === memberEmail
-  );
-  setSelectedMember(memberEmail);
-  setMemberTrackReportText(memberReport ? memberReport.leaderReport : "");
-  // Clear notification for that member
-  fetch("/api/teams/track", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-    body: JSON.stringify({
-      type: "clear-notification",
-      taskId: trackTask._id,
-      targetEmail: memberEmail,
-    }),
-  });
-};
-
+  const openMemberReport = (memberEmail) => {
+    const memberReport = trackReports.find(
+      (r) => r.reporterEmail === memberEmail
+    );
+    setSelectedMember(memberEmail);
+    setMemberTrackReportText(memberReport ? memberReport.leaderReport : "");
+    // Clear notification for that member
+    fetch("/api/teams/track", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({
+        type: "clear-notification",
+        taskId: trackTask._id,
+        targetEmail: memberEmail,
+      }),
+    });
+  };
 
   const handleSaveLeaderReport = async () => {
     if (!trackTask || !selectedMember) return;
@@ -5461,154 +5454,247 @@ const openMemberReport = (memberEmail) => {
       )}
 
       {showEditTaskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="relative w-full max-w-2xl bg-white rounded-lg shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden animate-fadeIn">
             {/* Modal Header */}
-            <div className="flex items-center justify-between bg-indigo-600 px-6 py-4">
-              <h2 className="text-lg font-semibold text-white">Edit Task</h2>
-              <button
-                onClick={() => setShowEditTaskModal(false)}
-                className="text-white hover:text-gray-200"
-              >
-                <FiX className="w-5 h-5" />
-              </button>
+            <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-5">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-white">
+                      Edit Task
+                    </h2>
+                    <p className="text-indigo-100 text-sm mt-0.5">
+                      Update task details and assignments
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowEditTaskModal(false)}
+                  className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                  aria-label="Close"
+                >
+                  <FiX className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Scrollable Body */}
-            <div className="p-6 overflow-y-auto max-h-[70vh] space-y-5">
-              {/* Task Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Task Name
-                </label>
-                <input
-                  type="text"
-                  value={editTaskData.taskName}
-                  onChange={(e) =>
-                    setEditTaskData({
-                      ...editTaskData,
-                      taskName: e.target.value,
-                    })
-                  }
-                  className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
+            <div className="p-6 overflow-y-auto max-h-[calc(85vh-140px)] space-y-6">
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Task Name */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Task Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={editTaskData.taskName}
+                    onChange={(e) =>
+                      setEditTaskData({
+                        ...editTaskData,
+                        taskName: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                    placeholder="Enter task name"
+                  />
+                </div>
 
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Description
-                </label>
-                <textarea
-                  rows="4"
-                  value={editTaskData.description}
-                  onChange={(e) =>
-                    setEditTaskData({
-                      ...editTaskData,
-                      description: e.target.value,
-                    })
-                  }
-                  className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
+                {/* Urgency */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Urgency <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={editTaskData.urgency}
+                      onChange={(e) =>
+                        setEditTaskData({
+                          ...editTaskData,
+                          urgency: e.target.value,
+                        })
+                      }
+                      className="w-full pl-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                    >
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+                      <svg
+                        className="w-4 h-4 text-gray-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
 
-              {/* Urgency */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Urgency
-                </label>
-                <select
-                  value={editTaskData.urgency}
-                  onChange={(e) =>
-                    setEditTaskData({
-                      ...editTaskData,
-                      urgency: e.target.value,
-                    })
-                  }
-                  className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                </select>
-              </div>
+                {/* Deadline */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Deadline <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="datetime-local"
+                      value={editTaskData.deadline}
+                      onChange={(e) =>
+                        setEditTaskData({
+                          ...editTaskData,
+                          deadline: e.target.value,
+                        })
+                      }
+                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                    />
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <svg
+                        className="w-4 h-4 text-gray-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
 
-              {/* Deadline */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Deadline
-                </label>
-                <input
-                  type="datetime-local"
-                  value={editTaskData.deadline}
-                  onChange={(e) =>
-                    setEditTaskData({
-                      ...editTaskData,
-                      deadline: e.target.value,
-                    })
-                  }
-                  className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
+                {/* Description */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    rows="4"
+                    value={editTaskData.description}
+                    onChange={(e) =>
+                      setEditTaskData({
+                        ...editTaskData,
+                        description: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors resize-none"
+                    placeholder="Describe the task in detail..."
+                  />
+                </div>
               </div>
 
               {/* Assigned Members */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Assigned Members
-                </label>
-                <div className="mt-2 space-y-2">
-                  {editTaskData.assignedMembers.map((member, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between border border-gray-200 rounded p-2"
-                    >
-                      <span className="text-sm text-gray-700">{member}</span>
-                      <button
-                        onClick={() => {
-                          const updated = editTaskData.assignedMembers.filter(
-                            (m, i) => i !== index
-                          );
-                          setEditTaskData({
-                            ...editTaskData,
-                            assignedMembers: updated,
-                          });
-                        }}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Assigned Team Members
+                  </label>
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                    {editTaskData.assignedMembers.length} members
+                  </span>
                 </div>
 
                 {/* Search & Add New Member */}
-                <div className="mt-3 relative">
+                <div className="relative mb-3">
+                  <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+                    <svg
+                      className="w-4 h-4 text-gray-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </div>
                   <input
                     type="text"
                     placeholder="Search team members to add"
                     value={newAssignedQuery}
                     onChange={(e) => setNewAssignedQuery(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                   />
-                  {newAssignedQuery && (
-                    <div className="absolute z-10 bg-white border border-gray-200 rounded-md mt-1 w-full max-h-48 overflow-auto shadow-lg">
-                      {teamInfo?.members
-                        ?.filter((m) => {
-                          // Exclude already assigned
-                          if (editTaskData.assignedMembers.includes(m.email))
-                            return false;
-                          // Match name or email
-                          const query = newAssignedQuery.toLowerCase();
-                          return (
-                            m.name.toLowerCase().includes(query) ||
-                            m.email.toLowerCase().includes(query)
-                          );
-                        })
-                        .map((member) => (
-                          <div
-                            key={member.email}
-                            className="flex items-center justify-between px-2 py-1 hover:bg-gray-100 cursor-pointer"
-                            onClick={() => {
+                </div>
+
+                {/* Search Results Dropdown */}
+                {newAssignedQuery && (
+                  <div className="absolute z-20 bg-white border border-gray-200 rounded-lg mt-1 shadow-lg w-full max-w-[calc(100%-3rem)] max-h-48 overflow-auto">
+                    {teamInfo?.members
+                      ?.filter((m) => {
+                        // Exclude already assigned
+                        if (editTaskData.assignedMembers.includes(m.email))
+                          return false;
+                        // Match name or email
+                        const query = newAssignedQuery.toLowerCase();
+                        return (
+                          m.name.toLowerCase().includes(query) ||
+                          m.email.toLowerCase().includes(query)
+                        );
+                      })
+                      .map((member) => (
+                        <div
+                          key={member.email}
+                          className="flex items-center justify-between px-4 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-0 cursor-pointer"
+                          onClick={() => {
+                            setEditTaskData({
+                              ...editTaskData,
+                              assignedMembers: [
+                                ...editTaskData.assignedMembers,
+                                member.email,
+                              ],
+                            });
+                            setNewAssignedQuery("");
+                          }}
+                        >
+                          <div className="flex items-center">
+                            <div className="w-7 h-7 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
+                              <span className="text-sm font-medium text-indigo-700">
+                                {member.name[0].toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-gray-700">
+                                {member.name}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {member.email}
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            className="text-xs flex items-center gap-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2 py-1 rounded transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setEditTaskData({
                                 ...editTaskData,
                                 assignedMembers: [
@@ -5619,47 +5705,124 @@ const openMemberReport = (memberEmail) => {
                               setNewAssignedQuery("");
                             }}
                           >
-                            <span className="text-sm text-gray-700">
-                              {member.name} ({member.email})
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                              />
+                            </svg>
+                            Add
+                          </button>
+                        </div>
+                      ))}
+
+                    {teamInfo?.members?.filter(
+                      (m) =>
+                        !editTaskData.assignedMembers.includes(m.email) &&
+                        (m.name
+                          .toLowerCase()
+                          .includes(newAssignedQuery.toLowerCase()) ||
+                          m.email
+                            .toLowerCase()
+                            .includes(newAssignedQuery.toLowerCase()))
+                    ).length === 0 && (
+                      <div className="px-4 py-3 text-sm text-center text-gray-500">
+                        No matching members found
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Current Assigned Members */}
+                <div className="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-2">
+                  <div className="max-h-40 overflow-y-auto">
+                    {editTaskData.assignedMembers.length > 0 ? (
+                      <ul className="divide-y divide-gray-200">
+                        {editTaskData.assignedMembers.map((member, index) => (
+                          <li
+                            key={index}
+                            className="flex items-center justify-between py-2 px-2"
+                          >
+                            <span className="text-sm text-gray-700 truncate">
+                              {member}
                             </span>
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
+                              onClick={() => {
+                                const updated =
+                                  editTaskData.assignedMembers.filter(
+                                    (m, i) => i !== index
+                                  );
                                 setEditTaskData({
                                   ...editTaskData,
-                                  assignedMembers: [
-                                    ...editTaskData.assignedMembers,
-                                    member.email,
-                                  ],
+                                  assignedMembers: updated,
                                 });
-                                setNewAssignedQuery("");
                               }}
-                              className="px-2 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
+                              className="ml-3 text-gray-400 hover:text-red-500 transition-colors"
+                              aria-label="Remove member"
                             >
-                              Add
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
                             </button>
-                          </div>
+                          </li>
                         ))}
-                    </div>
-                  )}
+                      </ul>
+                    ) : (
+                      <div className="text-center py-3 text-sm text-gray-500">
+                        No members assigned to this task
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="bg-gray-50 px-6 py-3 flex justify-end space-x-4">
-              <button
-                onClick={() => setShowEditTaskModal(false)}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveEditTask}
-                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-              >
-                Save Changes
-              </button>
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+              <div className="flex justify-end gap-4">
+                <button
+                  onClick={() => setShowEditTaskModal(false)}
+                  className="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEditTask}
+                  className="px-4 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center gap-1.5"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  Save Changes
+                </button>
+              </div>
             </div>
           </div>
         </div>
