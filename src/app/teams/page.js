@@ -461,7 +461,7 @@ export default function TeamsPage() {
       })
       .catch((err) => console.error(err));
   }, [router]);
-  
+
 
 useEffect(() => {
   const token = localStorage.getItem("token"); // or from a Redux store
@@ -5081,120 +5081,348 @@ const openMemberReport = (memberEmail) => {
       )}
 
       {showTrackModal && trackTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="relative bg-white w-full max-w-2xl rounded shadow-lg overflow-auto max-h-full">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn transition-opacity duration-300">
+          <div
+            className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
-            <div className="flex justify-between items-center border-b px-6 py-3">
-              <h2 className="text-xl font-semibold text-gray-800">
-                Tracking for: {trackTask.taskName}
-              </h2>
-              <button
-                onClick={() => setShowTrackModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <FiX className="w-6 h-6" />
-              </button>
+            <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 px-6 py-5 border-b border-indigo-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-white/20 rounded-lg">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-white tracking-wide">
+                      Task Tracking
+                    </h2>
+                    <p className="text-indigo-200 text-sm mt-0.5">
+                      {trackTask.taskName}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowTrackModal(false)}
+                  className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors duration-200"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
+
             {/* Body */}
-            <div className="px-6 py-4">
+            <div className="px-6 py-6 max-h-[calc(80vh-120px)] overflow-y-auto">
               {isLeader ? (
                 <div>
-                  <h3 className="text-lg font-medium text-gray-700 mb-4">
-                    Assigned Members
-                  </h3>
-                  <ul className="space-y-4">
+                  <div className="flex items-center gap-2 mb-5">
+                    <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full"></div>
+                    <h3 className="text-lg font-medium text-gray-800">
+                      Team Member Reports
+                    </h3>
+                  </div>
+
+                  <ul className="space-y-5">
                     {trackTask.assignedTo?.map((member) => {
                       const reportObj =
                         trackReports.find(
                           (r) => r.reporterEmail === member.email
                         ) || {};
+
                       return (
-                        <li key={member.email} className="border rounded p-4">
-                          <div className="flex justify-between items-center">
-                            <p className="text-sm font-medium text-gray-800">
-                              {member.email}
-                            </p>
+                        <li
+                          key={member.email}
+                          className="bg-gray-50 rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+                        >
+                          <div className="flex justify-between items-center px-4 py-3 bg-gray-100">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                                <span className="text-sm font-medium text-indigo-600">
+                                  {member.email[0].toUpperCase()}
+                                </span>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-800">
+                                  {member.email}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {reportObj.lastUpdated
+                                    ? new Date(
+                                        reportObj.lastUpdated
+                                      ).toLocaleString()
+                                    : "No report yet"}
+                                </p>
+                              </div>
+                            </div>
+
                             <button
                               onClick={() => openMemberReport(member.email)}
-                              className="text-sm text-indigo-600 border border-indigo-200 px-3 py-1 rounded hover:bg-indigo-50"
+                              className="text-sm flex items-center gap-1.5 text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors"
                             >
-                              Edit Leader Comment
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                              </svg>
+                              <span>Comment</span>
                             </button>
                           </div>
-                          <div className="mt-2">
-                            <p className="text-xs text-gray-500">
-                              User Report:
-                            </p>
-                            <div className="p-2 bg-gray-50 border rounded">
-                              {reportObj.userReport ||
-                                "No report submitted by user."}
+
+                          <div className="p-4">
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Report Content
+                                </p>
+                              </div>
+                              <div className="p-3 bg-white border rounded-lg">
+                                {reportObj.userReport ? (
+                                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                    {reportObj.userReport}
+                                  </p>
+                                ) : (
+                                  <p className="text-sm italic text-gray-400 text-center py-2">
+                                    No report submitted yet
+                                  </p>
+                                )}
+                              </div>
                             </div>
+
+                            {selectedMember === member.email && (
+                              <div className="mt-4 bg-indigo-50 p-4 rounded-lg border border-indigo-100 animate-fadeIn">
+                                <div className="mb-2.5">
+                                  <label className="block text-xs font-medium text-indigo-700 mb-1.5">
+                                    Your Comment
+                                  </label>
+                                  <textarea
+                                    className="w-full border border-indigo-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                                    rows={3}
+                                    placeholder="Enter your feedback or guidance..."
+                                    value={memberTrackReportText}
+                                    onChange={(e) =>
+                                      setMemberTrackReportText(e.target.value)
+                                    }
+                                  />
+                                </div>
+                                <div className="flex justify-end">
+                                  <button
+                                    onClick={handleSaveLeaderReport}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 shadow-sm transition-all duration-200 flex items-center gap-1.5"
+                                  >
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                    Save Comment
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            {reportObj.leaderReport && (
+                              <div className="mt-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
+                                  <p className="text-xs font-medium text-indigo-700 uppercase tracking-wider">
+                                    Leader Feedback
+                                  </p>
+                                </div>
+                                <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
+                                  <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                                    {reportObj.leaderReport}
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-2">
+                                    {reportObj.leaderCommentDate
+                                      ? new Date(
+                                          reportObj.leaderCommentDate
+                                        ).toLocaleString()
+                                      : ""}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          {selectedMember === member.email && (
-                            <div className="mt-4">
-                              <textarea
-                                className="w-full border border-gray-300 rounded p-2 text-sm"
-                                rows={3}
-                                placeholder="Enter leader comment..."
-                                value={memberTrackReportText}
-                                onChange={(e) =>
-                                  setMemberTrackReportText(e.target.value)
-                                }
-                              />
-                              <button
-                                onClick={handleSaveLeaderReport}
-                                className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
-                              >
-                                Save Leader Comment
-                              </button>
-                            </div>
-                          )}
-                          {reportObj.leaderReport && (
-                            <div className="mt-2 p-2 bg-indigo-50 border-l-4 border-indigo-500 rounded">
-                              <p className="text-xs font-semibold text-indigo-700">
-                                Leader Comment:
-                              </p>
-                              <p className="text-sm text-gray-800">
-                                {reportObj.leaderReport}
-                              </p>
-                            </div>
-                          )}
                         </li>
                       );
                     })}
                   </ul>
                 </div>
               ) : (
-                <div>
-                  <h3 className="text-lg font-medium text-gray-700 mb-4">
-                    Your Report
-                  </h3>
-                  <textarea
-                    className="w-full border border-gray-300 rounded p-3 text-sm"
-                    rows={5}
-                    placeholder="Enter your report here..."
-                    value={trackReportText}
-                    onChange={(e) => setTrackReportText(e.target.value)}
-                  />
-                  <button
-                    onClick={handleSaveUserReport}
-                    className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
-                  >
-                    Save Report
-                  </button>
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="p-2.5 bg-indigo-100 rounded-lg">
+                      <svg
+                        className="w-5 h-5 text-indigo-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-800">
+                      Your Progress Report
+                    </h3>
+                  </div>
+
+                  <div className="mb-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Report Details
+                      </label>
+                      <span className="text-xs text-gray-500">
+                        Last updated:{" "}
+                        {trackReports.find(
+                          (r) => r.reporterEmail === currentUserEmail
+                        )?.lastUpdated
+                          ? new Date(
+                              trackReports.find(
+                                (r) => r.reporterEmail === currentUserEmail
+                              )?.lastUpdated
+                            ).toLocaleString()
+                          : "Not submitted yet"}
+                      </span>
+                    </div>
+                    <textarea
+                      className="w-full border border-gray-300 rounded-lg p-3.5 text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-200"
+                      rows={6}
+                      placeholder="Describe your progress, challenges faced, and current status of the task..."
+                      value={trackReportText}
+                      onChange={(e) => setTrackReportText(e.target.value)}
+                    />
+
+                    <div className="bg-amber-50 rounded-lg p-3 mt-3 border border-amber-100 flex items-start gap-3">
+                      <svg
+                        className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <p className="text-xs text-amber-800">
+                        Your report will be visible to your team leader. Be
+                        specific about your progress and any issues you're
+                        facing to get the most helpful feedback.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleSaveUserReport}
+                      className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-sm transition-all duration-200 flex items-center gap-2"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                        />
+                      </svg>
+                      Submit Report
+                    </button>
+                  </div>
+
                   {(() => {
                     const userRecord = trackReports.find(
                       (r) => r.reporterEmail === currentUserEmail
                     );
                     if (userRecord && userRecord.leaderReport) {
                       return (
-                        <div className="mt-4 p-2 bg-indigo-50 border-l-4 border-indigo-500 rounded">
-                          <p className="text-xs font-semibold text-indigo-700">
-                            Leader Comment:
-                          </p>
-                          <p className="text-sm text-gray-800">
-                            {userRecord.leaderReport}
-                          </p>
+                        <div className="mt-8 bg-indigo-50 rounded-lg p-5 border-l-4 border-indigo-600 animate-fadeIn">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2 bg-indigo-100 rounded-full">
+                              <svg
+                                className="w-4 h-4 text-indigo-600"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                                />
+                              </svg>
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-semibold text-indigo-800">
+                                Leader Feedback
+                              </h4>
+                              <p className="text-xs text-indigo-600 mt-0.5">
+                                {userRecord.leaderCommentDate
+                                  ? new Date(
+                                      userRecord.leaderCommentDate
+                                    ).toLocaleString()
+                                  : ""}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="ml-9">
+                            <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                              {userRecord.leaderReport}
+                            </p>
+                          </div>
                         </div>
                       );
                     }
@@ -5203,14 +5431,30 @@ const openMemberReport = (memberEmail) => {
                 </div>
               )}
             </div>
+
             {/* Footer */}
-            <div className="flex justify-end border-t px-6 py-3">
-              <button
-                onClick={() => setShowTrackModal(false)}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-              >
-                Close
-              </button>
+            <div className="border-t border-gray-200 bg-gray-50 px-6 py-4 sticky bottom-0">
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowTrackModal(false)}
+                  className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 shadow-sm transition-all duration-200 font-medium flex items-center gap-2"
+                >
+                  <span>Close</span>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
