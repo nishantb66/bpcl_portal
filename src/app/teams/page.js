@@ -177,6 +177,14 @@ export default function TeamsPage() {
   // For tasks loading indicator
   const [tasksLoading, setTasksLoading] = useState(false);
 
+  // States for tracking feature
+  const [showTrackModal, setShowTrackModal] = useState(false);
+  const [trackTask, setTrackTask] = useState(null);
+  const [trackReports, setTrackReports] = useState([]); // Array of tracking records
+  const [trackReportText, setTrackReportText] = useState(""); // For normal member's own report
+  const [selectedMember, setSelectedMember] = useState(null); // For leader mode when a member is selected
+  const [memberTrackReportText, setMemberTrackReportText] = useState(""); // For leader editing a member's comment
+
   // Scroll to bottom whenever messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1587,6 +1595,122 @@ export default function TeamsPage() {
     }
   };
 
+
+const openTrackModal = async (task) => {
+  // Get current user email from state (assumes currentUserEmail is set in useEffect)
+  if (!isLeader) {
+    if (
+      !task.assignedTo ||
+      !task.assignedTo.some(
+        (assignment) => assignment.email === currentUserEmail
+      )
+    ) {
+      toast.error("You are not assigned to this task.");
+      return;
+    }
+  }
+  setTrackTask(task);
+  setSelectedMember(null);
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`/api/teams/track?taskId=${task._id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setTrackReports(data.tracking);
+      // Pre-fill the text area if a record exists for the current user
+      const userReportObj = data.tracking.find(
+        (r) => r.reporterEmail === currentUserEmail
+      );
+      setTrackReportText(userReportObj ? userReportObj.userReport : "");
+    } else {
+      toast.error(data.message);
+    }
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to load tracking information.");
+  }
+  setShowTrackModal(true);
+};
+
+  const handleSaveUserReport = async () => {
+    if (!trackTask) return;
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("/api/teams/track", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          taskId: trackTask._id,
+          report: trackReportText,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message);
+        // Optionally update the local tracking state here
+        setShowTrackModal(false);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to save report.");
+    }
+  };
+
+
+  const openMemberReport = (memberEmail) => {
+    const memberReport = trackReports.find(
+      (r) => r.reporterEmail === memberEmail
+    );
+    setSelectedMember(memberEmail);
+    setMemberTrackReportText(memberReport ? memberReport.leaderReport : "");
+  };
+
+
+  const handleSaveLeaderReport = async () => {
+    if (!trackTask || !selectedMember) return;
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("/api/teams/track", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          taskId: trackTask._id,
+          report: memberTrackReportText,
+          targetEmail: selectedMember,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message);
+        // Optionally update trackReports in state here
+        setSelectedMember(null);
+        setMemberTrackReportText("");
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to save leader report.");
+    }
+  };
+
+
+
+
+
+
   // If loading, show spinner
   if (loading) {
     return (
@@ -2200,6 +2324,18 @@ export default function TeamsPage() {
                                 d="M9 5l7 7-7 7"
                               />
                             </svg>
+
+                            {/* Track button: stopPropagation to avoid opening Task Details */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openTrackModal(task);
+                              }}
+                              className="px-3 py-1.5 text-sm text-indigo-600 border border-indigo-200 rounded hover:bg-indigo-50"
+                            >
+                              Track
+                            </button>
+
                             {/* Add Reminder Button */}
                             <div className="mt-3">
                               <button
@@ -4803,6 +4939,142 @@ export default function TeamsPage() {
               <button
                 onClick={() => setShowBookingSuccessModal(false)}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showTrackModal && trackTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="relative bg-white w-full max-w-2xl rounded shadow-lg overflow-auto max-h-full">
+            {/* Header */}
+            <div className="flex justify-between items-center border-b px-6 py-3">
+              <h2 className="text-xl font-semibold text-gray-800">
+                Tracking for: {trackTask.taskName}
+              </h2>
+              <button
+                onClick={() => setShowTrackModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FiX className="w-6 h-6" />
+              </button>
+            </div>
+            {/* Body */}
+            <div className="px-6 py-4">
+              {isLeader ? (
+                <div>
+                  <h3 className="text-lg font-medium text-gray-700 mb-4">
+                    Assigned Members
+                  </h3>
+                  <ul className="space-y-4">
+                    {trackTask.assignedTo?.map((member) => {
+                      const reportObj =
+                        trackReports.find(
+                          (r) => r.reporterEmail === member.email
+                        ) || {};
+                      return (
+                        <li key={member.email} className="border rounded p-4">
+                          <div className="flex justify-between items-center">
+                            <p className="text-sm font-medium text-gray-800">
+                              {member.email}
+                            </p>
+                            <button
+                              onClick={() => openMemberReport(member.email)}
+                              className="text-sm text-indigo-600 border border-indigo-200 px-3 py-1 rounded hover:bg-indigo-50"
+                            >
+                              Edit Leader Comment
+                            </button>
+                          </div>
+                          <div className="mt-2">
+                            <p className="text-xs text-gray-500">
+                              User Report:
+                            </p>
+                            <div className="p-2 bg-gray-50 border rounded">
+                              {reportObj.userReport ||
+                                "No report submitted by user."}
+                            </div>
+                          </div>
+                          {selectedMember === member.email && (
+                            <div className="mt-4">
+                              <textarea
+                                className="w-full border border-gray-300 rounded p-2 text-sm"
+                                rows={3}
+                                placeholder="Enter leader comment..."
+                                value={memberTrackReportText}
+                                onChange={(e) =>
+                                  setMemberTrackReportText(e.target.value)
+                                }
+                              />
+                              <button
+                                onClick={handleSaveLeaderReport}
+                                className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
+                              >
+                                Save Leader Comment
+                              </button>
+                            </div>
+                          )}
+                          {reportObj.leaderReport && (
+                            <div className="mt-2 p-2 bg-indigo-50 border-l-4 border-indigo-500 rounded">
+                              <p className="text-xs font-semibold text-indigo-700">
+                                Leader Comment:
+                              </p>
+                              <p className="text-sm text-gray-800">
+                                {reportObj.leaderReport}
+                              </p>
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ) : (
+                <div>
+                  <h3 className="text-lg font-medium text-gray-700 mb-4">
+                    Your Report
+                  </h3>
+                  <textarea
+                    className="w-full border border-gray-300 rounded p-3 text-sm"
+                    rows={5}
+                    placeholder="Enter your report here..."
+                    value={trackReportText}
+                    onChange={(e) => setTrackReportText(e.target.value)}
+                  />
+                  <button
+                    onClick={handleSaveUserReport}
+                    className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
+                  >
+                    Save Report
+                  </button>
+                  {(() => {
+                    const userRecord = trackReports.find(
+                      (r) => r.reporterEmail === currentUserEmail
+                    );
+                    if (userRecord && userRecord.leaderReport) {
+                      return (
+                        <div className="mt-4 p-2 bg-indigo-50 border-l-4 border-indigo-500 rounded">
+                          <p className="text-xs font-semibold text-indigo-700">
+                            Leader Comment:
+                          </p>
+                          <p className="text-sm text-gray-800">
+                            {userRecord.leaderReport}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              )}
+            </div>
+            {/* Footer */}
+            <div className="flex justify-end border-t px-6 py-3">
+              <button
+                onClick={() => setShowTrackModal(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
               >
                 Close
               </button>
