@@ -197,6 +197,9 @@ export default function TeamsPage() {
   });
   const [newAssignedQuery, setNewAssignedQuery] = useState("");
 
+  const [taskNotifications, setTaskNotifications] = useState({});
+
+
   // Scroll to bottom whenever messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -458,6 +461,41 @@ export default function TeamsPage() {
       })
       .catch((err) => console.error(err));
   }, [router]);
+
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  const eventSources = [];
+  tasks.forEach((task) => {
+    // Only subscribe for tasks that the current user is assigned to,
+    // or if leader, subscribe to all tasks.
+    if (
+      isLeader ||
+      (task.assignedTo &&
+        task.assignedTo.some((a) => a.email === currentUserEmail))
+    ) {
+      const es = new EventSource(
+        `/api/teams/notifications?taskId=${task._id}&token=${token}`
+      );
+      es.onmessage = (event) => {
+        const parsed = JSON.parse(event.data);
+        setTaskNotifications((prev) => ({
+          ...prev,
+          [task._id]: parsed.notification,
+        }));
+      };
+      es.onerror = (err) => {
+        console.error("SSE error", err);
+        es.close();
+      };
+      eventSources.push(es);
+    }
+  });
+  return () => {
+    eventSources.forEach((es) => es.close());
+  };
+}, [tasks, isLeader, currentUserEmail]);
+
+
 
   //Function to fetch the overview stats
   const fetchOverviewData = async () => {
@@ -1607,45 +1645,54 @@ export default function TeamsPage() {
     }
   };
 
-  const openTrackModal = async (task) => {
-    // Get current user email from state (assumes currentUserEmail is set in useEffect)
-    if (!isLeader) {
-      if (
-        !task.assignedTo ||
-        !task.assignedTo.some(
-          (assignment) => assignment.email === currentUserEmail
-        )
-      ) {
-        toast.error("You are not assigned to this task.");
-        return;
-      }
+const openTrackModal = async (task) => {
+  if (!isLeader) {
+    if (
+      !task.assignedTo ||
+      !task.assignedTo.some(
+        (assignment) => assignment.email === currentUserEmail
+      )
+    ) {
+      toast.error("You are not assigned to this task.");
+      return;
     }
-    setTrackTask(task);
-    setSelectedMember(null);
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`/api/teams/track?taskId=${task._id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setTrackReports(data.tracking);
-        // Pre-fill the text area if a record exists for the current user
-        const userReportObj = data.tracking.find(
-          (r) => r.reporterEmail === currentUserEmail
-        );
-        setTrackReportText(userReportObj ? userReportObj.userReport : "");
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to load tracking information.");
+  }
+  setTrackTask(task);
+  setSelectedMember(null);
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`/api/teams/track?taskId=${task._id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setTrackReports(data.tracking);
+      const userReportObj = data.tracking.find(
+        (r) => r.reporterEmail === currentUserEmail
+      );
+      setTrackReportText(userReportObj ? userReportObj.userReport : "");
+    } else {
+      toast.error(data.message);
     }
-    setShowTrackModal(true);
-  };
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to load tracking information.");
+  }
+  // Clear notification for current user (or for a specific member if leader)
+  if (!isLeader) {
+    await fetch("/api/teams/track", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({ type: "clear-notification", taskId: task._id }),
+    });
+    setTaskNotifications((prev) => ({ ...prev, [task._id]: false }));
+  }
+  setShowTrackModal(true);
+};
+
 
   const handleSaveUserReport = async () => {
     if (!trackTask) return;
@@ -1676,13 +1723,27 @@ export default function TeamsPage() {
     }
   };
 
-  const openMemberReport = (memberEmail) => {
-    const memberReport = trackReports.find(
-      (r) => r.reporterEmail === memberEmail
-    );
-    setSelectedMember(memberEmail);
-    setMemberTrackReportText(memberReport ? memberReport.leaderReport : "");
-  };
+const openMemberReport = (memberEmail) => {
+  const memberReport = trackReports.find(
+    (r) => r.reporterEmail === memberEmail
+  );
+  setSelectedMember(memberEmail);
+  setMemberTrackReportText(memberReport ? memberReport.leaderReport : "");
+  // Clear notification for that member
+  fetch("/api/teams/track", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+    body: JSON.stringify({
+      type: "clear-notification",
+      taskId: trackTask._id,
+      targetEmail: memberEmail,
+    }),
+  });
+};
+
 
   const handleSaveLeaderReport = async () => {
     if (!trackTask || !selectedMember) return;
@@ -2383,9 +2444,12 @@ export default function TeamsPage() {
                                 e.stopPropagation();
                                 openTrackModal(task);
                               }}
-                              className="px-3 py-1.5 text-sm text-indigo-600 border border-indigo-200 rounded hover:bg-indigo-50"
+                              className="relative inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium text-gray-700 hover:bg-indigo-200"
                             >
                               Track
+                              {taskNotifications[task._id] && (
+                                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-green-500"></span>
+                              )}
                             </button>
 
                             {/* Add Reminder Button */}

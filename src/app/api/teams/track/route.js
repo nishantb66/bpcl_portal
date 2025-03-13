@@ -38,6 +38,49 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
+  const body = await req.json();
+  // First, handle clear-notification requests
+  if (body.type === "clear-notification") {
+    const { taskId, targetEmail } = body;
+    const token = req.headers.get("authorization")?.split(" ")[1];
+    if (!token) return new Response("Unauthorized", { status: 401 });
+    let decoded;
+    try {
+      decoded = verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return new Response("Token expired", { status: 401 });
+    }
+    const db = await connectToDB();
+    const trackingCollection = db.collection("taskTrackings");
+    const currentTime = new Date();
+    let update;
+    if (targetEmail && targetEmail !== decoded.email) {
+      // Leader clears notification for a specific member
+      update = {
+        "tracking.$.memberNotification": false,
+        "tracking.$.updatedAt": currentTime,
+      };
+      await trackingCollection.updateOne(
+        { taskId, "tracking.reporterEmail": targetEmail.toLowerCase() },
+        { $set: update }
+      );
+    } else {
+      // Member clears their own notification (clears leaderNotification)
+      update = {
+        "tracking.$.leaderNotification": false,
+        "tracking.$.updatedAt": currentTime,
+      };
+      await trackingCollection.updateOne(
+        { taskId, "tracking.reporterEmail": decoded.email },
+        { $set: update }
+      );
+    }
+    return new Response(JSON.stringify({ message: "Notification cleared" }), {
+      status: 200,
+    });
+  }
+
+  // Otherwise, process tracking updates
   try {
     // Authenticate user
     const token = req.headers.get("authorization")?.split(" ")[1];
@@ -55,8 +98,7 @@ export async function POST(req) {
     }
     const currentUserEmail = decoded.email;
 
-    // Read and validate request body
-    const body = await req.json();
+    // Read request body
     const { taskId, report, targetEmail } = body;
     if (!taskId || !report) {
       return NextResponse.json(
@@ -65,13 +107,10 @@ export async function POST(req) {
       );
     }
 
-    // Determine mode:
-    // - If targetEmail is provided and is different from current user's email, we assume leader mode.
-    // - Otherwise, it is a normal member updating their own report.
+    // Determine mode: if targetEmail is provided (and different), assume leader mode.
     let mode = "user";
     let effectiveEmail = currentUserEmail;
     if (targetEmail && targetEmail !== currentUserEmail) {
-      // Verify that current user is team leader
       const db = await connectToDB();
       const teamsCollection = db.collection("teams");
       const team = await teamsCollection.findOne({
@@ -86,7 +125,6 @@ export async function POST(req) {
           { status: 403 }
         );
       }
-      // Also check that the target user is a member of this team
       const isMember = team.members.some(
         (m) => m.email === targetEmail.toLowerCase()
       );
@@ -100,7 +138,7 @@ export async function POST(req) {
       effectiveEmail = targetEmail.toLowerCase();
     }
 
-    // Update tracking record in the "taskTrackings" collection
+    // Update tracking record
     const db = await connectToDB();
     const trackingCollection = db.collection("taskTrackings");
     let trackingDoc = await trackingCollection.findOne({ taskId });
@@ -109,24 +147,26 @@ export async function POST(req) {
     if (mode === "user") {
       updateData["tracking.$.userReport"] = report;
       updateData["tracking.$.updatedAt"] = currentTime;
+      updateData["tracking.$.memberNotification"] = true; // flag for leader notification
     } else {
       updateData["tracking.$.leaderReport"] = report;
       updateData["tracking.$.updatedAt"] = currentTime;
+      updateData["tracking.$.leaderNotification"] = true; // flag for member notification
     }
 
     if (trackingDoc) {
-      // Try updating an existing record for effectiveEmail
       const updateResult = await trackingCollection.updateOne(
         { taskId, "tracking.reporterEmail": effectiveEmail },
         { $set: updateData }
       );
       if (updateResult.matchedCount === 0) {
-        // No existing record; push a new one
         const newRecord = {
           reporterEmail: effectiveEmail,
           userReport: mode === "user" ? report : "",
           leaderReport: mode === "leader" ? report : "",
           updatedAt: currentTime,
+          memberNotification: mode === "user",
+          leaderNotification: mode === "leader",
         };
         await trackingCollection.updateOne(
           { taskId },
@@ -134,7 +174,6 @@ export async function POST(req) {
         );
       }
     } else {
-      // Create a new document for this task
       const newDoc = {
         taskId,
         tracking: [
@@ -143,6 +182,8 @@ export async function POST(req) {
             userReport: mode === "user" ? report : "",
             leaderReport: mode === "leader" ? report : "",
             updatedAt: currentTime,
+            memberNotification: mode === "user",
+            leaderNotification: mode === "leader",
           },
         ],
       };
