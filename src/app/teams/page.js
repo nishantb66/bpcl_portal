@@ -199,6 +199,9 @@ export default function TeamsPage() {
 
   const [taskNotifications, setTaskNotifications] = useState({});
 
+  // Announcement banner state for the Teams page.
+  const [showAnnouncement, setShowAnnouncement] = useState(true);
+
   // Scroll to bottom whenever messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1950,416 +1953,62 @@ export default function TeamsPage() {
 
   // If user is in a team
   return (
-    <div className="min-h-screen flex bg-gray-100 relative">
-      <ToastContainer />
+    <div className="relative">
+      {/* Modern Professional Announcement Banner */}
+      {showAnnouncement && (
+        <div className="relative overflow-hidden border-b border-indigo-700/20">
+          {/* Animated gradient background with subtle pattern */}
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-600 animate-gradient-slow"></div>
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage:
+                "url('data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')",
+            }}
+          ></div>
 
-      {/* Top-right corner buttons */}
-      <div className="absolute top-4 right-4 flex items-center gap-3">
-        {hackathonData && isHackathonActive(hackathonData) && (
-          <button
-            onClick={() => router.push("/hack")}
-            className="group relative flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
-          >
-            <div className="flex items-center gap-1.5">
-              <div className="relative">
-                <div className="absolute -top-1 -right-1 w-2.5 h-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500"></span>
-                </div>
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-              </div>
-              <span className="font-medium">Event Live</span>
-            </div>
-          </button>
-        )}
-
-        <button
-          onClick={() => {
-            setShowLinksModal(true);
-            fetchImportantLinks();
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg group"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-            />
-          </svg>
-          <span className="font-medium">Important Links</span>
-        </button>
-      </div>
-
-      {/* Sidebar */}
-      <aside className="w-72 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 text-sm">
-        {/* Fixed Header Section */}
-        <div className="p-6 border-b border-gray-100 bg-white shrink-0">
-          <div className="flex items-center justify-between mb-4">
-            {isLeader ? (
-              <h2
-                className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-indigo-600 transition-colors duration-150"
-                onClick={() => {
-                  setTempTeamName(teamInfo?.teamName || "");
-                  setTempDescription(teamInfo?.teamDescription || "");
-                  setShowTeamInfoModal(true);
-                }}
-                title="Click to edit team name & description"
-              >
-                {teamInfo?.teamName || "Your Team"}
-              </h2>
-            ) : (
-              <h2 className="text-lg font-semibold text-gray-900">
-                {teamInfo?.teamName || "Your Team"}
-              </h2>
-            )}
-          </div>
-
-          {teamInfo?.teamDescription && (
-            <p className="text-sm text-gray-600 mb-3">
-              {teamInfo.teamDescription}
-            </p>
-          )}
-
-          {isLeader ? (
-            <div className="inline-flex items-center px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm">
-              Team Leader
-            </div>
-          ) : (
-            <p className="text-sm text-gray-600">Member</p>
-          )}
-        </div>
-
-        {/* Scrollable Content Section */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-6 space-y-6">
-            {/* Members Section */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-4">
-                Team Members
-              </h3>
-              <div className="space-y-3">
-                {/* Leader */}
-                <div className="flex items-center space-x-3 p-2 bg-indigo-50 rounded-lg">
-                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                    <span className="text-sm font-medium text-indigo-700">
-                      {teamInfo?.leaderName?.[0]}
-                    </span>
-                  </div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {teamInfo?.leaderName}
-                    <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-                      Owner
-                    </span>
-                  </p>
-                </div>
-
-                {/* Other Members */}
-                {teamInfo?.members
-                  ?.filter((m) => m.email !== teamInfo.leaderEmail)
-                  ?.map((member) => (
-                    <div
-                      key={member.email}
-                      className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-150"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-sm font-medium text-gray-600">
-                            {member.name[0]}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-800">
-                            {member.name}
-                          </p>
-                          {member.canAddMembers && (
-                            <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-                              Admin
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        {isLeader && (
-                          <button
-                            onClick={() => confirmUpdateAccess(member)}
-                            className="text-sm text-gray-600 hover:text-indigo-600"
-                          >
-                            {member.canAddMembers
-                              ? "Revoke Access"
-                              : "Grant Access"}
-                          </button>
-                        )}
-                        {(isLeader || userHasCap) && (
-                          <button
-                            onClick={() => handleRemoveMember(member.email)}
-                            className="p-1 text-gray-400 hover:text-red-500 rounded"
-                          >
-                            <FiTrash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-3">
-              <button
-                onClick={openOverview}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
-              >
-                <span className="text-sm font-medium">Overview</span>
-              </button>
-
-              {isLeader && (
-                <button
-                  onClick={() => {
-                    // If there's an existing hackathon, prefill the fields
-                    if (hackathonData) {
-                      setHackTopic(hackathonData.topic);
-                      setHackDescription(hackathonData.description);
-                      setHackStart(hackathonData.startDateTime.split(".")[0]);
-                      setHackEnd(hackathonData.endDateTime.split(".")[0]);
-                      setHackathonId(hackathonData._id);
-                    } else {
-                      setHackTopic("");
-                      setHackDescription("");
-                      setHackStart("");
-                      setHackEnd("");
-                      setHackathonId(null);
-                    }
-                    setShowHackathonModal(true);
-                  }}
-                  className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
-                >
-                  <span className="text-sm font-medium">
-                    Quick Brainstorming
+          {/* Content container */}
+          <div className="relative mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between">
+              {/* Left side - Icon and badge */}
+              <div className="hidden md:flex items-center space-x-4 flex-shrink-0">
+                <div className="flex items-center bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/20 shadow-sm">
+                  <svg
+                    className="w-4 h-4 text-white mr-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="text-xs font-medium text-white/90 uppercase tracking-wider">
+                    Announcement
                   </span>
-                </button>
-              )}
-
-              <button
-                onClick={openCheckpoints}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
-              >
-                <span className="text-sm font-medium">Checkpoints</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  fetchVacantRooms();
-                  setShowBookRoomModal(true);
-                }}
-                className="w-full flex items-center justify-center gap-3 px-5 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-indigo-100 text-gray-800 rounded-lg hover:shadow-md hover:from-blue-100 hover:to-indigo-100 transition-all duration-300"
-              >
-                <span className="font-medium tracking-wide text-sm">
-                  Book Conference Room
-                </span>
-              </button>
-
-              <button
-                onClick={() => setShowAIModal(true)}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-gray-300 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-200"
-              >
-                <span className="text-sm font-medium">AI Assistant (Beta)</span>
-              </button>
-            </div>
-
-            {/* Notice Section */}
-            {teamInfo?.notice && (
-              <div className="border-t border-gray-100 pt-6">
-                <div
-                  className={`rounded-lg border ${
-                    teamInfo.notice.importance === "High"
-                      ? "border-red-200 bg-red-50"
-                      : "border-green-200 bg-green-50"
-                  } p-4`}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        teamInfo.notice.importance === "High"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-green-100 text-green-800"
-                      }`}
-                    >
-                      {teamInfo.notice.importance} Priority
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {new Date(teamInfo.notice.updatedAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-2">
-                    {teamInfo.notice.topic}
-                  </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    {teamInfo.notice.message}
-                  </p>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Fixed Footer Section */}
-        {isLeader && (
-          <div className="p-6 border-t border-gray-100 bg-white shrink-0">
-            <div className="space-y-3">
-              <button
-                onClick={() => {
-                  setNoticeTopic(teamInfo.notice?.topic || "");
-                  setNoticeMessage(teamInfo.notice?.message || "");
-                  setNoticeImportance(teamInfo.notice?.importance || "Low");
-                  setShowNoticeModal(true);
-                }}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-              >
-                <FiPlusCircle className="w-4 h-4" />
-                <span className="text-sm font-medium">Create Notice</span>
-              </button>
-
-              <button
-                onClick={openAssignTaskModal}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
-              >
-                <FiPlusCircle className="w-4 h-4" />
-                <span className="text-sm font-medium">Assign Tasks</span>
-              </button>
-            </div>
-          </div>
-        )}
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 p-8 bg-white min-h-screen">
-        {isLeader || userHasCap ? (
-          <div className="max-w-5xl mx-auto">
-            <div className="mb-8">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-                Team Management
-              </h2>
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-700 mb-4">
-                  Add Members
-                </h3>
-                <div className="relative mb-4 max-w-md">
-                  <input
-                    type="text"
-                    placeholder="Search by email or username..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      handleSearch(e.target.value);
-                    }}
-                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-200"
-                  />
-                  <FiSearch className="absolute left-4 top-3.5 text-gray-400" />
-                  {searchLoading && (
-                    <FiLoader className="absolute right-4 top-3.5 text-gray-400 animate-spin" />
-                  )}
-
-                  {/* Search Results Dropdown */}
-                  {searchTerm && searchResults.length > 0 && (
-                    <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-64 overflow-auto">
-                      {searchResults.map((user) => (
-                        <div
-                          key={user._id}
-                          className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                              <span className="text-sm font-medium text-gray-600">
-                                {user.name[0].toUpperCase()}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-800">
-                                {user.name}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {user.email}
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            className="flex items-center space-x-2 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors duration-150"
-                            onClick={() => handleAddMember(user.email)}
-                          >
-                            <FiUserPlus className="w-4 h-4" />
-                            <span>Add</span>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <p className="text-sm text-gray-500">
-                  Type to find users and add them to your team. A user can only
-                  belong to one team.
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="max-w-5xl mx-auto">
-            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
-              <h2 className="text-xl font-semibold text-gray-800 mb-3">
-                Welcome to {teamInfo?.teamName}
-              </h2>
-              <p className="text-gray-600">
-                You are part of {teamInfo?.leaderName}&apos;s team.
-                Collaborations and assignments will appear here soon.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Tasks Section */}
-        <div className="max-w-5xl mx-auto">
-          <div className="bg-white rounded-xl border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Tasks Overview
-                </h3>
-                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">
-                  {tasks.length} {tasks.length === 1 ? "Task" : "Tasks"}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-6">
-              {tasksLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <FiLoader className="animate-spin w-8 h-8 text-indigo-600" />
-                  <span className="ml-2 text-gray-600">Loading tasks...</span>
-                </div>
-              ) : tasks.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="mb-3">
+              {/* Center - Main announcement text */}
+              <div className="flex-1 flex justify-center items-center px-4 md:px-10">
+                <p className="text-white/90 text-sm font-medium tracking-wide leading-relaxed max-w-3xl text-center">
+                  Welcome to the{" "}
+                  <span className="font-semibold text-white">
+                    EP Teams Workspace
+                  </span>
+                  . Explore our comprehensive collaboration features and connect
+                  with colleagues. Note that 'Track' and 'Checkpoint' features
+                  may take 2-3 seconds to initialize as we are working on optimizating performance
+                  <a
+                    href="/teamsguide"
+                    className="inline-flex items-center ml-2 border-b border-white/40 hover:border-white text-white hover:text-white transition-colors group"
+                  >
+                    <span>Read the Teams Guide</span>
                     <svg
-                      className="w-12 h-12 text-gray-300 mx-auto"
+                      className="w-3.5 h-3.5 ml-1 transform group-hover:translate-x-0.5 transition-transform"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -2368,389 +2017,81 @@ export default function TeamsPage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth="2"
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        d="M14 5l7 7m0 0l-7 7m7-7H3"
                       />
                     </svg>
-                  </div>
-                  <p className="text-gray-500 text-sm">
-                    No tasks assigned or created yet.
-                  </p>
-                </div>
-              ) : (
-                <ul className="divide-y divide-gray-100">
-                  {tasks.map((task) => {
-                    const isAssignedToUser = task.assignedTo.some(
-                      (assignee) => assignee.email === currentUserEmail
-                    );
+                  </a>
+                </p>
+              </div>
 
-                    return (
-                      <li
-                        key={task._id}
-                        onClick={() => openTaskDetails(task)}
-                        className={`p-4 hover:bg-gray-50 cursor-pointer rounded-lg transition-colors duration-150 ${
-                          isAssignedToUser
-                            ? "bg-blue-50 hover:bg-blue-50/80"
-                            : ""
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="flex-shrink-0">
-                              <div
-                                className={`w-3 h-3 rounded-full ${
-                                  task.urgency === "High"
-                                    ? "bg-red-400"
-                                    : task.urgency === "Medium"
-                                    ? "bg-yellow-400"
-                                    : "bg-green-400"
-                                }`}
-                              />
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-900">
-                                {task.taskName}
-                              </h4>
-                              <p className="text-xs text-gray-500 mt-0.5">
-                                {task.urgency} Priority
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-4">
-                            <div className="text-right">
-                              <p className="text-xs text-gray-500">Due Date</p>
-                              <p className="text-sm font-medium text-gray-900">
-                                {new Date(task.deadline).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <svg
-                              className="w-5 h-5 text-gray-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M9 5l7 7-7 7"
-                              />
-                            </svg>
-
-                            {/* Track button: stopPropagation to avoid opening Task Details */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openTrackModal(task);
-                              }}
-                              className="relative inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium text-gray-700 hover:bg-indigo-200"
-                            >
-                              Track
-                              {taskNotifications[task._id] && (
-                                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-green-500"></span>
-                              )}
-                            </button>
-
-                            {/* Add Reminder Button */}
-                            <div className="mt-3">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setReminderTask(task);
-                                  setReminderDateTime("");
-                                  setShowReminderModal(true);
-                                }}
-                                disabled={reminderSetForTasks.includes(
-                                  task._id
-                                )}
-                                className={`
-    inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full 
-    transition-all duration-200 transform hover:scale-105
-    ${
-      reminderSetForTasks.includes(task._id)
-        ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
-        : "bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 border border-gray-200 hover:border-blue-200"
-    }
-  `}
-                              >
-                                {reminderSetForTasks.includes(task._id) ? (
-                                  <>
-                                    <svg
-                                      className="w-3.5 h-3.5"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M5 13l4 4L19 7"
-                                      />
-                                    </svg>
-                                    <span>Reminder Set</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <svg
-                                      className="w-3.5 h-3.5"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                      />
-                                    </svg>
-                                    <span>Set Reminder</span>
-                                  </>
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* --- MODALS --- */}
-
-      {/* Assign Task Modal */}
-      {showAssignTaskModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          onClick={() => setShowAssignTaskModal(false)}
-        >
-          <div
-            className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      />
-                    </svg>
-                  </div>
-                  <h2 className="text-lg font-semibold text-gray-800">
-                    Assign New Task
-                  </h2>
-                </div>
+              {/* Right side - Close button */}
+              <div className="flex-shrink-0">
                 <button
-                  onClick={() => setShowAssignTaskModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition"
+                  onClick={() => setShowAnnouncement(false)}
+                  className="group p-1.5 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition-all duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-white/40"
+                  aria-label="Dismiss announcement"
                 >
-                  <FiX className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-            </div>
-
-            {/* Scrollable Content */}
-            <div className="overflow-y-auto p-6 space-y-4">
-              {/* Two Column Layout for Basic Info */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Task Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={taskNameField}
-                    onChange={(e) => setTaskNameField(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
-                    placeholder="Enter task name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Deadline <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={deadlineField}
-                    onChange={(e) => setDeadlineField(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  value={descriptionField}
-                  onChange={(e) => setDescriptionField(e.target.value)}
-                  rows="3"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none"
-                  placeholder="Describe the task"
-                />
-              </div>
-
-              {/* Urgency & Assignment Type in one row */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Urgency
-                  </label>
-                  <select
-                    value={urgencyField}
-                    onChange={(e) => setUrgencyField(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent bg-white"
-                  >
-                    <option>Low</option>
-                    <option>Medium</option>
-                    <option>High</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Assign To
-                  </label>
-                  <div className="flex items-center gap-4">
-                    <label className="inline-flex items-center">
-                      <input
-                        type="radio"
-                        checked={assignToAll}
-                        onChange={() => setAssignToAll(true)}
-                        className="text-indigo-600 focus:ring-indigo-400"
-                      />
-                      <span className="ml-2 text-sm">All Members</span>
-                    </label>
-                    <label className="inline-flex items-center">
-                      <input
-                        type="radio"
-                        checked={!assignToAll}
-                        onChange={() => setAssignToAll(false)}
-                        className="text-indigo-600 focus:ring-indigo-400"
-                      />
-                      <span className="ml-2 text-sm">Specific Members</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              {/* Member Selection */}
-              {!assignToAll && (
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <div className="relative mb-2">
-                    <input
-                      type="text"
-                      placeholder="Search members..."
-                      value={memberSearchTerm}
-                      onChange={(e) => setMemberSearchTerm(e.target.value)}
-                      className="w-full px-3 py-2 pr-10 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
-                    />
-                    <FiSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  </div>
-                  <div className="max-h-32 overflow-y-auto">
-                    {teamInfo?.members
-                      ?.filter((member) =>
-                        member.name
-                          .toLowerCase()
-                          .includes(memberSearchTerm.toLowerCase())
-                      )
-                      .map((member) => (
-                        <label
-                          key={member.email}
-                          className="flex items-center p-2 hover:bg-gray-100 rounded"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checkedMembers.includes(member.email)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setCheckedMembers((prev) => [
-                                  ...prev,
-                                  member.email,
-                                ]);
-                              } else {
-                                setCheckedMembers((prev) =>
-                                  prev.filter((m) => m !== member.email)
-                                );
-                              }
-                            }}
-                            className="text-indigo-600 rounded focus:ring-indigo-400"
-                          />
-                          <span className="ml-2 text-sm">{member.name}</span>
-                        </label>
-                      ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-100">
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowAssignTaskModal(false)}
-                  className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateTask}
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <span>Create Task</span>
                   <svg
-                    className="w-4 h-4"
+                    className="w-4 h-4 text-white/80 group-hover:text-white transition-colors"
                     fill="none"
-                    stroke="currentColor"
                     viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth="2"
-                      d="M13 5l7 7-7 7M5 12h15"
+                      d="M6 18L18 6M6 6l12 12"
                     />
                   </svg>
                 </button>
               </div>
             </div>
           </div>
+
+          {/* Decorative elements */}
+          <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-white/0 via-white/10 to-white/0"></div>
+          <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-white/0 via-white/10 to-white/0"></div>
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
         </div>
       )}
 
-      {/* Modern Task Details Modal */}
-      {showTaskDetailsModal && selectedTask && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
-          onClick={() => setShowTaskDetailsModal(false)}
-        >
-          <div
-            className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header Section */}
-            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-indigo-50 rounded-xl">
+      {/* Add these animations to your globals.css */}
+      <style jsx global>{`
+        @keyframes gradient-slow {
+          0%,
+          100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+        }
+
+        .animate-gradient-slow {
+          background-size: 200% 100%;
+          animation: gradient-slow 15s ease infinite;
+        }
+      `}</style>
+
+      <div className="min-h-screen flex bg-gray-100 relative">
+        <ToastContainer />
+
+        {/* Top-right corner buttons */}
+        <div className="absolute top-4 right-4 flex items-center gap-3">
+          {hackathonData && isHackathonActive(hackathonData) && (
+            <button
+              onClick={() => router.push("/hack")}
+              className="group relative flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+            >
+              <div className="flex items-center gap-1.5">
+                <div className="relative">
+                  <div className="absolute -top-1 -right-1 w-2.5 h-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500"></span>
+                  </div>
                   <svg
-                    className="w-6 h-6 text-indigo-600"
+                    className="w-5 h-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -2759,316 +2100,787 @@ export default function TeamsPage() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
                     />
                   </svg>
                 </div>
-                <h2 className="text-xl font-semibold text-gray-800">
-                  {selectedTask.taskName}
-                </h2>
+                <span className="font-medium">Event Live</span>
               </div>
-              <button
-                onClick={() => setShowTaskDetailsModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-              >
-                <FiX className="w-5 h-5 text-gray-500" />
-              </button>
+            </button>
+          )}
+
+          <button
+            onClick={() => {
+              setShowLinksModal(true);
+              fetchImportantLinks();
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg group"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+              />
+            </svg>
+            <span className="font-medium">Important Links</span>
+          </button>
+        </div>
+
+        {/* Sidebar */}
+        <aside className="w-72 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 text-sm">
+          {/* Fixed Header Section */}
+          <div className="p-6 border-b border-gray-100 bg-white shrink-0">
+            <div className="flex items-center justify-between mb-4">
+              {isLeader ? (
+                <h2
+                  className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-indigo-600 transition-colors duration-150"
+                  onClick={() => {
+                    setTempTeamName(teamInfo?.teamName || "");
+                    setTempDescription(teamInfo?.teamDescription || "");
+                    setShowTeamInfoModal(true);
+                  }}
+                  title="Click to edit team name & description"
+                >
+                  {teamInfo?.teamName || "Your Team"}
+                </h2>
+              ) : (
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {teamInfo?.teamName || "Your Team"}
+                </h2>
+              )}
             </div>
 
-            {/* Content Section */}
+            {teamInfo?.teamDescription && (
+              <p className="text-sm text-gray-600 mb-3">
+                {teamInfo.teamDescription}
+              </p>
+            )}
+
+            {isLeader ? (
+              <div className="inline-flex items-center px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm">
+                Team Leader
+              </div>
+            ) : (
+              <p className="text-sm text-gray-600">Member</p>
+            )}
+          </div>
+
+          {/* Scrollable Content Section */}
+          <div className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-6">
-              {/* Task Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm font-medium text-gray-600">Urgency</p>
-                  <p
-                    className={`text-lg mt-1 ${
-                      selectedTask.urgency === "High"
-                        ? "text-red-600"
-                        : selectedTask.urgency === "Medium"
-                        ? "text-yellow-600"
-                        : "text-green-600"
-                    }`}
-                  >
-                    {selectedTask.urgency}
-                  </p>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm font-medium text-gray-600">Deadline</p>
-                  <p className="text-lg mt-1 text-gray-800">
-                    {new Date(selectedTask.deadline).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
+              {/* Members Section */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-4">
+                  Team Members
+                </h3>
+                <div className="space-y-3">
+                  {/* Leader */}
+                  <div className="flex items-center space-x-3 p-2 bg-indigo-50 rounded-lg">
+                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                      <span className="text-sm font-medium text-indigo-700">
+                        {teamInfo?.leaderName?.[0]}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {teamInfo?.leaderName}
+                      <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                        Owner
+                      </span>
+                    </p>
+                  </div>
 
-              {/* Description */}
-              <div className="bg-gray-50 rounded-xl p-4">
-                <h3 className="font-medium text-gray-700 mb-2">Description</h3>
-                <p className="text-gray-600">{selectedTask.description}</p>
-              </div>
-
-              {/* Assignees Section */}
-              {isLeader && (
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <h3 className="font-medium text-gray-700 mb-3">Assignees</h3>
-                  <div
-                    className={`space-y-2 ${
-                      selectedTask.assignedTo.length > 3
-                        ? "max-h-40 overflow-y-auto pr-2"
-                        : ""
-                    }`}
-                  >
-                    {selectedTask.assignedTo.map((assignee) => (
+                  {/* Other Members */}
+                  {teamInfo?.members
+                    ?.filter((m) => m.email !== teamInfo.leaderEmail)
+                    ?.map((member) => (
                       <div
-                        key={assignee.email}
-                        className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm"
+                        key={member.email}
+                        className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-150"
                       >
-                        <span className="text-sm text-gray-700">
-                          {assignee.email}
-                        </span>
-                        <span
-                          className={`text-sm px-2 py-1 rounded-full ${
-                            assignee.status === "Done"
-                              ? "bg-green-100 text-green-700"
-                              : assignee.status === "In Progress"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-gray-100 text-gray-700"
-                          }`}
-                        >
-                          {assignee.status}
-                        </span>
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                            <span className="text-sm font-medium text-gray-600">
+                              {member.name[0]}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">
+                              {member.name}
+                            </p>
+                            {member.canAddMembers && (
+                              <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                                Admin
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          {isLeader && (
+                            <button
+                              onClick={() => confirmUpdateAccess(member)}
+                              className="text-sm text-gray-600 hover:text-indigo-600"
+                            >
+                              {member.canAddMembers
+                                ? "Revoke Access"
+                                : "Grant Access"}
+                            </button>
+                          )}
+                          {(isLeader || userHasCap) && (
+                            <button
+                              onClick={() => handleRemoveMember(member.email)}
+                              className="p-1 text-gray-400 hover:text-red-500 rounded"
+                            >
+                              <FiTrash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Dependencies Section */}
-              <div className="bg-gray-50 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-medium text-gray-700">
-                    Dependencies & Successors
-                  </h3>
-                  {isLeader && (
-                    <button
-                      onClick={() => {
-                        setDependencyMainTask(selectedTask);
-                        setDependencySearchTerm("");
-                        setFilteredTasks(
-                          tasks.filter((t) => t._id !== selectedTask._id)
-                        );
-                        setShowDependencyModal(true);
-                      }}
-                      className="flex items-center space-x-1 text-sm text-indigo-600 hover:text-indigo-800"
-                    >
-                      <FiPlus className="w-4 h-4" />
-                      <span>Add Dependency</span>
-                    </button>
-                  )}
-                </div>
-
-                <div className="space-y-3">
-                  {/* Dependencies */}
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">Depends on:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedTask.dependsOn &&
-                      selectedTask.dependsOn.length > 0 ? (
-                        selectedTask.dependsOn.map((depId) => {
-                          const depTask = tasks.find((t) => t._id === depId);
-                          return depTask ? (
-                            <span
-                              key={depId}
-                              className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-indigo-50 text-indigo-700"
-                            >
-                              {depTask.taskName}
-                            </span>
-                          ) : null;
-                        })
-                      ) : (
-                        <span className="text-sm text-gray-500">
-                          No dependencies
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Successors */}
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">Successors:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedTask.successors &&
-                      selectedTask.successors.length > 0 ? (
-                        selectedTask.successors.map((succId) => {
-                          const succTask = tasks.find((t) => t._id === succId);
-                          return succTask ? (
-                            <span
-                              key={succId}
-                              className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-50 text-green-700"
-                            >
-                              {succTask.taskName}
-                            </span>
-                          ) : null;
-                        })
-                      ) : (
-                        <span className="text-sm text-gray-500">
-                          No successors
-                        </span>
-                      )}
-                    </div>
-                  </div>
                 </div>
               </div>
 
-              {/* Discussion Section */}
-              <div className="bg-gray-50 rounded-xl p-4">
-                <h3 className="font-medium text-gray-700 mb-3">Discussion</h3>
-                <div
-                  className={`space-y-3 ${
-                    selectedTask.discussion?.length > 2
-                      ? "max-h-60 overflow-y-auto pr-2"
-                      : ""
-                  }`}
-                >
-                  {selectedTask.discussion &&
-                  selectedTask.discussion.length > 0 ? (
-                    selectedTask.discussion.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-white rounded-lg p-3 shadow-sm"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                              <span className="text-sm font-medium text-indigo-700">
-                                {item.name.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-800">
-                                {item.name}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {item.email}
-                              </p>
-                            </div>
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            {new Date(item.createdAt).toLocaleString()}
-                          </span>
-                        </div>
-                        <p className="text-gray-700 text-sm">{item.message}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500 text-center py-4">
-                      No discussions yet
-                    </p>
-                  )}
-                </div>
-
-                {/* Add Message Form */}
-                {(selectedTask.assignedTo.some(
-                  (a) =>
-                    a.email === jwt.decode(localStorage.getItem("token"))?.email
-                ) ||
-                  selectedTask.createdBy ===
-                    jwt.decode(localStorage.getItem("token"))?.email) && (
-                  <div className="mt-4">
-                    <textarea
-                      value={newIdea}
-                      onChange={(e) => setNewIdea(e.target.value)}
-                      placeholder="Share your thoughts..."
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
-                      rows={3}
-                    />
-                    <button
-                      onClick={handleAddIdea}
-                      className="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-                    >
-                      Post Message
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Footer Actions */}
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 p-6 space-y-3">
-              {selectedTask.assignedTo.some(
-                (a) =>
-                  a.email === jwt.decode(localStorage.getItem("token"))?.email
-              ) && (
-                <div className="flex items-center space-x-3">
-                  <select
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value)}
-                    className="flex-1 border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
-                  >
-                    <option>Not Started</option>
-                    <option>In Progress</option>
-                    <option>Done</option>
-                  </select>
-                  <button
-                    onClick={handleUpdateStatus}
-                    className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200"
-                  >
-                    Update Status
-                  </button>
-                </div>
-              )}
-
-              <div className="flex space-x-3">
+              {/* Action Buttons */}
+              <div className="space-y-3">
                 <button
-                  onClick={() => handleAddToCalendar(selectedTask)}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                  onClick={openOverview}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
                 >
-                  Add to Calendar
+                  <span className="text-sm font-medium">Overview</span>
                 </button>
 
                 {isLeader && (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openEditTaskModal(selectedTask);
+                    onClick={() => {
+                      // If there's an existing hackathon, prefill the fields
+                      if (hackathonData) {
+                        setHackTopic(hackathonData.topic);
+                        setHackDescription(hackathonData.description);
+                        setHackStart(hackathonData.startDateTime.split(".")[0]);
+                        setHackEnd(hackathonData.endDateTime.split(".")[0]);
+                        setHackathonId(hackathonData._id);
+                      } else {
+                        setHackTopic("");
+                        setHackDescription("");
+                        setHackStart("");
+                        setHackEnd("");
+                        setHackathonId(null);
+                      }
+                      setShowHackathonModal(true);
                     }}
-                    className="px-3 py-1.5 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700"
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
                   >
-                    Edit Task
+                    <span className="text-sm font-medium">
+                      Quick Brainstorming
+                    </span>
                   </button>
                 )}
 
-                {selectedTask.createdBy ===
-                  jwt.decode(localStorage.getItem("token"))?.email && (
-                  <button
-                    onClick={handleDeleteTask}
-                    className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                <button
+                  onClick={openCheckpoints}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  <span className="text-sm font-medium">Checkpoints</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    fetchVacantRooms();
+                    setShowBookRoomModal(true);
+                  }}
+                  className="w-full flex items-center justify-center gap-3 px-5 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-indigo-100 text-gray-800 rounded-lg hover:shadow-md hover:from-blue-100 hover:to-indigo-100 transition-all duration-300"
+                >
+                  <span className="font-medium tracking-wide text-sm">
+                    Book Conference Room
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setShowAIModal(true)}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-gray-300 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-200"
+                >
+                  <span className="text-sm font-medium">
+                    AI Assistant (Beta)
+                  </span>
+                </button>
+              </div>
+
+              {/* Notice Section */}
+              {teamInfo?.notice && (
+                <div className="border-t border-gray-100 pt-6">
+                  <div
+                    className={`rounded-lg border ${
+                      teamInfo.notice.importance === "High"
+                        ? "border-red-200 bg-red-50"
+                        : "border-green-200 bg-green-50"
+                    } p-4`}
                   >
-                    Delete Task
-                  </button>
+                    <div className="flex items-center justify-between mb-3">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          teamInfo.notice.importance === "High"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {teamInfo.notice.importance} Priority
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(
+                          teamInfo.notice.updatedAt
+                        ).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-medium text-gray-900 mb-2">
+                      {teamInfo.notice.topic}
+                    </h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {teamInfo.notice.message}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Fixed Footer Section */}
+          {isLeader && (
+            <div className="p-6 border-t border-gray-100 bg-white shrink-0">
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    setNoticeTopic(teamInfo.notice?.topic || "");
+                    setNoticeMessage(teamInfo.notice?.message || "");
+                    setNoticeImportance(teamInfo.notice?.importance || "Low");
+                    setShowNoticeModal(true);
+                  }}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                >
+                  <FiPlusCircle className="w-4 h-4" />
+                  <span className="text-sm font-medium">Create Notice</span>
+                </button>
+
+                <button
+                  onClick={openAssignTaskModal}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  <FiPlusCircle className="w-4 h-4" />
+                  <span className="text-sm font-medium">Assign Tasks</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </aside>
+
+        {/* Main Content */}
+        <div className="flex-1 p-8 bg-white min-h-screen">
+          {isLeader || userHasCap ? (
+            <div className="max-w-5xl mx-auto">
+              <div className="mb-8">
+                <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+                  Team Management
+                </h2>
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                  <h3 className="text-lg font-medium text-gray-700 mb-4">
+                    Add Members
+                  </h3>
+                  <div className="relative mb-4 max-w-md">
+                    <input
+                      type="text"
+                      placeholder="Search by email or username..."
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        handleSearch(e.target.value);
+                      }}
+                      className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-200"
+                    />
+                    <FiSearch className="absolute left-4 top-3.5 text-gray-400" />
+                    {searchLoading && (
+                      <FiLoader className="absolute right-4 top-3.5 text-gray-400 animate-spin" />
+                    )}
+
+                    {/* Search Results Dropdown */}
+                    {searchTerm && searchResults.length > 0 && (
+                      <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-64 overflow-auto">
+                        {searchResults.map((user) => (
+                          <div
+                            key={user._id}
+                            className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                <span className="text-sm font-medium text-gray-600">
+                                  {user.name[0].toUpperCase()}
+                                </span>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-800">
+                                  {user.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {user.email}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              className="flex items-center space-x-2 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors duration-150"
+                              onClick={() => handleAddMember(user.email)}
+                            >
+                              <FiUserPlus className="w-4 h-4" />
+                              <span>Add</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    Type to find users and add them to your team. A user can
+                    only belong to one team.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="max-w-5xl mx-auto">
+              <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+                <h2 className="text-xl font-semibold text-gray-800 mb-3">
+                  Welcome to {teamInfo?.teamName}
+                </h2>
+                <p className="text-gray-600">
+                  You are part of {teamInfo?.leaderName}&apos;s team.
+                  Collaborations and assignments will appear here soon.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Tasks Section */}
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-white rounded-xl border border-gray-200">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Tasks Overview
+                  </h3>
+                  <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">
+                    {tasks.length} {tasks.length === 1 ? "Task" : "Tasks"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-6">
+                {tasksLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <FiLoader className="animate-spin w-8 h-8 text-indigo-600" />
+                    <span className="ml-2 text-gray-600">Loading tasks...</span>
+                  </div>
+                ) : tasks.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="mb-3">
+                      <svg
+                        className="w-12 h-12 text-gray-300 mx-auto"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 text-sm">
+                      No tasks assigned or created yet.
+                    </p>
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-gray-100">
+                    {tasks.map((task) => {
+                      const isAssignedToUser = task.assignedTo.some(
+                        (assignee) => assignee.email === currentUserEmail
+                      );
+
+                      return (
+                        <li
+                          key={task._id}
+                          onClick={() => openTaskDetails(task)}
+                          className={`p-4 hover:bg-gray-50 cursor-pointer rounded-lg transition-colors duration-150 ${
+                            isAssignedToUser
+                              ? "bg-blue-50 hover:bg-blue-50/80"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <div className="flex-shrink-0">
+                                <div
+                                  className={`w-3 h-3 rounded-full ${
+                                    task.urgency === "High"
+                                      ? "bg-red-400"
+                                      : task.urgency === "Medium"
+                                      ? "bg-yellow-400"
+                                      : "bg-green-400"
+                                  }`}
+                                />
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-medium text-gray-900">
+                                  {task.taskName}
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                  {task.urgency} Priority
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-4">
+                              <div className="text-right">
+                                <p className="text-xs text-gray-500">
+                                  Due Date
+                                </p>
+                                <p className="text-sm font-medium text-gray-900">
+                                  {new Date(task.deadline).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <svg
+                                className="w-5 h-5 text-gray-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M9 5l7 7-7 7"
+                                />
+                              </svg>
+
+                              {/* Track button: stopPropagation to avoid opening Task Details */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openTrackModal(task);
+                                }}
+                                className="relative inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium text-gray-700 hover:bg-indigo-200"
+                              >
+                                Track
+                                {taskNotifications[task._id] && (
+                                  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-green-500"></span>
+                                )}
+                              </button>
+
+                              {/* Add Reminder Button */}
+                              <div className="mt-3">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setReminderTask(task);
+                                    setReminderDateTime("");
+                                    setShowReminderModal(true);
+                                  }}
+                                  disabled={reminderSetForTasks.includes(
+                                    task._id
+                                  )}
+                                  className={`
+    inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full 
+    transition-all duration-200 transform hover:scale-105
+    ${
+      reminderSetForTasks.includes(task._id)
+        ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+        : "bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 border border-gray-200 hover:border-blue-200"
+    }
+  `}
+                                >
+                                  {reminderSetForTasks.includes(task._id) ? (
+                                    <>
+                                      <svg
+                                        className="w-3.5 h-3.5"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M5 13l4 4L19 7"
+                                        />
+                                      </svg>
+                                      <span>Reminder Set</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <svg
+                                        className="w-3.5 h-3.5"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                      </svg>
+                                      <span>Set Reminder</span>
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 )}
               </div>
             </div>
           </div>
         </div>
-      )}
 
-      {showOverviewModal && overviewData && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          onClick={() => setShowOverviewModal(false)}
-        >
+        {/* --- MODALS --- */}
+
+        {/* Assign Task Modal */}
+        {showAssignTaskModal && (
           <div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl relative overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowAssignTaskModal(false)}
           >
-            {/* Header Section */}
-            <div className="px-8 py-6 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl">
+            <div
+              className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                        />
+                      </svg>
+                    </div>
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Assign New Task
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setShowAssignTaskModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition"
+                  >
+                    <FiX className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="overflow-y-auto p-6 space-y-4">
+                {/* Two Column Layout for Basic Info */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Task Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={taskNameField}
+                      onChange={(e) => setTaskNameField(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                      placeholder="Enter task name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Deadline <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={deadlineField}
+                      onChange={(e) => setDeadlineField(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={descriptionField}
+                    onChange={(e) => setDescriptionField(e.target.value)}
+                    rows="3"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none"
+                    placeholder="Describe the task"
+                  />
+                </div>
+
+                {/* Urgency & Assignment Type in one row */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Urgency
+                    </label>
+                    <select
+                      value={urgencyField}
+                      onChange={(e) => setUrgencyField(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent bg-white"
+                    >
+                      <option>Low</option>
+                      <option>Medium</option>
+                      <option>High</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Assign To
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <label className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          checked={assignToAll}
+                          onChange={() => setAssignToAll(true)}
+                          className="text-indigo-600 focus:ring-indigo-400"
+                        />
+                        <span className="ml-2 text-sm">All Members</span>
+                      </label>
+                      <label className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          checked={!assignToAll}
+                          onChange={() => setAssignToAll(false)}
+                          className="text-indigo-600 focus:ring-indigo-400"
+                        />
+                        <span className="ml-2 text-sm">Specific Members</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Member Selection */}
+                {!assignToAll && (
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <div className="relative mb-2">
+                      <input
+                        type="text"
+                        placeholder="Search members..."
+                        value={memberSearchTerm}
+                        onChange={(e) => setMemberSearchTerm(e.target.value)}
+                        className="w-full px-3 py-2 pr-10 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                      />
+                      <FiSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    </div>
+                    <div className="max-h-32 overflow-y-auto">
+                      {teamInfo?.members
+                        ?.filter((member) =>
+                          member.name
+                            .toLowerCase()
+                            .includes(memberSearchTerm.toLowerCase())
+                        )
+                        .map((member) => (
+                          <label
+                            key={member.email}
+                            className="flex items-center p-2 hover:bg-gray-100 rounded"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checkedMembers.includes(member.email)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setCheckedMembers((prev) => [
+                                    ...prev,
+                                    member.email,
+                                  ]);
+                                } else {
+                                  setCheckedMembers((prev) =>
+                                    prev.filter((m) => m !== member.email)
+                                  );
+                                }
+                              }}
+                              className="text-indigo-600 rounded focus:ring-indigo-400"
+                            />
+                            <span className="ml-2 text-sm">{member.name}</span>
+                          </label>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-100">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowAssignTaskModal(false)}
+                    className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateTask}
+                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span>Create Task</span>
                     <svg
-                      className="w-6 h-6 text-white"
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M13 5l7 7-7 7M5 12h15"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modern Task Details Modal */}
+        {showTaskDetailsModal && selectedTask && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+            onClick={() => setShowTaskDetailsModal(false)}
+          >
+            <div
+              className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header Section */}
+              <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-indigo-50 rounded-xl">
+                    <svg
+                      className="w-6 h-6 text-indigo-600"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -3077,35 +2889,325 @@ export default function TeamsPage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                       />
                     </svg>
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-800">
-                      Team Overview
-                    </h2>
-                    <p className="text-gray-500">
-                      Analytics and Insights Dashboard
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    {selectedTask.taskName}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setShowTaskDetailsModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                >
+                  <FiX className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              {/* Content Section */}
+              <div className="p-6 space-y-6">
+                {/* Task Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <p className="text-sm font-medium text-gray-600">Urgency</p>
+                    <p
+                      className={`text-lg mt-1 ${
+                        selectedTask.urgency === "High"
+                          ? "text-red-600"
+                          : selectedTask.urgency === "Medium"
+                          ? "text-yellow-600"
+                          : "text-green-600"
+                      }`}
+                    >
+                      {selectedTask.urgency}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <p className="text-sm font-medium text-gray-600">
+                      Deadline
+                    </p>
+                    <p className="text-lg mt-1 text-gray-800">
+                      {new Date(selectedTask.deadline).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setShowOverviewModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-                >
-                  <FiX className="w-6 h-6 text-gray-500" />
-                </button>
+
+                {/* Description */}
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <h3 className="font-medium text-gray-700 mb-2">
+                    Description
+                  </h3>
+                  <p className="text-gray-600">{selectedTask.description}</p>
+                </div>
+
+                {/* Assignees Section */}
+                {isLeader && (
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <h3 className="font-medium text-gray-700 mb-3">
+                      Assignees
+                    </h3>
+                    <div
+                      className={`space-y-2 ${
+                        selectedTask.assignedTo.length > 3
+                          ? "max-h-40 overflow-y-auto pr-2"
+                          : ""
+                      }`}
+                    >
+                      {selectedTask.assignedTo.map((assignee) => (
+                        <div
+                          key={assignee.email}
+                          className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm"
+                        >
+                          <span className="text-sm text-gray-700">
+                            {assignee.email}
+                          </span>
+                          <span
+                            className={`text-sm px-2 py-1 rounded-full ${
+                              assignee.status === "Done"
+                                ? "bg-green-100 text-green-700"
+                                : assignee.status === "In Progress"
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            {assignee.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Dependencies Section */}
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-medium text-gray-700">
+                      Dependencies & Successors
+                    </h3>
+                    {isLeader && (
+                      <button
+                        onClick={() => {
+                          setDependencyMainTask(selectedTask);
+                          setDependencySearchTerm("");
+                          setFilteredTasks(
+                            tasks.filter((t) => t._id !== selectedTask._id)
+                          );
+                          setShowDependencyModal(true);
+                        }}
+                        className="flex items-center space-x-1 text-sm text-indigo-600 hover:text-indigo-800"
+                      >
+                        <FiPlus className="w-4 h-4" />
+                        <span>Add Dependency</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    {/* Dependencies */}
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Depends on:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedTask.dependsOn &&
+                        selectedTask.dependsOn.length > 0 ? (
+                          selectedTask.dependsOn.map((depId) => {
+                            const depTask = tasks.find((t) => t._id === depId);
+                            return depTask ? (
+                              <span
+                                key={depId}
+                                className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-indigo-50 text-indigo-700"
+                              >
+                                {depTask.taskName}
+                              </span>
+                            ) : null;
+                          })
+                        ) : (
+                          <span className="text-sm text-gray-500">
+                            No dependencies
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Successors */}
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Successors:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedTask.successors &&
+                        selectedTask.successors.length > 0 ? (
+                          selectedTask.successors.map((succId) => {
+                            const succTask = tasks.find(
+                              (t) => t._id === succId
+                            );
+                            return succTask ? (
+                              <span
+                                key={succId}
+                                className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-50 text-green-700"
+                              >
+                                {succTask.taskName}
+                              </span>
+                            ) : null;
+                          })
+                        ) : (
+                          <span className="text-sm text-gray-500">
+                            No successors
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Discussion Section */}
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <h3 className="font-medium text-gray-700 mb-3">Discussion</h3>
+                  <div
+                    className={`space-y-3 ${
+                      selectedTask.discussion?.length > 2
+                        ? "max-h-60 overflow-y-auto pr-2"
+                        : ""
+                    }`}
+                  >
+                    {selectedTask.discussion &&
+                    selectedTask.discussion.length > 0 ? (
+                      selectedTask.discussion.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-white rounded-lg p-3 shadow-sm"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                                <span className="text-sm font-medium text-indigo-700">
+                                  {item.name.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-800">
+                                  {item.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {item.email}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              {new Date(item.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <p className="text-gray-700 text-sm">
+                            {item.message}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 text-center py-4">
+                        No discussions yet
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Add Message Form */}
+                  {(selectedTask.assignedTo.some(
+                    (a) =>
+                      a.email ===
+                      jwt.decode(localStorage.getItem("token"))?.email
+                  ) ||
+                    selectedTask.createdBy ===
+                      jwt.decode(localStorage.getItem("token"))?.email) && (
+                    <div className="mt-4">
+                      <textarea
+                        value={newIdea}
+                        onChange={(e) => setNewIdea(e.target.value)}
+                        placeholder="Share your thoughts..."
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                        rows={3}
+                      />
+                      <button
+                        onClick={handleAddIdea}
+                        className="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                      >
+                        Post Message
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="sticky bottom-0 bg-white border-t border-gray-100 p-6 space-y-3">
+                {selectedTask.assignedTo.some(
+                  (a) =>
+                    a.email === jwt.decode(localStorage.getItem("token"))?.email
+                ) && (
+                  <div className="flex items-center space-x-3">
+                    <select
+                      value={newStatus}
+                      onChange={(e) => setNewStatus(e.target.value)}
+                      className="flex-1 border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                    >
+                      <option>Not Started</option>
+                      <option>In Progress</option>
+                      <option>Done</option>
+                    </select>
+                    <button
+                      onClick={handleUpdateStatus}
+                      className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200"
+                    >
+                      Update Status
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => handleAddToCalendar(selectedTask)}
+                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                  >
+                    Add to Calendar
+                  </button>
+
+                  {isLeader && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditTaskModal(selectedTask);
+                      }}
+                      className="px-3 py-1.5 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700"
+                    >
+                      Edit Task
+                    </button>
+                  )}
+
+                  {selectedTask.createdBy ===
+                    jwt.decode(localStorage.getItem("token"))?.email && (
+                    <button
+                      onClick={handleDeleteTask}
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                    >
+                      Delete Task
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Content Area */}
-            <div className="p-8 max-h-[calc(90vh-120px)] overflow-y-auto">
-              {/* KPI Cards */}
-              <div className="grid grid-cols-2 gap-6 mb-8">
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+        {showOverviewModal && overviewData && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowOverviewModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl relative overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header Section */}
+              <div className="px-8 py-6 border-b border-gray-100">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="p-3 bg-blue-500 rounded-xl">
+                    <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl">
                       <svg
                         className="w-6 h-6 text-white"
                         fill="none"
@@ -3116,29 +3218,457 @@ export default function TeamsPage() {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                         />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-blue-600">
-                        Team Members
+                      <h2 className="text-2xl font-bold text-gray-800">
+                        Team Overview
+                      </h2>
+                      <p className="text-gray-500">
+                        Analytics and Insights Dashboard
                       </p>
-                      <h3 className="text-3xl font-bold text-gray-800 mt-1">
-                        {overviewData.totalMembers}
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Excluding Team Leader
-                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowOverviewModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                  >
+                    <FiX className="w-6 h-6 text-gray-500" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Content Area */}
+              <div className="p-8 max-h-[calc(90vh-120px)] overflow-y-auto">
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 gap-6 mb-8">
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-blue-500 rounded-xl">
+                        <svg
+                          className="w-6 h-6 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-blue-600">
+                          Team Members
+                        </p>
+                        <h3 className="text-3xl font-bold text-gray-800 mt-1">
+                          {overviewData.totalMembers}
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Excluding Team Leader
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-purple-500 rounded-xl">
+                        <svg
+                          className="w-6 h-6 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-purple-600">
+                          Total Tasks
+                        </p>
+                        <h3 className="text-3xl font-bold text-gray-800 mt-1">
+                          {overviewData.totalTasks}
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Active Projects
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-purple-500 rounded-xl">
+                {/* Charts Grid */}
+                <div className="grid grid-cols-2 gap-8">
+                  {/* Priority Distribution */}
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                    <h4 className="text-lg font-semibold text-gray-800 mb-6">
+                      Priority Distribution
+                    </h4>
+                    <div className="w-full" style={{ height: "300px" }}>
+                      <Pie
+                        data={{
+                          labels: ["High", "Medium", "Low"],
+                          datasets: [
+                            {
+                              label: "Priority",
+                              data: [
+                                overviewData.priorityStats.high,
+                                overviewData.priorityStats.medium,
+                                overviewData.priorityStats.low,
+                              ],
+                              backgroundColor: [
+                                "rgba(239, 68, 68, 0.9)",
+                                "rgba(245, 158, 11, 0.9)",
+                                "rgba(16, 185, 129, 0.9)",
+                              ],
+                              borderWidth: 0,
+                            },
+                          ],
+                        }}
+                        options={{
+                          maintainAspectRatio: false,
+                          responsive: true,
+                          plugins: {
+                            legend: {
+                              position: "bottom",
+                              labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                              },
+                            },
+                          },
+                          animation: {
+                            duration: 2000,
+                          },
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Task Status */}
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                    <h4 className="text-lg font-semibold text-gray-800 mb-6">
+                      Task Completion Status
+                    </h4>
+                    <div className="w-full" style={{ height: "300px" }}>
+                      <Bar
+                        data={{
+                          labels: ["Not Started", "In Progress", "Done"],
+                          datasets: [
+                            {
+                              label: "Tasks",
+                              data: [
+                                overviewData.statusStats.notStarted,
+                                overviewData.statusStats.inProgress,
+                                overviewData.statusStats.done,
+                              ],
+                              backgroundColor: [
+                                "rgba(156, 163, 175, 0.9)",
+                                "rgba(59, 130, 246, 0.9)",
+                                "rgba(16, 185, 129, 0.9)",
+                              ],
+                              borderRadius: 8,
+                            },
+                          ],
+                        }}
+                        options={{
+                          maintainAspectRatio: false,
+                          responsive: true,
+                          scales: {
+                            y: {
+                              beginAtZero: true,
+                              grid: {
+                                display: true,
+                                color: "rgba(0,0,0,0.05)",
+                              },
+                            },
+                            x: {
+                              grid: {
+                                display: false,
+                              },
+                            },
+                          },
+                          plugins: {
+                            legend: {
+                              display: false,
+                            },
+                          },
+                          animation: {
+                            duration: 2000,
+                          },
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Assignment Distribution */}
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6 col-span-2">
+                    <h4 className="text-lg font-semibold text-gray-800 mb-6">
+                      Team Assignment Distribution
+                    </h4>
+                    <div className="w-full" style={{ height: "300px" }}>
+                      <Doughnut
+                        data={{
+                          labels: ["Assigned Tasks", "Unassigned Tasks"],
+                          datasets: [
+                            {
+                              data: [
+                                overviewData.assignedCount,
+                                overviewData.unassignedCount,
+                              ],
+                              backgroundColor: [
+                                "rgba(59, 130, 246, 0.9)",
+                                "rgba(229, 231, 235, 0.9)",
+                              ],
+                              borderWidth: 0,
+                            },
+                          ],
+                        }}
+                        options={{
+                          maintainAspectRatio: false,
+                          responsive: true,
+                          cutout: "70%",
+                          plugins: {
+                            legend: {
+                              position: "bottom",
+                              labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                              },
+                            },
+                          },
+                          animation: {
+                            duration: 2000,
+                          },
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Notice Modal */}
+        {showNoticeModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowNoticeModal(false)}
+          >
+            <div
+              className="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl">
                       <svg
-                        className="w-6 h-6 text-white"
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-800">
+                        Create Notice
+                      </h2>
+                      <p className="text-sm text-gray-500">
+                        Share important updates with your team
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowNoticeModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                  >
+                    <FiX className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Form Content */}
+              <div className="p-6 space-y-6">
+                {/* Topic Input */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notice Topic <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={noticeTopic}
+                    onChange={(e) => setNoticeTopic(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-200"
+                    placeholder="Enter notice topic..."
+                  />
+                </div>
+
+                {/* Message Input */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Message Content <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={noticeMessage}
+                    onChange={(e) => setNoticeMessage(e.target.value)}
+                    rows="4"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-200 resize-none"
+                    placeholder="Type your notice message here..."
+                  />
+                </div>
+
+                {/* Importance Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Importance Level
+                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex-1">
+                      <input
+                        type="radio"
+                        name="importance"
+                        checked={noticeImportance === "Low"}
+                        onChange={() => setNoticeImportance("Low")}
+                        className="hidden"
+                      />
+                      <div
+                        className={`p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
+                          noticeImportance === "Low"
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <div
+                            className={`w-3 h-3 rounded-full ${
+                              noticeImportance === "Low"
+                                ? "bg-green-500"
+                                : "bg-gray-300"
+                            }`}
+                          />
+                          <span
+                            className={`font-medium ${
+                              noticeImportance === "Low"
+                                ? "text-green-700"
+                                : "text-gray-600"
+                            }`}
+                          >
+                            Low Priority
+                          </span>
+                        </div>
+                      </div>
+                    </label>
+
+                    <label className="flex-1">
+                      <input
+                        type="radio"
+                        name="importance"
+                        checked={noticeImportance === "High"}
+                        onChange={() => setNoticeImportance("High")}
+                        className="hidden"
+                      />
+                      <div
+                        className={`p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
+                          noticeImportance === "High"
+                            ? "border-red-500 bg-red-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <div
+                            className={`w-3 h-3 rounded-full ${
+                              noticeImportance === "High"
+                                ? "bg-red-500"
+                                : "bg-gray-300"
+                            }`}
+                          />
+                          <span
+                            className={`font-medium ${
+                              noticeImportance === "High"
+                                ? "text-red-700"
+                                : "text-gray-600"
+                            }`}
+                          >
+                            High Priority
+                          </span>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-100">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowNoticeModal(false)}
+                    className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveNotice}
+                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors duration-200 flex items-center justify-center gap-2"
+                  >
+                    <span>Post Notice</span>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Checkpoints Modal */}
+        {showCheckpointsModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowCheckpointsModal(false)}
+          >
+            <div
+              className="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl">
+                      <svg
+                        className="w-5 h-5 text-white"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -3152,190 +3682,133 @@ export default function TeamsPage() {
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-purple-600">
-                        Total Tasks
-                      </p>
-                      <h3 className="text-3xl font-bold text-gray-800 mt-1">
-                        {overviewData.totalTasks}
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Active Projects
+                      <h2 className="text-lg font-semibold text-gray-800">
+                        Checkpoints
+                      </h2>
+                      <p className="text-sm text-gray-500">
+                        Track project milestones
                       </p>
                     </div>
                   </div>
+                  <button
+                    onClick={() => setShowCheckpointsModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                  >
+                    <FiX className="w-5 h-5 text-gray-500" />
+                  </button>
                 </div>
               </div>
 
-              {/* Charts Grid */}
-              <div className="grid grid-cols-2 gap-8">
-                {/* Priority Distribution */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                  <h4 className="text-lg font-semibold text-gray-800 mb-6">
-                    Priority Distribution
-                  </h4>
-                  <div className="w-full" style={{ height: "300px" }}>
-                    <Pie
-                      data={{
-                        labels: ["High", "Medium", "Low"],
-                        datasets: [
-                          {
-                            label: "Priority",
-                            data: [
-                              overviewData.priorityStats.high,
-                              overviewData.priorityStats.medium,
-                              overviewData.priorityStats.low,
-                            ],
-                            backgroundColor: [
-                              "rgba(239, 68, 68, 0.9)",
-                              "rgba(245, 158, 11, 0.9)",
-                              "rgba(16, 185, 129, 0.9)",
-                            ],
-                            borderWidth: 0,
-                          },
-                        ],
-                      }}
-                      options={{
-                        maintainAspectRatio: false,
-                        responsive: true,
-                        plugins: {
-                          legend: {
-                            position: "bottom",
-                            labels: {
-                              padding: 20,
-                              usePointStyle: true,
-                            },
-                          },
-                        },
-                        animation: {
-                          duration: 2000,
-                        },
-                      }}
-                    />
-                  </div>
-                </div>
+              {/* Content */}
+              <div className="p-6">
+                {/* Checkpoints List */}
+                <div className="space-y-3 mb-6 max-h-[60vh] overflow-y-auto pr-2">
+                  {checkpoints.map((cp) => (
+                    <div
+                      key={cp._id}
+                      className="group bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors duration-200"
+                    >
+                      <div className="flex items-center justify-between p-4">
+                        <div
+                          onClick={() => openCheckpointDetails(cp)}
+                          className="flex items-center gap-3 flex-1 cursor-pointer"
+                        >
+                          <div className="w-2 h-2 bg-emerald-400 rounded-full" />
+                          <div>
+                            <h3 className="text-sm font-medium text-gray-800 group-hover:text-emerald-600 transition-colors duration-200">
+                              {cp.name}
+                            </h3>
+                            <p className="text-xs text-gray-500">
+                              {cp.checks?.length || 0} items
+                            </p>
+                          </div>
+                        </div>
 
-                {/* Task Status */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                  <h4 className="text-lg font-semibold text-gray-800 mb-6">
-                    Task Completion Status
-                  </h4>
-                  <div className="w-full" style={{ height: "300px" }}>
-                    <Bar
-                      data={{
-                        labels: ["Not Started", "In Progress", "Done"],
-                        datasets: [
-                          {
-                            label: "Tasks",
-                            data: [
-                              overviewData.statusStats.notStarted,
-                              overviewData.statusStats.inProgress,
-                              overviewData.statusStats.done,
-                            ],
-                            backgroundColor: [
-                              "rgba(156, 163, 175, 0.9)",
-                              "rgba(59, 130, 246, 0.9)",
-                              "rgba(16, 185, 129, 0.9)",
-                            ],
-                            borderRadius: 8,
-                          },
-                        ],
-                      }}
-                      options={{
-                        maintainAspectRatio: false,
-                        responsive: true,
-                        scales: {
-                          y: {
-                            beginAtZero: true,
-                            grid: {
-                              display: true,
-                              color: "rgba(0,0,0,0.05)",
-                            },
-                          },
-                          x: {
-                            grid: {
-                              display: false,
-                            },
-                          },
-                        },
-                        plugins: {
-                          legend: {
-                            display: false,
-                          },
-                        },
-                        animation: {
-                          duration: 2000,
-                        },
-                      }}
-                    />
-                  </div>
-                </div>
+                        {/* Actions */}
+                        {(isLeader || userHasCap) && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                editCheckpointName(cp);
+                              }}
+                              className="p-2 text-gray-400 hover:text-emerald-600 rounded-lg transition-colors duration-200"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteCheckpoint(cp._id);
+                              }}
+                              className="p-2 text-gray-400 hover:text-red-600 rounded-lg transition-colors duration-200"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
 
-                {/* Assignment Distribution */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6 col-span-2">
-                  <h4 className="text-lg font-semibold text-gray-800 mb-6">
-                    Team Assignment Distribution
-                  </h4>
-                  <div className="w-full" style={{ height: "300px" }}>
-                    <Doughnut
-                      data={{
-                        labels: ["Assigned Tasks", "Unassigned Tasks"],
-                        datasets: [
-                          {
-                            data: [
-                              overviewData.assignedCount,
-                              overviewData.unassignedCount,
-                            ],
-                            backgroundColor: [
-                              "rgba(59, 130, 246, 0.9)",
-                              "rgba(229, 231, 235, 0.9)",
-                            ],
-                            borderWidth: 0,
-                          },
-                        ],
-                      }}
-                      options={{
-                        maintainAspectRatio: false,
-                        responsive: true,
-                        cutout: "70%",
-                        plugins: {
-                          legend: {
-                            position: "bottom",
-                            labels: {
-                              padding: 20,
-                              usePointStyle: true,
-                            },
-                          },
-                        },
-                        animation: {
-                          duration: 2000,
-                        },
-                      }}
-                    />
-                  </div>
+                  {checkpoints.length === 0 && (
+                    <div className="text-center py-8">
+                      <div className="mb-3">
+                        <svg
+                          className="w-12 h-12 text-gray-300 mx-auto"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-gray-500 text-sm">
+                        No checkpoints created yet
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Notice Modal */}
-      {showNoticeModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          onClick={() => setShowNoticeModal(false)}
-        >
-          <div
-            className="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl">
+              {/* Footer */}
+              {(isLeader || userHasCap) && (
+                <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-100">
+                  <button
+                    onClick={() => createCheckpoint()}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors duration-200"
+                  >
                     <svg
-                      className="w-5 h-5 text-white"
+                      className="w-5 h-5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -3344,278 +3817,274 @@ export default function TeamsPage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                       />
                     </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-800">
-                      Create Notice
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      Share important updates with your team
-                    </p>
-                  </div>
+                    <span className="font-medium">Create New Checkpoint</span>
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowNoticeModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-                >
-                  <FiX className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-            </div>
-
-            {/* Form Content */}
-            <div className="p-6 space-y-6">
-              {/* Topic Input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notice Topic <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={noticeTopic}
-                  onChange={(e) => setNoticeTopic(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-200"
-                  placeholder="Enter notice topic..."
-                />
-              </div>
-
-              {/* Message Input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Message Content <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  value={noticeMessage}
-                  onChange={(e) => setNoticeMessage(e.target.value)}
-                  rows="4"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-200 resize-none"
-                  placeholder="Type your notice message here..."
-                />
-              </div>
-
-              {/* Importance Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Importance Level
-                </label>
-                <div className="flex gap-4">
-                  <label className="flex-1">
-                    <input
-                      type="radio"
-                      name="importance"
-                      checked={noticeImportance === "Low"}
-                      onChange={() => setNoticeImportance("Low")}
-                      className="hidden"
-                    />
-                    <div
-                      className={`p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
-                        noticeImportance === "Low"
-                          ? "border-green-500 bg-green-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <div
-                          className={`w-3 h-3 rounded-full ${
-                            noticeImportance === "Low"
-                              ? "bg-green-500"
-                              : "bg-gray-300"
-                          }`}
-                        />
-                        <span
-                          className={`font-medium ${
-                            noticeImportance === "Low"
-                              ? "text-green-700"
-                              : "text-gray-600"
-                          }`}
-                        >
-                          Low Priority
-                        </span>
-                      </div>
-                    </div>
-                  </label>
-
-                  <label className="flex-1">
-                    <input
-                      type="radio"
-                      name="importance"
-                      checked={noticeImportance === "High"}
-                      onChange={() => setNoticeImportance("High")}
-                      className="hidden"
-                    />
-                    <div
-                      className={`p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
-                        noticeImportance === "High"
-                          ? "border-red-500 bg-red-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <div
-                          className={`w-3 h-3 rounded-full ${
-                            noticeImportance === "High"
-                              ? "bg-red-500"
-                              : "bg-gray-300"
-                          }`}
-                        />
-                        <span
-                          className={`font-medium ${
-                            noticeImportance === "High"
-                              ? "text-red-700"
-                              : "text-gray-600"
-                          }`}
-                        >
-                          High Priority
-                        </span>
-                      </div>
-                    </div>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-100">
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowNoticeModal(false)}
-                  className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveNotice}
-                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors duration-200 flex items-center justify-center gap-2"
-                >
-                  <span>Post Notice</span>
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </button>
-              </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Checkpoints Modal */}
-      {showCheckpointsModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          onClick={() => setShowCheckpointsModal(false)}
-        >
+        {/* Checkpoint Details Modal */}
+        {showCheckpointDetailsModal && selectedCheckpoint && (
           <div
-            className="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowCheckpointDetailsModal(false)}
           >
-            {/* Header */}
-            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-800">
-                      Checkpoints
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      Track project milestones
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowCheckpointsModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-                >
-                  <FiX className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-6">
-              {/* Checkpoints List */}
-              <div className="space-y-3 mb-6 max-h-[60vh] overflow-y-auto pr-2">
-                {checkpoints.map((cp) => (
-                  <div
-                    key={cp._id}
-                    className="group bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors duration-200"
-                  >
-                    <div className="flex items-center justify-between p-4">
-                      <div
-                        onClick={() => openCheckpointDetails(cp)}
-                        className="flex items-center gap-3 flex-1 cursor-pointer"
+            <div
+              className="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
                       >
-                        <div className="w-2 h-2 bg-emerald-400 rounded-full" />
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-800 group-hover:text-emerald-600 transition-colors duration-200">
-                            {cp.name}
-                          </h3>
-                          <p className="text-xs text-gray-500">
-                            {cp.checks?.length || 0} items
-                          </p>
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-800">
+                        {selectedCheckpoint.name}
+                      </h2>
+                      <p className="text-sm text-gray-500">
+                        Track your progress
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowCheckpointDetailsModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                  >
+                    <FiX className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Content Area */}
+              <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                {/* Checks List */}
+                <div className="space-y-3">
+                  {selectedCheckpoint.checks.map((ch) => {
+                    const currentUserEmail = jwt.decode(
+                      localStorage.getItem("token")
+                    )?.email;
+                    const isUserDone = ch.doneBy?.includes(currentUserEmail);
+                    const totalMembers = ch.doneBy?.length || 0;
+
+                    return (
+                      <div
+                        key={ch._id}
+                        className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors duration-200"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                                  isUserDone ? "bg-green-500" : "bg-gray-300"
+                                }`}
+                              />
+                              <p
+                                className={`text-sm font-medium ${
+                                  isUserDone
+                                    ? "text-gray-500 line-through"
+                                    : "text-gray-800"
+                                }`}
+                              >
+                                {ch.description}
+                              </p>
+                            </div>
+                            {ch.doneBy && ch.doneBy.length > 0 && (
+                              <div className="mt-2 flex items-center gap-2">
+                                <div className="flex -space-x-2">
+                                  {ch.doneBy.slice(0, 3).map((email, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="w-6 h-6 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center"
+                                    >
+                                      <span className="text-xs font-medium text-blue-600">
+                                        {email[0].toUpperCase()}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                                <span className="text-xs text-gray-500">
+                                  {totalMembers}{" "}
+                                  {totalMembers === 1 ? "member" : "members"}{" "}
+                                  completed
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() =>
+                              toggleCheckDone(selectedCheckpoint._id, ch._id)
+                            }
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                              isUserDone
+                                ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            }`}
+                          >
+                            {isUserDone ? (
+                              <span className="flex items-center gap-1">
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                                Done
+                              </span>
+                            ) : (
+                              "Mark Done"
+                            )}
+                          </button>
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
+              </div>
 
-                      {/* Actions */}
-                      {(isLeader || userHasCap) && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              editCheckpointName(cp);
-                            }}
-                            className="p-2 text-gray-400 hover:text-emerald-600 rounded-lg transition-colors duration-200"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
+              {/* Footer */}
+              {(isLeader || userHasCap) && (
+                <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-100">
+                  <button
+                    onClick={() => addCheck(selectedCheckpoint._id)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                    <span className="font-medium">Add New Check</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {showLinksModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowLinksModal(false)}
+          >
+            <div
+              className="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-800">
+                        Important Links
+                      </h2>
+                      <p className="text-sm text-gray-500">
+                        Manage your team's important resources
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowLinksModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                  >
+                    <svg
+                      className="w-5 h-5 text-gray-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                {/* Links List */}
+                <div className="space-y-3 mb-6 max-h-[60vh] overflow-y-auto pr-2">
+                  {importantLinks.length > 0 ? (
+                    importantLinks.map((link, idx) => (
+                      <div
+                        key={idx}
+                        className="group bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 p-4 transition-all duration-200"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <a
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-700 font-medium block truncate transition-colors duration-200"
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </button>
+                              {link.title}
+                            </a>
+                            <p className="text-xs text-gray-500 mt-1 truncate">
+                              {link.url}
+                            </p>
+                          </div>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteCheckpoint(cp._id);
-                            }}
-                            className="p-2 text-gray-400 hover:text-red-600 rounded-lg transition-colors duration-200"
+                            onClick={() => handleRemoveLink(link.url)}
+                            className="p-2 text-gray-400 hover:text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200"
                           >
                             <svg
-                              className="w-4 h-4"
+                              className="w-5 h-5"
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"
@@ -3629,208 +4098,37 @@ export default function TeamsPage() {
                             </svg>
                           </button>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-
-                {checkpoints.length === 0 && (
-                  <div className="text-center py-8">
-                    <div className="mb-3">
-                      <svg
-                        className="w-12 h-12 text-gray-300 mx-auto"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                        />
-                      </svg>
-                    </div>
-                    <p className="text-gray-500 text-sm">
-                      No checkpoints created yet
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Footer */}
-            {(isLeader || userHasCap) && (
-              <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-100">
-                <button
-                  onClick={() => createCheckpoint()}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors duration-200"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
-                  <span className="font-medium">Create New Checkpoint</span>
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Checkpoint Details Modal */}
-      {showCheckpointDetailsModal && selectedCheckpoint && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          onClick={() => setShowCheckpointDetailsModal(false)}
-        >
-          <div
-            className="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-800">
-                      {selectedCheckpoint.name}
-                    </h2>
-                    <p className="text-sm text-gray-500">Track your progress</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowCheckpointDetailsModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-                >
-                  <FiX className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-            </div>
-
-            {/* Content Area */}
-            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
-              {/* Checks List */}
-              <div className="space-y-3">
-                {selectedCheckpoint.checks.map((ch) => {
-                  const currentUserEmail = jwt.decode(
-                    localStorage.getItem("token")
-                  )?.email;
-                  const isUserDone = ch.doneBy?.includes(currentUserEmail);
-                  const totalMembers = ch.doneBy?.length || 0;
-
-                  return (
-                    <div
-                      key={ch._id}
-                      className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-gray-200 transition-colors duration-200"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                isUserDone ? "bg-green-500" : "bg-gray-300"
-                              }`}
-                            />
-                            <p
-                              className={`text-sm font-medium ${
-                                isUserDone
-                                  ? "text-gray-500 line-through"
-                                  : "text-gray-800"
-                              }`}
-                            >
-                              {ch.description}
-                            </p>
-                          </div>
-                          {ch.doneBy && ch.doneBy.length > 0 && (
-                            <div className="mt-2 flex items-center gap-2">
-                              <div className="flex -space-x-2">
-                                {ch.doneBy.slice(0, 3).map((email, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="w-6 h-6 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center"
-                                  >
-                                    <span className="text-xs font-medium text-blue-600">
-                                      {email[0].toUpperCase()}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                              <span className="text-xs text-gray-500">
-                                {totalMembers}{" "}
-                                {totalMembers === 1 ? "member" : "members"}{" "}
-                                completed
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        <button
-                          onClick={() =>
-                            toggleCheckDone(selectedCheckpoint._id, ch._id)
-                          }
-                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                            isUserDone
-                              ? "bg-green-100 text-green-700 hover:bg-green-200"
-                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          }`}
-                        >
-                          {isUserDone ? (
-                            <span className="flex items-center gap-1">
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              Done
-                            </span>
-                          ) : (
-                            "Mark Done"
-                          )}
-                        </button>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="mb-3">
+                        <svg
+                          className="w-12 h-12 text-gray-300 mx-auto"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-gray-500 text-sm">
+                        No important links added yet
+                      </p>
                     </div>
-                  );
-                })}
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Footer */}
-            {(isLeader || userHasCap) && (
-              <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-100">
+              {/* Footer */}
+              <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
                 <button
-                  onClick={() => addCheck(selectedCheckpoint._id)}
+                  onClick={() => setShowAddLinkModal(true)}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200"
                 >
                   <svg
@@ -3846,30 +4144,118 @@ export default function TeamsPage() {
                       d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                     />
                   </svg>
-                  <span className="font-medium">Add New Check</span>
+                  <span className="font-medium">Add New Link</span>
                 </button>
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {showLinksModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          onClick={() => setShowLinksModal(false)}
-        >
+        {showAddLinkModal && (
           <div
-            className="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowAddLinkModal(false)}
           >
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl">
+            <div
+              className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-800">
+                        Add New Link
+                      </h2>
+                      <p className="text-sm text-gray-500">
+                        Add an important resource
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowAddLinkModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                  >
                     <svg
-                      className="w-5 h-5 text-white"
+                      className="w-5 h-5 text-gray-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Form Content */}
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Link Title <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={newLinkTitle}
+                      onChange={(e) => setNewLinkTitle(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
+                      placeholder="Enter link title..."
+                    />
+                    <svg
+                      className="absolute left-3 top-3.5 w-5 h-5 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                      />
+                    </svg>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Give your link a descriptive title
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Link URL <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={newLinkUrl}
+                      onChange={(e) => setNewLinkUrl(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
+                      placeholder="https://..."
+                    />
+                    <svg
+                      className="absolute left-3 top-3.5 w-5 h-5 text-gray-400"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -3882,86 +4268,17 @@ export default function TeamsPage() {
                       />
                     </svg>
                   </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-800">
-                      Important Links
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      Manage your team's important resources
-                    </p>
-                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Include the complete URL starting with http:// or https://
+                  </p>
                 </div>
-                <button
-                  onClick={() => setShowLinksModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-                >
-                  <svg
-                    className="w-5 h-5 text-gray-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
 
-            {/* Content */}
-            <div className="p-6">
-              {/* Links List */}
-              <div className="space-y-3 mb-6 max-h-[60vh] overflow-y-auto pr-2">
-                {importantLinks.length > 0 ? (
-                  importantLinks.map((link, idx) => (
-                    <div
-                      key={idx}
-                      className="group bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 p-4 transition-all duration-200"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <a
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-700 font-medium block truncate transition-colors duration-200"
-                          >
-                            {link.title}
-                          </a>
-                          <p className="text-xs text-gray-500 mt-1 truncate">
-                            {link.url}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => handleRemoveLink(link.url)}
-                          className="p-2 text-gray-400 hover:text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="mb-3">
+                {/* Info Box */}
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-full">
                       <svg
-                        className="w-12 h-12 text-gray-300 mx-auto"
+                        className="w-4 h-4 text-blue-600"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -3970,60 +4287,34 @@ export default function TeamsPage() {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                       </svg>
                     </div>
-                    <p className="text-gray-500 text-sm">
-                      No important links added yet
+                    <p className="text-sm text-blue-700">
+                      This link will be visible to all team members
                     </p>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
 
-            {/* Footer */}
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
-              <button
-                onClick={() => setShowAddLinkModal(true)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-                <span className="font-medium">Add New Link</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showAddLinkModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          onClick={() => setShowAddLinkModal(false)}
-        >
-          <div
-            className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl">
+              {/* Footer */}
+              <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowAddLinkModal(false)}
+                    className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAddLink}
+                    disabled={!newLinkTitle.trim() || !newLinkUrl.trim()}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center gap-2"
+                  >
+                    <span>Add Link</span>
                     <svg
-                      className="w-5 h-5 text-white"
+                      className="w-4 h-4"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -4035,328 +4326,234 @@ export default function TeamsPage() {
                         d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                       />
                     </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-800">
-                      Add New Link
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      Add an important resource
-                    </p>
-                  </div>
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowAddLinkModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-                >
-                  <svg
-                    className="w-5 h-5 text-gray-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Form Content */}
-            <div className="p-6 space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Link Title <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={newLinkTitle}
-                    onChange={(e) => setNewLinkTitle(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
-                    placeholder="Enter link title..."
-                  />
-                  <svg
-                    className="absolute left-3 top-3.5 w-5 h-5 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+        {/* Dependency Modal (Leader only) */}
+        {showDependencyModal && dependencyMainTask && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4"
+            onClick={() => setShowDependencyModal(false)}
+          >
+            <div
+              className="relative bg-white w-full max-w-md rounded-lg shadow-xl p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setShowDependencyModal(false)}
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+
+              <h2 className="text-xl font-bold mb-4">
+                Set Dependency for: {dependencyMainTask.taskName}
+              </h2>
+
+              <p className="text-sm text-gray-600 mb-2">
+                Select which existing task must be completed first.
+              </p>
+
+              {/* A quick input to filter tasks */}
+              <input
+                type="text"
+                placeholder="Search tasks..."
+                value={dependencySearchTerm}
+                onChange={(e) => {
+                  setDependencySearchTerm(e.target.value);
+                  // Filter out the main task itself and show all others
+                  const term = e.target.value.toLowerCase();
+                  const results = tasks.filter(
+                    (t) =>
+                      t._id !== dependencyMainTask._id &&
+                      t.taskName.toLowerCase().includes(term)
+                  );
+                  setFilteredTasks(results);
+                }}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2"
+              />
+
+              {/* Show filtered tasks as a list to pick from */}
+              <ul className="max-h-48 overflow-auto border border-gray-200 rounded-lg p-2 mb-4">
+                {filteredTasks.map((t) => (
+                  <li
+                    key={t._id}
+                    onClick={() =>
+                      handleAddDependency(dependencyMainTask._id, t._id)
+                    }
+                    className="p-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-700 rounded"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                    />
-                  </svg>
-                </div>
-                <p className="mt-2 text-xs text-gray-500">
-                  Give your link a descriptive title
-                </p>
-              </div>
+                    {t.taskName}
+                  </li>
+                ))}
+                {filteredTasks.length === 0 && (
+                  <li className="text-sm text-gray-500">
+                    No matching tasks found.
+                  </li>
+                )}
+              </ul>
+            </div>
+          </div>
+        )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Link URL <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={newLinkUrl}
-                    onChange={(e) => setNewLinkUrl(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
-                    placeholder="https://..."
-                  />
-                  <svg
-                    className="absolute left-3 top-3.5 w-5 h-5 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                    />
-                  </svg>
-                </div>
-                <p className="mt-2 text-xs text-gray-500">
-                  Include the complete URL starting with http:// or https://
-                </p>
-              </div>
-
-              {/* Info Box */}
-              <div className="bg-blue-50 rounded-xl p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-full">
+        {/* Modern AI Chat Assistant Modal */}
+        {showAIModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+            onClick={() => setShowAIModal(false)}
+          >
+            <div
+              className="relative bg-white w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col h-[80vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center">
                     <svg
-                      className="w-4 h-4 text-blue-600"
+                      className="w-6 h-6 text-white"
                       fill="none"
-                      viewBox="0 0 24 24"
                       stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        strokeWidth="2"
+                        d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
                       />
                     </svg>
                   </div>
-                  <p className="text-sm text-blue-700">
-                    This link will be visible to all team members
-                  </p>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-800">
+                      AI Chat Assistant
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      Powered by Advanced AI
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() =>
+                      setConversations([
+                        {
+                          role: "assistant",
+                          content:
+                            "Hello! I'm your AI assistant. How can I help you today?",
+                        },
+                      ])
+                    }
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 text-gray-500 tooltip"
+                    title="Clear chat history"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setShowAIModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                  >
+                    <svg
+                      className="w-5 h-5 text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
                 </div>
               </div>
-            </div>
 
-            {/* Footer */}
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowAddLinkModal(false)}
-                  className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddLink}
-                  disabled={!newLinkTitle.trim() || !newLinkUrl.trim()}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center gap-2"
-                >
-                  <span>Add Link</span>
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+              {/* Chat Area */}
+              <div
+                ref={chatAreaRef}
+                className="flex-1 overflow-y-auto p-6 space-y-4"
+              >
+                {conversations.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-start ${
+                      message.role === "user" ? "justify-end" : ""
+                    } space-x-3`}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+                    {message.role === "assistant" && (
+                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                        <svg
+                          className="w-5 h-5 text-indigo-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+                          />
+                        </svg>
+                      </div>
+                    )}
 
-      {/* Dependency Modal (Leader only) */}
-      {showDependencyModal && dependencyMainTask && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4"
-          onClick={() => setShowDependencyModal(false)}
-        >
-          <div
-            className="relative bg-white w-full max-w-md rounded-lg shadow-xl p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close Button */}
-            <button
-              onClick={() => setShowDependencyModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
+                    <div
+                      className={`${
+                        message.role === "user"
+                          ? "bg-indigo-600 text-white rounded-2xl rounded-tr-none"
+                          : "bg-gray-50 text-gray-700 rounded-2xl rounded-tl-none"
+                      } p-4 max-w-[80%]`}
+                    >
+                      {message.role === "user" ? (
+                        <p>{message.content}</p>
+                      ) : (
+                        renderFormattedMessage(message.content)
+                      )}
+                    </div>
 
-            <h2 className="text-xl font-bold mb-4">
-              Set Dependency for: {dependencyMainTask.taskName}
-            </h2>
+                    {message.role === "user" && (
+                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">
+                        <svg
+                          className="w-5 h-5 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                ))}
 
-            <p className="text-sm text-gray-600 mb-2">
-              Select which existing task must be completed first.
-            </p>
-
-            {/* A quick input to filter tasks */}
-            <input
-              type="text"
-              placeholder="Search tasks..."
-              value={dependencySearchTerm}
-              onChange={(e) => {
-                setDependencySearchTerm(e.target.value);
-                // Filter out the main task itself and show all others
-                const term = e.target.value.toLowerCase();
-                const results = tasks.filter(
-                  (t) =>
-                    t._id !== dependencyMainTask._id &&
-                    t.taskName.toLowerCase().includes(term)
-                );
-                setFilteredTasks(results);
-              }}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2"
-            />
-
-            {/* Show filtered tasks as a list to pick from */}
-            <ul className="max-h-48 overflow-auto border border-gray-200 rounded-lg p-2 mb-4">
-              {filteredTasks.map((t) => (
-                <li
-                  key={t._id}
-                  onClick={() =>
-                    handleAddDependency(dependencyMainTask._id, t._id)
-                  }
-                  className="p-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-700 rounded"
-                >
-                  {t.taskName}
-                </li>
-              ))}
-              {filteredTasks.length === 0 && (
-                <li className="text-sm text-gray-500">
-                  No matching tasks found.
-                </li>
-              )}
-            </ul>
-          </div>
-        </div>
-      )}
-
-      {/* Modern AI Chat Assistant Modal */}
-      {showAIModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
-          onClick={() => setShowAIModal(false)}
-        >
-          <div
-            className="relative bg-white w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col h-[80vh]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-800">
-                    AI Chat Assistant
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    Powered by Advanced AI
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() =>
-                    setConversations([
-                      {
-                        role: "assistant",
-                        content:
-                          "Hello! I'm your AI assistant. How can I help you today?",
-                      },
-                    ])
-                  }
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 text-gray-500 tooltip"
-                  title="Clear chat history"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setShowAIModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-                >
-                  <svg
-                    className="w-5 h-5 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Chat Area */}
-            <div
-              ref={chatAreaRef}
-              className="flex-1 overflow-y-auto p-6 space-y-4"
-            >
-              {conversations.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex items-start ${
-                    message.role === "user" ? "justify-end" : ""
-                  } space-x-3`}
-                >
-                  {message.role === "assistant" && (
+                {/* Loading Animation */}
+                {isLoading && (
+                  <div className="flex items-start space-x-3">
                     <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
                       <svg
                         className="w-5 h-5 text-indigo-600"
@@ -4372,48 +4569,37 @@ export default function TeamsPage() {
                         />
                       </svg>
                     </div>
-                  )}
-
-                  <div
-                    className={`${
-                      message.role === "user"
-                        ? "bg-indigo-600 text-white rounded-2xl rounded-tr-none"
-                        : "bg-gray-50 text-gray-700 rounded-2xl rounded-tl-none"
-                    } p-4 max-w-[80%]`}
-                  >
-                    {message.role === "user" ? (
-                      <p>{message.content}</p>
-                    ) : (
-                      renderFormattedMessage(message.content)
-                    )}
-                  </div>
-
-                  {message.role === "user" && (
-                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">
-                      <svg
-                        className="w-5 h-5 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
+                    <div className="bg-gray-50 rounded-2xl rounded-tl-none p-4">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
 
-              {/* Loading Animation */}
-              {isLoading && (
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+              {/* Input Area */}
+              <div className="p-6 border-t border-gray-100">
+                <div className="relative">
+                  <textarea
+                    className="w-full pl-4 pr-20 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none"
+                    rows={3}
+                    placeholder="Type your message here..."
+                    value={currentMessage}
+                    onChange={(e) => setCurrentMessage(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={!currentMessage.trim() || isLoading}
+                    className="absolute right-2 bottom-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center space-x-2"
+                  >
+                    <span>Send</span>
                     <svg
-                      className="w-5 h-5 text-indigo-600"
+                      className="w-4 h-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -4422,668 +4608,38 @@ export default function TeamsPage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth="2"
-                        d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+                        d="M14 5l7 7m0 0l-7 7m7-7H3"
                       />
                     </svg>
-                  </div>
-                  <div className="bg-gray-50 rounded-2xl rounded-tl-none p-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input Area */}
-            <div className="p-6 border-t border-gray-100">
-              <div className="relative">
-                <textarea
-                  className="w-full pl-4 pr-20 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none"
-                  rows={3}
-                  placeholder="Type your message here..."
-                  value={currentMessage}
-                  onChange={(e) => setCurrentMessage(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                />
-                <button
-                  onClick={handleSendMessage}
-                  disabled={!currentMessage.trim() || isLoading}
-                  className="absolute right-2 bottom-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center space-x-2"
-                >
-                  <span>Send</span>
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M14 5l7 7m0 0l-7 7m7-7H3"
-                    />
-                  </svg>
-                </button>
-              </div>
-              <div className="flex justify-between mt-2">
-                <p className="text-xs text-gray-500">
-                  Press Enter to send, Shift + Enter for new line
-                </p>
-                <p className="text-xs text-gray-500">
-                  {currentMessage.length} characters
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Email Reminder Modal */}
-      {showReminderModal && reminderTask && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          onClick={() => setShowReminderModal(false)}
-        >
-          <div
-            className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl">
-                  <svg
-                    className="w-5 h-5 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-800">
-                    Email Reminder
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    Schedule task notification
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowReminderModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-              >
-                <FiX className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 space-y-6">
-              <div className="bg-blue-50 rounded-xl p-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-blue-100 rounded-full mt-1">
-                    <svg
-                      className="w-4 h-4 text-blue-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-blue-900">
-                      Task Details
-                    </p>
-                    <h3 className="text-base font-semibold text-gray-800 mt-1">
-                      {reminderTask?.taskName}
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      You'll receive an email notification at the specified
-                      time.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Reminder Date & Time <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="datetime-local"
-                    value={reminderDateTime}
-                    onChange={(e) => setReminderDateTime(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
-                  />
-                  <svg
-                    className="absolute left-3 top-3.5 w-5 h-5 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-                <p className="mt-2 text-xs text-gray-500">
-                  Select a date and time when you'd like to receive the reminder
-                  email
-                </p>
-              </div>
-
-              <div className="bg-gray-50 rounded-xl p-4">
-                <div className="flex items-center gap-3">
-                  <div className="shrink-0">
-                    <svg
-                      className="w-5 h-5 text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                  <div className="flex-1 text-sm text-gray-600">
-                    <p>
-                      The reminder will be sent to your registered email address
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowReminderModal(false)}
-                  className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSetReminder}
-                  disabled={!reminderDateTime}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center gap-2"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span>Set Reminder</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Professional Hackathon Creation Modal */}
-      {showHackathonModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          onClick={() => setShowHackathonModal(false)}
-        >
-          <div
-            className="bg-white w-full max-w-xl rounded-2xl shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="px-8 py-6 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl">
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-800">
-                      {hackathonId ? "Update Event" : "Create Event"}
-                    </h2>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Set up an in-house brainstorming session
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowHackathonModal(false)}
-                  className="p-2 hover:bg-gray-50 rounded-full text-gray-400 hover:text-gray-500"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Form Content */}
-            <div className="p-8 space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Topic <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={hackTopic}
-                  onChange={(e) => setHackTopic(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
-                  placeholder="Enter hackathon topic..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  value={hackDescription}
-                  onChange={(e) => setHackDescription(e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none"
-                  placeholder="Describe the hackathon challenge and objectives..."
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Start Date & Time <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={hackStart}
-                    onChange={(e) => setHackStart(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    End Date & Time <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={hackEnd}
-                    onChange={(e) => setHackEnd(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <div className="bg-blue-50 rounded-xl p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <svg
-                      className="w-4 h-4 text-blue-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                  <p className="text-sm text-blue-700">
-                    The event will be visible to all team members once created
-                    according to the session duration.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-8 py-6 bg-gray-50 border-t border-gray-100">
-              <div className="flex items-center justify-end gap-4">
-                {hackathonId && (
-                  <button
-                    onClick={handleDeleteHackathon}
-                    className="px-6 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
-                  >
-                    Delete Event
                   </button>
-                )}
-                <button
-                  onClick={handleSaveHackathon}
-                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2"
-                >
-                  {hackathonId ? "Update Event" : "Create Event"}
-                </button>
+                </div>
+                <div className="flex justify-between mt-2">
+                  <p className="text-xs text-gray-500">
+                    Press Enter to send, Shift + Enter for new line
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {currentMessage.length} characters
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Book Conference Room Modal */}
-      {showBookRoomModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          onClick={() => setShowBookRoomModal(false)}
-        >
+        {/* Email Reminder Modal */}
+        {showReminderModal && reminderTask && (
           <div
-            className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl max-h-[90vh] overflow-auto"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowReminderModal(false)}
           >
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-800">
-                Book Conference Room
-              </h2>
-              <button
-                onClick={() => setShowBookRoomModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleBookRoomFromTeams} className="p-6 space-y-4">
-              {/* Room selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Select a Room
-                </label>
-                <select
-                  value={bookingForm.roomId}
-                  onChange={(e) =>
-                    setBookingForm({ ...bookingForm, roomId: e.target.value })
-                  }
-                  required
-                >
-                  <option value="">-- Choose a Room --</option>
-                  {availableRooms.map((roomId) => (
-                    <option key={roomId} value={roomId}>
-                      {roomId}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Start Time */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Start Time
-                </label>
-                <input
-                  type="datetime-local"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  value={bookingForm.meetingStart}
-                  onChange={(e) =>
-                    setBookingForm({
-                      ...bookingForm,
-                      meetingStart: e.target.value,
-                    })
-                  }
-                  required
-                />
-              </div>
-
-              {/* End Time */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  End Time
-                </label>
-                <input
-                  type="datetime-local"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  value={bookingForm.meetingEnd}
-                  onChange={(e) =>
-                    setBookingForm({
-                      ...bookingForm,
-                      meetingEnd: e.target.value,
-                    })
-                  }
-                  required
-                />
-              </div>
-
-              {/* Topic */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Meeting Topic
-                </label>
-                <input
-                  type="text"
-                  placeholder="Project kickoff meeting"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  value={bookingForm.topic}
-                  onChange={(e) =>
-                    setBookingForm({ ...bookingForm, topic: e.target.value })
-                  }
-                  required
-                />
-              </div>
-
-              {/* Department */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Department
-                </label>
-                <input
-                  type="text"
-                  placeholder="Engineering"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  value={bookingForm.department}
-                  onChange={(e) =>
-                    setBookingForm({
-                      ...bookingForm,
-                      department: e.target.value,
-                    })
-                  }
-                  required
-                />
-              </div>
-
-              {/* Participants */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Number of Participants (max 20)
-                </label>
-                <input
-                  type="number"
-                  max="20"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="0"
-                  value={bookingForm.numEmployees}
-                  onChange={(e) =>
-                    setBookingForm({
-                      ...bookingForm,
-                      numEmployees: e.target.value,
-                    })
-                  }
-                  required
-                />
-              </div>
-
-              {/* Host Designation */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Your Role
-                </label>
-                <input
-                  type="text"
-                  placeholder="Team Lead"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  value={bookingForm.hostDesignation}
-                  onChange={(e) =>
-                    setBookingForm({
-                      ...bookingForm,
-                      hostDesignation: e.target.value,
-                    })
-                  }
-                  required
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center justify-end space-x-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowBookRoomModal(false)}
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
-                >
-                  Confirm Booking
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Booking Success Modal */}
-      {showBookingSuccessModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          onClick={() => setShowBookingSuccessModal(false)}
-        >
-          <div
-            className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">
-                Booking Confirmed
-              </h2>
-              <button
-                onClick={() => setShowBookingSuccessModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {/* Body */}
-            <p className="text-sm text-gray-700">
-              Your room has been booked successfully. You can view your booking
-              status{" "}
-              <a
-                href="https://bpcl-portal.vercel.app/meeting"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-indigo-600 underline"
-              >
-                here
-              </a>
-              .
-            </p>
-
-            {/* Footer */}
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => setShowBookingSuccessModal(false)}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showTrackModal && trackTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn transition-opacity duration-300">
-          <div
-            className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 animate-scaleIn"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 px-6 py-5 border-b border-indigo-700">
-              <div className="flex items-center justify-between">
+            <div
+              className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-white/20 rounded-lg">
+                  <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl">
                     <svg
                       className="w-5 h-5 text-white"
                       fill="none"
@@ -5094,22 +4650,333 @@ export default function TeamsPage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-white tracking-wide">
-                      Task Tracking
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Email Reminder
                     </h2>
-                    <p className="text-indigo-200 text-sm mt-0.5">
-                      {trackTask.taskName}
+                    <p className="text-sm text-gray-500">
+                      Schedule task notification
                     </p>
                   </div>
                 </div>
                 <button
-                  onClick={() => setShowTrackModal(false)}
-                  className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors duration-200"
+                  onClick={() => setShowReminderModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                >
+                  <FiX className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 space-y-6">
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-blue-100 rounded-full mt-1">
+                      <svg
+                        className="w-4 h-4 text-blue-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-blue-900">
+                        Task Details
+                      </p>
+                      <h3 className="text-base font-semibold text-gray-800 mt-1">
+                        {reminderTask?.taskName}
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        You'll receive an email notification at the specified
+                        time.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Reminder Date & Time <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="datetime-local"
+                      value={reminderDateTime}
+                      onChange={(e) => setReminderDateTime(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
+                    />
+                    <svg
+                      className="absolute left-3 top-3.5 w-5 h-5 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Select a date and time when you'd like to receive the
+                    reminder email
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="shrink-0">
+                      <svg
+                        className="w-5 h-5 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1 text-sm text-gray-600">
+                      <p>
+                        The reminder will be sent to your registered email
+                        address
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowReminderModal(false)}
+                    className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSetReminder}
+                    disabled={!reminderDateTime}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center gap-2"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span>Set Reminder</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Professional Hackathon Creation Modal */}
+        {showHackathonModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowHackathonModal(false)}
+          >
+            <div
+              className="bg-white w-full max-w-xl rounded-2xl shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-8 py-6 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl">
+                      <svg
+                        className="w-6 h-6 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-800">
+                        {hackathonId ? "Update Event" : "Create Event"}
+                      </h2>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Set up an in-house brainstorming session
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowHackathonModal(false)}
+                    className="p-2 hover:bg-gray-50 rounded-full text-gray-400 hover:text-gray-500"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Form Content */}
+              <div className="p-8 space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Topic <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={hackTopic}
+                    onChange={(e) => setHackTopic(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                    placeholder="Enter hackathon topic..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={hackDescription}
+                    onChange={(e) => setHackDescription(e.target.value)}
+                    rows={4}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none"
+                    placeholder="Describe the hackathon challenge and objectives..."
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Start Date & Time <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={hackStart}
+                      onChange={(e) => setHackStart(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      End Date & Time <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={hackEnd}
+                      onChange={(e) => setHackEnd(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-full">
+                      <svg
+                        className="w-4 h-4 text-blue-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-blue-700">
+                      The event will be visible to all team members once created
+                      according to the session duration.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-8 py-6 bg-gray-50 border-t border-gray-100">
+                <div className="flex items-center justify-end gap-4">
+                  {hackathonId && (
+                    <button
+                      onClick={handleDeleteHackathon}
+                      className="px-6 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+                    >
+                      Delete Event
+                    </button>
+                  )}
+                  <button
+                    onClick={handleSaveHackathon}
+                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2"
+                  >
+                    {hackathonId ? "Update Event" : "Create Event"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Book Conference Room Modal */}
+        {showBookRoomModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowBookRoomModal(false)}
+          >
+            <div
+              className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl max-h-[90vh] overflow-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Book Conference Room
+                </h2>
+                <button
+                  onClick={() => setShowBookRoomModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
                 >
                   <svg
                     className="w-5 h-5"
@@ -5126,168 +4993,623 @@ export default function TeamsPage() {
                   </svg>
                 </button>
               </div>
-            </div>
 
-            {/* Body */}
-            <div className="px-6 py-6 max-h-[calc(80vh-120px)] overflow-y-auto">
-              {isLeader ? (
+              {/* Form */}
+              <form
+                onSubmit={handleBookRoomFromTeams}
+                className="p-6 space-y-4"
+              >
+                {/* Room selection */}
                 <div>
-                  <div className="flex items-center gap-2 mb-5">
-                    <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full"></div>
-                    <h3 className="text-lg font-medium text-gray-800">
-                      Team Member Reports
-                    </h3>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Select a Room
+                  </label>
+                  <select
+                    value={bookingForm.roomId}
+                    onChange={(e) =>
+                      setBookingForm({ ...bookingForm, roomId: e.target.value })
+                    }
+                    required
+                  >
+                    <option value="">-- Choose a Room --</option>
+                    {availableRooms.map((roomId) => (
+                      <option key={roomId} value={roomId}>
+                        {roomId}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Start Time */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Start Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    value={bookingForm.meetingStart}
+                    onChange={(e) =>
+                      setBookingForm({
+                        ...bookingForm,
+                        meetingStart: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+
+                {/* End Time */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    End Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    value={bookingForm.meetingEnd}
+                    onChange={(e) =>
+                      setBookingForm({
+                        ...bookingForm,
+                        meetingEnd: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+
+                {/* Topic */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Meeting Topic
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Project kickoff meeting"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    value={bookingForm.topic}
+                    onChange={(e) =>
+                      setBookingForm({ ...bookingForm, topic: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+
+                {/* Department */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Department
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Engineering"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    value={bookingForm.department}
+                    onChange={(e) =>
+                      setBookingForm({
+                        ...bookingForm,
+                        department: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+
+                {/* Participants */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Number of Participants (max 20)
+                  </label>
+                  <input
+                    type="number"
+                    max="20"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="0"
+                    value={bookingForm.numEmployees}
+                    onChange={(e) =>
+                      setBookingForm({
+                        ...bookingForm,
+                        numEmployees: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+
+                {/* Host Designation */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Your Role
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Team Lead"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    value={bookingForm.hostDesignation}
+                    onChange={(e) =>
+                      setBookingForm({
+                        ...bookingForm,
+                        hostDesignation: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end space-x-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowBookRoomModal(false)}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+                  >
+                    Confirm Booking
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Booking Success Modal */}
+        {showBookingSuccessModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowBookingSuccessModal(false)}
+          >
+            <div
+              className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-800">
+                  Booking Confirmed
+                </h2>
+                <button
+                  onClick={() => setShowBookingSuccessModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Body */}
+              <p className="text-sm text-gray-700">
+                Your room has been booked successfully. You can view your
+                booking status{" "}
+                <a
+                  href="https://bpcl-portal.vercel.app/meeting"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 underline"
+                >
+                  here
+                </a>
+                .
+              </p>
+
+              {/* Footer */}
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setShowBookingSuccessModal(false)}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showTrackModal && trackTask && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn transition-opacity duration-300">
+            <div
+              className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 animate-scaleIn"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 px-6 py-5 border-b border-indigo-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-white/20 rounded-lg">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold text-white tracking-wide">
+                        Task Tracking
+                      </h2>
+                      <p className="text-indigo-200 text-sm mt-0.5">
+                        {trackTask.taskName}
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    onClick={() => setShowTrackModal(false)}
+                    className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors duration-200"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
 
-                  <ul className="space-y-5">
-                    {trackTask.assignedTo?.map((member) => {
-                      const reportObj =
-                        trackReports.find(
-                          (r) => r.reporterEmail === member.email
-                        ) || {};
+              {/* Body */}
+              <div className="px-6 py-6 max-h-[calc(80vh-120px)] overflow-y-auto">
+                {isLeader ? (
+                  <div>
+                    <div className="flex items-center gap-2 mb-5">
+                      <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full"></div>
+                      <h3 className="text-lg font-medium text-gray-800">
+                        Team Member Reports
+                      </h3>
+                    </div>
 
-                      return (
-                        <li
-                          key={member.email}
-                          className="bg-gray-50 rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+                    <ul className="space-y-5">
+                      {trackTask.assignedTo?.map((member) => {
+                        const reportObj =
+                          trackReports.find(
+                            (r) => r.reporterEmail === member.email
+                          ) || {};
+
+                        return (
+                          <li
+                            key={member.email}
+                            className="bg-gray-50 rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+                          >
+                            <div className="flex justify-between items-center px-4 py-3 bg-gray-100">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                                  <span className="text-sm font-medium text-indigo-600">
+                                    {member.email[0].toUpperCase()}
+                                  </span>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-800">
+                                    {member.email}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {reportObj.lastUpdated
+                                      ? new Date(
+                                          reportObj.lastUpdated
+                                        ).toLocaleString()
+                                      : "No report yet"}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={() => openMemberReport(member.email)}
+                                className="text-sm flex items-center gap-1.5 text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                  />
+                                </svg>
+                                <span>Comment</span>
+                              </button>
+                            </div>
+
+                            <div className="p-4">
+                              <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Report Content
+                                  </p>
+                                </div>
+                                <div className="p-3 bg-white border rounded-lg">
+                                  {reportObj.userReport ? (
+                                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                      {reportObj.userReport}
+                                    </p>
+                                  ) : (
+                                    <p className="text-sm italic text-gray-400 text-center py-2">
+                                      No report submitted yet
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {selectedMember === member.email && (
+                                <div className="mt-4 bg-indigo-50 p-4 rounded-lg border border-indigo-100 animate-fadeIn">
+                                  <div className="mb-2.5">
+                                    <label className="block text-xs font-medium text-indigo-700 mb-1.5">
+                                      Your Comment
+                                    </label>
+                                    <textarea
+                                      className="w-full border border-indigo-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                                      rows={3}
+                                      placeholder="Enter your feedback or guidance..."
+                                      value={memberTrackReportText}
+                                      onChange={(e) =>
+                                        setMemberTrackReportText(e.target.value)
+                                      }
+                                    />
+                                  </div>
+                                  <div className="flex justify-end">
+                                    <button
+                                      onClick={handleSaveLeaderReport}
+                                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 shadow-sm transition-all duration-200 flex items-center gap-1.5"
+                                    >
+                                      <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M5 13l4 4L19 7"
+                                        />
+                                      </svg>
+                                      Save Comment
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+
+                              {reportObj.leaderReport && (
+                                <div className="mt-4">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
+                                    <p className="text-xs font-medium text-indigo-700 uppercase tracking-wider">
+                                      Leader Feedback
+                                    </p>
+                                  </div>
+                                  <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
+                                    <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                                      {reportObj.leaderReport}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-2">
+                                      {reportObj.leaderCommentDate
+                                        ? new Date(
+                                            reportObj.leaderCommentDate
+                                          ).toLocaleString()
+                                        : ""}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="p-2.5 bg-indigo-100 rounded-lg">
+                        <svg
+                          className="w-5 h-5 text-indigo-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
                         >
-                          <div className="flex justify-between items-center px-4 py-3 bg-gray-100">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                                <span className="text-sm font-medium text-indigo-600">
-                                  {member.email[0].toUpperCase()}
-                                </span>
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-800">
+                        Your Progress Report
+                      </h3>
+                    </div>
+
+                    <div className="mb-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Report Details
+                        </label>
+                        <span className="text-xs text-gray-500">
+                          Last updated:{" "}
+                          {trackReports.find(
+                            (r) => r.reporterEmail === currentUserEmail
+                          )?.lastUpdated
+                            ? new Date(
+                                trackReports.find(
+                                  (r) => r.reporterEmail === currentUserEmail
+                                )?.lastUpdated
+                              ).toLocaleString()
+                            : "Not submitted yet"}
+                        </span>
+                      </div>
+                      <textarea
+                        className="w-full border border-gray-300 rounded-lg p-3.5 text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-200"
+                        rows={6}
+                        placeholder="Describe your progress, challenges faced, and current status of the task..."
+                        value={trackReportText}
+                        onChange={(e) => setTrackReportText(e.target.value)}
+                      />
+
+                      <div className="bg-amber-50 rounded-lg p-3 mt-3 border border-amber-100 flex items-start gap-3">
+                        <svg
+                          className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        <p className="text-xs text-amber-800">
+                          Your report will be visible to your team leader. Be
+                          specific about your progress and any issues you're
+                          facing to get the most helpful feedback.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        onClick={handleSaveUserReport}
+                        className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-sm transition-all duration-200 flex items-center gap-2"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                          />
+                        </svg>
+                        Submit Report
+                      </button>
+                    </div>
+
+                    {(() => {
+                      const userRecord = trackReports.find(
+                        (r) => r.reporterEmail === currentUserEmail
+                      );
+                      if (userRecord && userRecord.leaderReport) {
+                        return (
+                          <div className="mt-8 bg-indigo-50 rounded-lg p-5 border-l-4 border-indigo-600 animate-fadeIn">
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="p-2 bg-indigo-100 rounded-full">
+                                <svg
+                                  className="w-4 h-4 text-indigo-600"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                                  />
+                                </svg>
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-gray-800">
-                                  {member.email}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {reportObj.lastUpdated
+                                <h4 className="text-sm font-semibold text-indigo-800">
+                                  Leader Feedback
+                                </h4>
+                                <p className="text-xs text-indigo-600 mt-0.5">
+                                  {userRecord.leaderCommentDate
                                     ? new Date(
-                                        reportObj.lastUpdated
+                                        userRecord.leaderCommentDate
                                       ).toLocaleString()
-                                    : "No report yet"}
+                                    : ""}
                                 </p>
                               </div>
                             </div>
-
-                            <button
-                              onClick={() => openMemberReport(member.email)}
-                              className="text-sm flex items-center gap-1.5 text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors"
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                              </svg>
-                              <span>Comment</span>
-                            </button>
-                          </div>
-
-                          <div className="p-4">
-                            <div>
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Report Content
-                                </p>
-                              </div>
-                              <div className="p-3 bg-white border rounded-lg">
-                                {reportObj.userReport ? (
-                                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                                    {reportObj.userReport}
-                                  </p>
-                                ) : (
-                                  <p className="text-sm italic text-gray-400 text-center py-2">
-                                    No report submitted yet
-                                  </p>
-                                )}
-                              </div>
+                            <div className="ml-9">
+                              <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                                {userRecord.leaderReport}
+                              </p>
                             </div>
-
-                            {selectedMember === member.email && (
-                              <div className="mt-4 bg-indigo-50 p-4 rounded-lg border border-indigo-100 animate-fadeIn">
-                                <div className="mb-2.5">
-                                  <label className="block text-xs font-medium text-indigo-700 mb-1.5">
-                                    Your Comment
-                                  </label>
-                                  <textarea
-                                    className="w-full border border-indigo-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
-                                    rows={3}
-                                    placeholder="Enter your feedback or guidance..."
-                                    value={memberTrackReportText}
-                                    onChange={(e) =>
-                                      setMemberTrackReportText(e.target.value)
-                                    }
-                                  />
-                                </div>
-                                <div className="flex justify-end">
-                                  <button
-                                    onClick={handleSaveLeaderReport}
-                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 shadow-sm transition-all duration-200 flex items-center gap-1.5"
-                                  >
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M5 13l4 4L19 7"
-                                      />
-                                    </svg>
-                                    Save Comment
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-
-                            {reportObj.leaderReport && (
-                              <div className="mt-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <div className="w-1 h-1 bg-indigo-500 rounded-full"></div>
-                                  <p className="text-xs font-medium text-indigo-700 uppercase tracking-wider">
-                                    Leader Feedback
-                                  </p>
-                                </div>
-                                <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
-                                  <p className="text-sm text-gray-800 whitespace-pre-wrap">
-                                    {reportObj.leaderReport}
-                                  </p>
-                                  <p className="text-xs text-gray-500 mt-2">
-                                    {reportObj.leaderCommentDate
-                                      ? new Date(
-                                          reportObj.leaderCommentDate
-                                        ).toLocaleString()
-                                      : ""}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
                           </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-gray-200 bg-gray-50 px-6 py-4 sticky bottom-0">
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setShowTrackModal(false)}
+                    className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 shadow-sm transition-all duration-200 font-medium flex items-center gap-2"
+                  >
+                    <span>Close</span>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
                 </div>
-              ) : (
-                <div className="bg-white rounded-xl border border-gray-200 p-5">
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className="p-2.5 bg-indigo-100 rounded-lg">
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showEditTaskModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="relative w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden animate-fadeIn">
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-5">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/20 rounded-lg">
                       <svg
-                        className="w-5 h-5 text-indigo-600"
+                        className="w-5 h-5 text-white"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -5300,40 +5622,443 @@ export default function TeamsPage() {
                         />
                       </svg>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-800">
-                      Your Progress Report
-                    </h3>
+                    <div>
+                      <h2 className="text-xl font-semibold text-white">
+                        Edit Task
+                      </h2>
+                      <p className="text-indigo-100 text-sm mt-0.5">
+                        Update task details and assignments
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowEditTaskModal(false)}
+                    className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                    aria-label="Close"
+                  >
+                    <FiX className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrollable Body */}
+              <div className="p-6 overflow-y-auto max-h-[calc(85vh-140px)] space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  {/* Task Name */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Task Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={editTaskData.taskName}
+                      onChange={(e) =>
+                        setEditTaskData({
+                          ...editTaskData,
+                          taskName: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                      placeholder="Enter task name"
+                    />
                   </div>
 
-                  <div className="mb-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Report Details
-                      </label>
-                      <span className="text-xs text-gray-500">
-                        Last updated:{" "}
-                        {trackReports.find(
-                          (r) => r.reporterEmail === currentUserEmail
-                        )?.lastUpdated
-                          ? new Date(
-                              trackReports.find(
-                                (r) => r.reporterEmail === currentUserEmail
-                              )?.lastUpdated
-                            ).toLocaleString()
-                          : "Not submitted yet"}
-                      </span>
+                  {/* Urgency */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Urgency <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={editTaskData.urgency}
+                        onChange={(e) =>
+                          setEditTaskData({
+                            ...editTaskData,
+                            urgency: e.target.value,
+                          })
+                        }
+                        className="w-full pl-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                      >
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+                        <svg
+                          className="w-4 h-4 text-gray-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
                     </div>
-                    <textarea
-                      className="w-full border border-gray-300 rounded-lg p-3.5 text-sm focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-200"
-                      rows={6}
-                      placeholder="Describe your progress, challenges faced, and current status of the task..."
-                      value={trackReportText}
-                      onChange={(e) => setTrackReportText(e.target.value)}
-                    />
+                  </div>
 
-                    <div className="bg-amber-50 rounded-lg p-3 mt-3 border border-amber-100 flex items-start gap-3">
+                  {/* Deadline */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Deadline <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="datetime-local"
+                        value={editTaskData.deadline}
+                        onChange={(e) =>
+                          setEditTaskData({
+                            ...editTaskData,
+                            deadline: e.target.value,
+                          })
+                        }
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                      />
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg
+                          className="w-4 h-4 text-gray-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Description <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      rows="4"
+                      value={editTaskData.description}
+                      onChange={(e) =>
+                        setEditTaskData({
+                          ...editTaskData,
+                          description: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors resize-none"
+                      placeholder="Describe the task in detail..."
+                    />
+                  </div>
+                </div>
+
+                {/* Assigned Members */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Assigned Team Members
+                    </label>
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                      {editTaskData.assignedMembers.length} members
+                    </span>
+                  </div>
+
+                  {/* Search & Add New Member */}
+                  <div className="relative mb-3">
+                    <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
                       <svg
-                        className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0"
+                        className="w-4 h-4 text-gray-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search team members to add"
+                      value={newAssignedQuery}
+                      onChange={(e) => setNewAssignedQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                    />
+                  </div>
+
+                  {/* Search Results Dropdown */}
+                  {newAssignedQuery && (
+                    <div className="absolute z-20 bg-white border border-gray-200 rounded-lg mt-1 shadow-lg w-full max-w-[calc(100%-3rem)] max-h-48 overflow-auto">
+                      {teamInfo?.members
+                        ?.filter((m) => {
+                          // Exclude already assigned
+                          if (editTaskData.assignedMembers.includes(m.email))
+                            return false;
+                          // Match name or email
+                          const query = newAssignedQuery.toLowerCase();
+                          return (
+                            m.name.toLowerCase().includes(query) ||
+                            m.email.toLowerCase().includes(query)
+                          );
+                        })
+                        .map((member) => (
+                          <div
+                            key={member.email}
+                            className="flex items-center justify-between px-4 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-0 cursor-pointer"
+                            onClick={() => {
+                              setEditTaskData({
+                                ...editTaskData,
+                                assignedMembers: [
+                                  ...editTaskData.assignedMembers,
+                                  member.email,
+                                ],
+                              });
+                              setNewAssignedQuery("");
+                            }}
+                          >
+                            <div className="flex items-center">
+                              <div className="w-7 h-7 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
+                                <span className="text-sm font-medium text-indigo-700">
+                                  {member.name[0].toUpperCase()}
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium text-gray-700">
+                                  {member.name}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {member.email}
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              className="text-xs flex items-center gap-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2 py-1 rounded transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditTaskData({
+                                  ...editTaskData,
+                                  assignedMembers: [
+                                    ...editTaskData.assignedMembers,
+                                    member.email,
+                                  ],
+                                });
+                                setNewAssignedQuery("");
+                              }}
+                            >
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                />
+                              </svg>
+                              Add
+                            </button>
+                          </div>
+                        ))}
+
+                      {teamInfo?.members?.filter(
+                        (m) =>
+                          !editTaskData.assignedMembers.includes(m.email) &&
+                          (m.name
+                            .toLowerCase()
+                            .includes(newAssignedQuery.toLowerCase()) ||
+                            m.email
+                              .toLowerCase()
+                              .includes(newAssignedQuery.toLowerCase()))
+                      ).length === 0 && (
+                        <div className="px-4 py-3 text-sm text-center text-gray-500">
+                          No matching members found
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Current Assigned Members */}
+                  <div className="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-2">
+                    <div className="max-h-40 overflow-y-auto">
+                      {editTaskData.assignedMembers.length > 0 ? (
+                        <ul className="divide-y divide-gray-200">
+                          {editTaskData.assignedMembers.map((member, index) => (
+                            <li
+                              key={index}
+                              className="flex items-center justify-between py-2 px-2"
+                            >
+                              <span className="text-sm text-gray-700 truncate">
+                                {member}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  const updated =
+                                    editTaskData.assignedMembers.filter(
+                                      (m, i) => i !== index
+                                    );
+                                  setEditTaskData({
+                                    ...editTaskData,
+                                    assignedMembers: updated,
+                                  });
+                                }}
+                                className="ml-3 text-gray-400 hover:text-red-500 transition-colors"
+                                aria-label="Remove member"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="text-center py-3 text-sm text-gray-500">
+                          No members assigned to this task
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                <div className="flex justify-end gap-4">
+                  <button
+                    onClick={() => setShowEditTaskModal(false)}
+                    className="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveEditTask}
+                    className="px-4 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center gap-1.5"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Team Info Modal */}
+        {showTeamInfoModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowTeamInfoModal(false)}
+          >
+            <div
+              className="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-800">
+                        Team Details
+                      </h2>
+                      <p className="text-sm text-gray-500">
+                        Update your team information
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowTeamInfoModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                  >
+                    <FiX className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Form Content */}
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Team Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={tempTeamName}
+                    onChange={(e) => setTempTeamName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200"
+                    placeholder="Enter team name..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Team Description
+                  </label>
+                  <textarea
+                    value={tempDescription}
+                    onChange={(e) => setTempDescription(e.target.value)}
+                    rows="4"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200 resize-none"
+                    placeholder="Describe your team's purpose and goals..."
+                  />
+                  <p className="mt-2 text-xs text-gray-500">
+                    A clear description helps team members understand their
+                    roles and objectives.
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-indigo-100 rounded-full">
+                      <svg
+                        className="w-5 h-5 text-indigo-600"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -5345,630 +6070,53 @@ export default function TeamsPage() {
                           d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                       </svg>
-                      <p className="text-xs text-amber-800">
-                        Your report will be visible to your team leader. Be
-                        specific about your progress and any issues you're
-                        facing to get the most helpful feedback.
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Team Visibility
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Team details are visible to all members
                       </p>
                     </div>
                   </div>
-
-                  <div className="flex justify-end">
-                    <button
-                      onClick={handleSaveUserReport}
-                      className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-sm transition-all duration-200 flex items-center gap-2"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
-                        />
-                      </svg>
-                      Submit Report
-                    </button>
-                  </div>
-
-                  {(() => {
-                    const userRecord = trackReports.find(
-                      (r) => r.reporterEmail === currentUserEmail
-                    );
-                    if (userRecord && userRecord.leaderReport) {
-                      return (
-                        <div className="mt-8 bg-indigo-50 rounded-lg p-5 border-l-4 border-indigo-600 animate-fadeIn">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-indigo-100 rounded-full">
-                              <svg
-                                className="w-4 h-4 text-indigo-600"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                                />
-                              </svg>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-semibold text-indigo-800">
-                                Leader Feedback
-                              </h4>
-                              <p className="text-xs text-indigo-600 mt-0.5">
-                                {userRecord.leaderCommentDate
-                                  ? new Date(
-                                      userRecord.leaderCommentDate
-                                    ).toLocaleString()
-                                  : ""}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="ml-9">
-                            <p className="text-sm text-gray-800 whitespace-pre-wrap">
-                              {userRecord.leaderReport}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
                 </div>
-              )}
-            </div>
+              </div>
 
-            {/* Footer */}
-            <div className="border-t border-gray-200 bg-gray-50 px-6 py-4 sticky bottom-0">
-              <div className="flex justify-end">
-                <button
-                  onClick={() => setShowTrackModal(false)}
-                  className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 shadow-sm transition-all duration-200 font-medium flex items-center gap-2"
-                >
-                  <span>Close</span>
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+              {/* Footer */}
+              <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-100">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowTeamInfoModal(false)}
+                    className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
+                    Cancel
+                  </button>
+                  <button
+                    onClick={updateTeamInfo}
+                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors duration-200 flex items-center justify-center gap-2"
+                  >
+                    <span>Save Changes</span>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {showEditTaskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden animate-fadeIn">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-5">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-lg">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-white">
-                      Edit Task
-                    </h2>
-                    <p className="text-indigo-100 text-sm mt-0.5">
-                      Update task details and assignments
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowEditTaskModal(false)}
-                  className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
-                  aria-label="Close"
-                >
-                  <FiX className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Scrollable Body */}
-            <div className="p-6 overflow-y-auto max-h-[calc(85vh-140px)] space-y-6">
-              <div className="grid gap-6 md:grid-cols-2">
-                {/* Task Name */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Task Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={editTaskData.taskName}
-                    onChange={(e) =>
-                      setEditTaskData({
-                        ...editTaskData,
-                        taskName: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                    placeholder="Enter task name"
-                  />
-                </div>
-
-                {/* Urgency */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Urgency <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={editTaskData.urgency}
-                      onChange={(e) =>
-                        setEditTaskData({
-                          ...editTaskData,
-                          urgency: e.target.value,
-                        })
-                      }
-                      className="w-full pl-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                    >
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-                      <svg
-                        className="w-4 h-4 text-gray-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Deadline */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Deadline <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="datetime-local"
-                      value={editTaskData.deadline}
-                      onChange={(e) =>
-                        setEditTaskData({
-                          ...editTaskData,
-                          deadline: e.target.value,
-                        })
-                      }
-                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                    />
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <svg
-                        className="w-4 h-4 text-gray-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Description <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    rows="4"
-                    value={editTaskData.description}
-                    onChange={(e) =>
-                      setEditTaskData({
-                        ...editTaskData,
-                        description: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors resize-none"
-                    placeholder="Describe the task in detail..."
-                  />
-                </div>
-              </div>
-
-              {/* Assigned Members */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Assigned Team Members
-                  </label>
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                    {editTaskData.assignedMembers.length} members
-                  </span>
-                </div>
-
-                {/* Search & Add New Member */}
-                <div className="relative mb-3">
-                  <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                    <svg
-                      className="w-4 h-4 text-gray-500"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search team members to add"
-                    value={newAssignedQuery}
-                    onChange={(e) => setNewAssignedQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                  />
-                </div>
-
-                {/* Search Results Dropdown */}
-                {newAssignedQuery && (
-                  <div className="absolute z-20 bg-white border border-gray-200 rounded-lg mt-1 shadow-lg w-full max-w-[calc(100%-3rem)] max-h-48 overflow-auto">
-                    {teamInfo?.members
-                      ?.filter((m) => {
-                        // Exclude already assigned
-                        if (editTaskData.assignedMembers.includes(m.email))
-                          return false;
-                        // Match name or email
-                        const query = newAssignedQuery.toLowerCase();
-                        return (
-                          m.name.toLowerCase().includes(query) ||
-                          m.email.toLowerCase().includes(query)
-                        );
-                      })
-                      .map((member) => (
-                        <div
-                          key={member.email}
-                          className="flex items-center justify-between px-4 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-0 cursor-pointer"
-                          onClick={() => {
-                            setEditTaskData({
-                              ...editTaskData,
-                              assignedMembers: [
-                                ...editTaskData.assignedMembers,
-                                member.email,
-                              ],
-                            });
-                            setNewAssignedQuery("");
-                          }}
-                        >
-                          <div className="flex items-center">
-                            <div className="w-7 h-7 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
-                              <span className="text-sm font-medium text-indigo-700">
-                                {member.name[0].toUpperCase()}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-sm font-medium text-gray-700">
-                                {member.name}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                {member.email}
-                              </span>
-                            </div>
-                          </div>
-                          <button
-                            className="text-xs flex items-center gap-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2 py-1 rounded transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditTaskData({
-                                ...editTaskData,
-                                assignedMembers: [
-                                  ...editTaskData.assignedMembers,
-                                  member.email,
-                                ],
-                              });
-                              setNewAssignedQuery("");
-                            }}
-                          >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                              />
-                            </svg>
-                            Add
-                          </button>
-                        </div>
-                      ))}
-
-                    {teamInfo?.members?.filter(
-                      (m) =>
-                        !editTaskData.assignedMembers.includes(m.email) &&
-                        (m.name
-                          .toLowerCase()
-                          .includes(newAssignedQuery.toLowerCase()) ||
-                          m.email
-                            .toLowerCase()
-                            .includes(newAssignedQuery.toLowerCase()))
-                    ).length === 0 && (
-                      <div className="px-4 py-3 text-sm text-center text-gray-500">
-                        No matching members found
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Current Assigned Members */}
-                <div className="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-2">
-                  <div className="max-h-40 overflow-y-auto">
-                    {editTaskData.assignedMembers.length > 0 ? (
-                      <ul className="divide-y divide-gray-200">
-                        {editTaskData.assignedMembers.map((member, index) => (
-                          <li
-                            key={index}
-                            className="flex items-center justify-between py-2 px-2"
-                          >
-                            <span className="text-sm text-gray-700 truncate">
-                              {member}
-                            </span>
-                            <button
-                              onClick={() => {
-                                const updated =
-                                  editTaskData.assignedMembers.filter(
-                                    (m, i) => i !== index
-                                  );
-                                setEditTaskData({
-                                  ...editTaskData,
-                                  assignedMembers: updated,
-                                });
-                              }}
-                              className="ml-3 text-gray-400 hover:text-red-500 transition-colors"
-                              aria-label="Remove member"
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <div className="text-center py-3 text-sm text-gray-500">
-                        No members assigned to this task
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-              <div className="flex justify-end gap-4">
-                <button
-                  onClick={() => setShowEditTaskModal(false)}
-                  className="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveEditTask}
-                  className="px-4 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center gap-1.5"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  Save Changes
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Team Info Modal */}
-      {showTeamInfoModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          onClick={() => setShowTeamInfoModal(false)}
-        >
-          <div
-            className="relative bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-800">
-                      Team Details
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      Update your team information
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowTeamInfoModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-                >
-                  <FiX className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-            </div>
-
-            {/* Form Content */}
-            <div className="p-6 space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Team Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={tempTeamName}
-                  onChange={(e) => setTempTeamName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200"
-                  placeholder="Enter team name..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Team Description
-                </label>
-                <textarea
-                  value={tempDescription}
-                  onChange={(e) => setTempDescription(e.target.value)}
-                  rows="4"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition duration-200 resize-none"
-                  placeholder="Describe your team's purpose and goals..."
-                />
-                <p className="mt-2 text-xs text-gray-500">
-                  A clear description helps team members understand their roles
-                  and objectives.
-                </p>
-              </div>
-
-              <div className="bg-gray-50 rounded-xl p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-indigo-100 rounded-full">
-                    <svg
-                      className="w-5 h-5 text-indigo-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">
-                      Team Visibility
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Team details are visible to all members
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-100">
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowTeamInfoModal(false)}
-                  className="flex-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={updateTeamInfo}
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors duration-200 flex items-center justify-center gap-2"
-                >
-                  <span>Save Changes</span>
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

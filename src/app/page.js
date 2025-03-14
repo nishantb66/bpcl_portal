@@ -59,7 +59,24 @@ export default function Home() {
 
   const [employeeMessage, setEmployeeMessage] = useState("");
 
+  // Track whether to show the announcement
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
+
   const router = useRouter();
+
+  useEffect(() => {
+    // If the user is logged in (userName is set)
+    // and we have NOT yet closed the banner for this session, show it
+    if (userName && !localStorage.getItem("bannerClosedForThisSession")) {
+      setShowAnnouncement(true);
+    }
+  }, [userName]);
+
+  const handleCloseAnnouncement = () => {
+    setShowAnnouncement(false);
+    // Mark this banner as closed for the current login session
+    localStorage.setItem("bannerClosedForThisSession", "true");
+  };
 
   // Auto-scroll
   useEffect(() => {
@@ -185,6 +202,8 @@ export default function Home() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("name");
+    // Remove the banner-closed flag so it shows again on next login
+    localStorage.removeItem("bannerClosedForThisSession");
     localStorage.clear();
     setUserName(null);
     router.push("/login");
@@ -396,6 +415,102 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
+      {/* Announcement Banner */}
+      {showAnnouncement && (
+        <div className="relative overflow-hidden">
+          {/* Animated gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 animate-gradient-x"></div>
+
+          {/* Subtle pattern overlay */}
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3Ccircle cx='13' cy='13' r='1'/%3E%3C/g%3E%3C/svg%3E\")",
+            }}
+          ></div>
+
+          {/* Banner content with animation */}
+          <div className="relative px-4 py-3 sm:px-6 animate-fade-in-down">
+            <div className="flex items-center justify-center max-w-5xl mx-auto">
+              {/* Left icon */}
+              <div className="hidden md:flex flex-shrink-0 items-center mr-3">
+                <div className="bg-white/20 p-1.5 rounded-full">
+                  <svg
+                    className="w-4 h-4 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Announcement content */}
+              <div className="flex-1 flex items-center justify-center text-center sm:text-left">
+                <p className="text-sm font-medium text-white tracking-wide leading-snug max-w-3xl">
+                  <span className="hidden sm:inline font-semibold mr-1.5">
+                    Welcome to Enterprise Portal.
+                  </span>
+                  Explore our features and tools—we're constantly adding new
+                  capabilities. Have a suggestion or request?
+                  <a
+                    href="https://bpcl-portal.vercel.app/contact"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center ml-1.5 text-indigo-100 hover:text-white font-semibold border-b border-indigo-300/40 hover:border-white transition-colors"
+                  >
+                    <span>Contact me</span>
+                    <svg
+                      className="w-3 h-3 ml-0.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M14 5l7 7m0 0l-7 7m7-7H3"
+                      />
+                    </svg>
+                  </a>
+                </p>
+              </div>
+
+              {/* Close button with enhanced styling */}
+              <div className="ml-4 flex-shrink-0">
+                <button
+                  onClick={handleCloseAnnouncement}
+                  className="group p-1 rounded-full bg-indigo-800/40 hover:bg-indigo-800/80 border border-white/10 hover:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all duration-200"
+                  aria-label="Dismiss notification"
+                >
+                  <svg
+                    className="w-4 h-4 text-white/70 group-hover:text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ToastContainer position="top-center" autoClose={3000} />
       <header className="sticky top-0 z-50 bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700/50 shadow-lg transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
