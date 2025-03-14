@@ -1865,7 +1865,7 @@ export default function Home() {
               >
                 Message me
               </Link>
-              <Link href="#" className="text-gray-500 hover:text-gray-600">
+              <Link href="/about" className="text-gray-500 hover:text-gray-600">
                 About
               </Link>
               <Link href="#" className="text-gray-500 hover:text-gray-600">

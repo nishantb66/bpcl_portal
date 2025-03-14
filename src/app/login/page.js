@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FiLogIn } from "react-icons/fi";
+import { FiLogIn, FiHelpCircle } from "react-icons/fi";
 
 export default function Login() {
   // State & Logic
@@ -158,13 +158,54 @@ export default function Login() {
                 Register Now
               </Link>
             </p>
-            <Link
-              href="/admin"
-              className="mt-2 block font-medium text-indigo-600 hover:text-indigo-500"
-            >
-              Login as Administrator
-            </Link>
+            <div className="mt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href="/admin"
+                className="font-medium text-indigo-600 hover:text-indigo-500"
+              >
+                Login as Administrator
+              </Link>
+
+              <span className="hidden sm:inline text-gray-300">|</span>
+
+              <Link
+                href="/about"
+                className="font-medium text-indigo-600 hover:text-indigo-500 flex items-center gap-1.5"
+              >
+                <FiHelpCircle className="w-4 h-4" />
+                <span>What is this Platform?</span>
+              </Link>
+            </div>
           </div>
+
+          {/* Information Banner
+          <div className="mt-6 bg-blue-50 border border-blue-100 rounded-lg p-3.5">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <FiHelpCircle className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">
+                  New to Enterprise Portal?
+                </h3>
+                <div className="mt-1 text-sm text-blue-700">
+                  <p>
+                    Learn more about our powerful enterprise collaboration
+                    platform and discover how it can transform your workplace
+                    productivity.
+                  </p>
+                  <p className="mt-2">
+                    <Link
+                      href="/about"
+                      className="font-medium text-blue-700 hover:text-blue-900 underline decoration-blue-400 hover:decoration-blue-700 transition-colors"
+                    >
+                      Explore features →
+                    </Link>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div> */}
         </div>
       </main>
 
