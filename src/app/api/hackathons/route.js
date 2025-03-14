@@ -294,6 +294,101 @@ export async function POST(req) {
       );
     }
 
+    /****************************************
+     * UPDATE GUIDELINES
+     ****************************************/
+    if (type === "update-guidelines") {
+      // Only a leader can update guidelines
+      if (!leaderTeam) {
+        return NextResponse.json(
+          { message: "You are not a team leader or have no team." },
+          { status: 403 }
+        );
+      }
+      // Ensure guidelines text is provided
+      const { guidelines } = body;
+      if (!guidelines || !guidelines.trim()) {
+        return NextResponse.json(
+          { message: "Guidelines text is required." },
+          { status: 400 }
+        );
+      }
+      // Update the hackathon document for this team by setting the guidelines field.
+      // We'll store it as an object with text, likes (an empty array), and updatedAt timestamp.
+      const updateResult = await hackathonsCollection.updateOne(
+        { teamId: leaderTeam._id },
+        {
+          $set: {
+            "guidelines.text": guidelines.trim(),
+            "guidelines.updatedAt": new Date(),
+            "guidelines.likes": [], // reset likes on update
+          },
+        }
+      );
+      return NextResponse.json(
+        { message: "Guidelines updated successfully!" },
+        { status: 200 }
+      );
+    }
+
+    /****************************************
+     * LIKE GUIDELINES
+     ****************************************/
+    if (type === "like-guidelines") {
+      // The user must be in a team (leader or member); however, typically only members can like.
+      if (!userTeam) {
+        return NextResponse.json(
+          { message: "You are not in any team." },
+          { status: 403 }
+        );
+      }
+      // Find the hackathon for the user's team.
+      const hackathon = await hackathonsCollection.findOne({
+        teamId: userTeam._id,
+      });
+      if (!hackathon || !hackathon.guidelines || !hackathon.guidelines.text) {
+        return NextResponse.json(
+          { message: "No guidelines found for your team." },
+          { status: 400 }
+        );
+      }
+      // (Optional) Prevent leader from liking their own guidelines.
+      if (hackathon.guidelines.createdBy === email) {
+        return NextResponse.json(
+          { message: "Leader cannot like their own guidelines." },
+          { status: 400 }
+        );
+      }
+      // Check if the user has already liked the guidelines.
+      if (
+        hackathon.guidelines.likes &&
+        hackathon.guidelines.likes.includes(email)
+      ) {
+        return NextResponse.json(
+          { message: "You have already supported these guidelines." },
+          { status: 400 }
+        );
+      }
+      // Append the user's email to the guidelines.likes array.
+      const updatedLikes = hackathon.guidelines.likes
+        ? [...hackathon.guidelines.likes, email]
+        : [email];
+
+      await hackathonsCollection.updateOne(
+        { _id: hackathon._id },
+        {
+          $set: {
+            "guidelines.likes": updatedLikes,
+            updatedAt: new Date(),
+          },
+        }
+      );
+      return NextResponse.json(
+        { message: "Guidelines supported successfully!" },
+        { status: 200 }
+      );
+    }
+
     // If none matched
     return NextResponse.json(
       { message: "Invalid hackathon request type" },
