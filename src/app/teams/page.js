@@ -6186,100 +6186,276 @@ export default function TeamsPage() {
         {showPdfsModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
             <div
-              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-gray-900/70 backdrop-blur-sm"
               onClick={() => setShowPdfsModal(false)}
             />
             <div
               className="relative w-full max-w-2xl bg-white rounded-lg shadow-xl p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  Team PDFs
-                </h2>
+              <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-indigo-50 rounded-md">
+                    <svg
+                      className="w-5 h-5 text-indigo-600"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    Team Documents
+                  </h2>
+                </div>
                 <button
                   onClick={() => setShowPdfsModal(false)}
-                  className="p-2 rounded-full hover:bg-gray-100"
+                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  aria-label="Close"
                 >
                   <FiX className="w-5 h-5 text-gray-600" />
                 </button>
               </div>
 
               {/* Upload Section */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Attach PDF
-                </label>
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files.length > 0) {
-                      setSelectedFile(e.target.files[0]);
-                    }
-                  }}
-                  className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer focus:outline-none"
-                />
-                <button
-                  onClick={handleUploadPdf}
-                  disabled={!selectedFile || uploadingPdf}
-                  className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {uploadingPdf ? "Uploading..." : "Upload PDF"}
-                </button>
+              <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Upload Document (PDF)
+                  </label>
+                  <span className="text-xs text-gray-500">
+                    {pdfList.length}/10 documents used
+                  </span>
+                </div>
+
+                {pdfList.length < 10 ? (
+                  <>
+                    <div className="mt-1 flex items-center">
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            setSelectedFile(e.target.files[0]);
+                          }
+                        }}
+                        className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 focus:outline-none"
+                      />
+                      <button
+                        onClick={handleUploadPdf}
+                        disabled={
+                          !selectedFile || uploadingPdf || pdfList.length >= 10
+                        }
+                        className="ml-3 inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {uploadingPdf ? (
+                          <>
+                            <FiLoader className="animate-spin -ml-1 mr-2 h-4 w-4" />
+                            Uploading...
+                          </>
+                        ) : (
+                          "Upload"
+                        )}
+                      </button>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Max file size: 10MB. PDF format only.
+                    </p>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center py-2 text-sm text-gray-600 bg-yellow-50 border border-yellow-100 rounded-md">
+                    <svg
+                      className="w-4 h-4 mr-2 text-yellow-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                    </svg>
+                    Document limit reached (10/10)
+                  </div>
+                )}
               </div>
 
               {/* List of PDFs */}
-              <div className="space-y-3 max-h-60 overflow-y-auto">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-gray-700">
+                    Shared Documents
+                  </h3>
+                  <div className="text-xs text-gray-500">
+                    Last updated:{" "}
+                    {pdfList.length > 0
+                      ? new Date(pdfList[0].createdAt).toLocaleDateString()
+                      : "Never"}
+                  </div>
+                </div>
+
                 {pdfLoading ? (
-                  <div className="flex items-center justify-center py-4">
-                    <FiLoader className="animate-spin w-6 h-6 text-indigo-600" />
+                  <div className="py-8 flex flex-col items-center justify-center">
+                    <FiLoader className="animate-spin w-8 h-8 text-indigo-600 mb-2" />
+                    <span className="text-sm text-gray-500">
+                      Loading documents...
+                    </span>
                   </div>
                 ) : pdfList.length === 0 ? (
-                  <p className="text-sm text-gray-500">No PDFs attached yet.</p>
-                ) : (
-                  pdfList.map((pdf) => (
-                    <div
-                      key={pdf._id}
-                      className="flex items-center justify-between bg-gray-50 border border-gray-100 p-3 rounded-lg"
+                  <div className="py-10 flex flex-col items-center justify-center bg-gray-50 rounded-lg border border-gray-100">
+                    <svg
+                      className="w-12 h-12 text-gray-300 mb-3"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      <div>
-                        <p className="text-sm font-medium text-gray-800">
-                          {pdf.filename}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {new Date(pdf.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleViewPdf(pdf._id)}
-                          className="text-indigo-600 text-sm hover:underline"
-                        >
-                          {pdfViewLoadingId === pdf._id ? (
-                            <FiLoader className="animate-spin w-4 h-4 inline-block" />
-                          ) : (
-                            "View"
-                          )}
-                        </button>
-
-                        {isLeader && (
-                          <button
-                            onClick={() => handleDeletePdf(pdf._id)}
-                            className="text-red-500 text-sm hover:underline"
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    <p className="text-sm text-gray-500 font-medium">
+                      No documents available
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Upload a PDF to get started
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-hidden border border-gray-200 rounded-lg">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                           >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))
+                            Document Name
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            Date Added
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {pdfList.map((pdf) => (
+                          <tr key={pdf._id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <svg
+                                  className="flex-shrink-0 h-5 w-5 text-red-500 mr-3"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                                <div className="text-sm font-medium text-gray-800 truncate max-w-[200px]">
+                                  {pdf.filename}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-500">
+                                {new Date(pdf.createdAt).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  }
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                              <div className="flex items-center justify-end space-x-3">
+                                <button
+                                  onClick={() => handleViewPdf(pdf._id)}
+                                  className="text-indigo-600 hover:text-indigo-800 font-medium"
+                                >
+                                  {pdfViewLoadingId === pdf._id ? (
+                                    <FiLoader className="animate-spin w-4 h-4 inline-block" />
+                                  ) : (
+                                    "View"
+                                  )}
+                                </button>
+
+                                <button
+                                  onClick={() => handleDeletePdf(pdf._id)}
+                                  className="text-gray-600 hover:text-red-600"
+                                  title="Delete document"
+                                >
+                                  <svg
+                                    className="w-5 h-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
+              </div>
+
+              {/* Hint message */}
+              <div className="mt-6 flex items-center space-x-3 p-3 bg-blue-50 rounded-md border border-blue-100">
+                <svg
+                  className="h-5 w-5 text-blue-500"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <p className="text-sm text-blue-700">
+                  All team members can upload and delete documents. Documents
+                  are shared with everyone on the team.
+                </p>
               </div>
             </div>
           </div>
         )}
-
         {/* Team Info Modal */}
         {showTeamInfoModal && (
           <div
