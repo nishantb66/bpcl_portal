@@ -207,6 +207,7 @@ export default function TeamsPage() {
   const [pdfList, setPdfList] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null); // The PDF file from input
   const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Scroll to bottom whenever messages change
   useEffect(() => {
@@ -519,10 +520,11 @@ export default function TeamsPage() {
         toast.error(data.message);
         return;
       }
-      setOverviewData(data.overviewData); // store the stats
+      setOverviewData(data.overviewData); // Store the overview stats
     } catch (err) {
       console.error(err);
       toast.error("Failed to fetch overview data.");
+    } finally {
     }
   };
 
@@ -825,6 +827,7 @@ export default function TeamsPage() {
   // 3) Fetch tasks
   const fetchTasks = () => {
     const token = localStorage.getItem("token");
+    setTasksLoading(true); // Start loading spinner
     setTasksLoading(true); // Start loading
     fetch("/api/teams/tasks", {
       method: "GET",
@@ -839,7 +842,9 @@ export default function TeamsPage() {
         }
       })
       .catch((err) => console.error(err))
-      .finally(() => setTasksLoading(false)); // End loading
+      .finally(() => {
+        setTasksLoading(false); // Stop loading spinner
+      });
   };
 
   // 4) Open Task details modal
@@ -1833,6 +1838,7 @@ export default function TeamsPage() {
 
   const fetchPdfs = async () => {
     try {
+      setPdfLoading(true); // Start loading indicator
       const token = localStorage.getItem("token");
       if (!token) return;
       const res = await fetch("/api/teams/documents", {
@@ -1848,6 +1854,8 @@ export default function TeamsPage() {
     } catch (err) {
       console.error(err);
       toast.error("Error fetching PDFs");
+    } finally {
+      setPdfLoading(false); // Stop loading indicator
     }
   };
 
@@ -2634,9 +2642,17 @@ export default function TeamsPage() {
 
               <div className="p-6">
                 {tasksLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <FiLoader className="animate-spin w-8 h-8 text-indigo-600" />
-                    <span className="ml-2 text-gray-600">Loading tasks...</span>
+                  <div className="flex flex-col items-center justify-center py-8 space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <FiLoader className="animate-spin w-8 h-8 text-indigo-600" />
+                      <span className="text-gray-600 font-medium">
+                        Loading tasks...
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      Please wait while we fetch the tasks assigned to your
+                      team.
+                    </p>
                   </div>
                 ) : tasks.length === 0 ? (
                   <div className="text-center py-8">
@@ -2678,6 +2694,7 @@ export default function TeamsPage() {
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-4">
+                              {/* Urgency indicator */}
                               <div className="flex-shrink-0">
                                 <div
                                   className={`w-3 h-3 rounded-full ${
@@ -2689,6 +2706,7 @@ export default function TeamsPage() {
                                   }`}
                                 />
                               </div>
+                              {/* Task Name & Priority */}
                               <div>
                                 <h4 className="text-sm font-medium text-gray-900">
                                   {task.taskName}
@@ -2698,7 +2716,9 @@ export default function TeamsPage() {
                                 </p>
                               </div>
                             </div>
+
                             <div className="flex items-center space-x-4">
+                              {/* Due Date */}
                               <div className="text-right">
                                 <p className="text-xs text-gray-500">
                                   Due Date
@@ -2707,6 +2727,8 @@ export default function TeamsPage() {
                                   {new Date(task.deadline).toLocaleDateString()}
                                 </p>
                               </div>
+
+                              {/* Arrow icon */}
                               <svg
                                 className="w-5 h-5 text-gray-400"
                                 fill="none"
@@ -2721,7 +2743,7 @@ export default function TeamsPage() {
                                 />
                               </svg>
 
-                              {/* Track button: stopPropagation to avoid opening Task Details */}
+                              {/* Track button (stopPropagation to avoid opening Task Details) */}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -2731,69 +2753,67 @@ export default function TeamsPage() {
                               >
                                 Track
                                 {taskNotifications[task._id] && (
-                                  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-green-500"></span>
+                                  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-green-500" />
                                 )}
                               </button>
 
                               {/* Add Reminder Button */}
-                              <div className="mt-3">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setReminderTask(task);
-                                    setReminderDateTime("");
-                                    setShowReminderModal(true);
-                                  }}
-                                  disabled={reminderSetForTasks.includes(
-                                    task._id
-                                  )}
-                                  className={`
-    inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full 
-    transition-all duration-200 transform hover:scale-105
-    ${
-      reminderSetForTasks.includes(task._id)
-        ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
-        : "bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 border border-gray-200 hover:border-blue-200"
-    }
-  `}
-                                >
-                                  {reminderSetForTasks.includes(task._id) ? (
-                                    <>
-                                      <svg
-                                        className="w-3.5 h-3.5"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M5 13l4 4L19 7"
-                                        />
-                                      </svg>
-                                      <span>Reminder Set</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <svg
-                                        className="w-3.5 h-3.5"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                        />
-                                      </svg>
-                                      <span>Set Reminder</span>
-                                    </>
-                                  )}
-                                </button>
-                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setReminderTask(task);
+                                  setReminderDateTime("");
+                                  setShowReminderModal(true);
+                                }}
+                                disabled={reminderSetForTasks.includes(
+                                  task._id
+                                )}
+                                className={`
+                    inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full 
+                    transition-all duration-200 transform hover:scale-105
+                    ${
+                      reminderSetForTasks.includes(task._id)
+                        ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                        : "bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 border border-gray-200 hover:border-blue-200"
+                    }
+                  `}
+                              >
+                                {reminderSetForTasks.includes(task._id) ? (
+                                  <>
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                    <span>Reminder Set</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                      />
+                                    </svg>
+                                    <span>Set Reminder</span>
+                                  </>
+                                )}
+                              </button>
                             </div>
                           </div>
                         </li>
@@ -6178,7 +6198,11 @@ export default function TeamsPage() {
 
               {/* List of PDFs */}
               <div className="space-y-3 max-h-60 overflow-y-auto">
-                {pdfList.length === 0 ? (
+                {pdfLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <FiLoader className="animate-spin w-6 h-6 text-indigo-600" />
+                  </div>
+                ) : pdfList.length === 0 ? (
                   <p className="text-sm text-gray-500">No PDFs attached yet.</p>
                 ) : (
                   pdfList.map((pdf) => (
