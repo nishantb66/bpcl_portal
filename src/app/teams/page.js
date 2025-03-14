@@ -2124,15 +2124,11 @@ export default function TeamsPage() {
       {/* Modern Professional Announcement Banner */}
       {showAnnouncement && (
         <div className="relative overflow-hidden border-b border-indigo-700/20">
-          {/* Animated gradient background with subtle pattern */}
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-600 animate-gradient-slow"></div>
-          <div
-            className="absolute inset-0 opacity-10"
-            style={{
-              backgroundImage:
-                "url('data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')",
-            }}
-          ></div>
+          {/* Gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-600 bg-[length:200%_100%] animate-[gradient-slow_15s_ease_infinite]"></div>
+
+          {/* Pattern overlay with background image as data URI directly in className */}
+          <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2760%27%20height%3D%2760%27%20viewBox%3D%270%200%2060%2060%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Cg%20fill%3D%27none%27%20fill-rule%3D%27evenodd%27%3E%3Cg%20fill%3D%27%23ffffff%27%20fill-opacity%3D%271%27%3E%3Cpath%20d%3D%27M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%27%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')]"></div>
 
           {/* Content container */}
           <div className="relative mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
@@ -2145,6 +2141,7 @@ export default function TeamsPage() {
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -2169,7 +2166,7 @@ export default function TeamsPage() {
                   . Explore our comprehensive collaboration features and connect
                   with colleagues. Note that 'Track' and 'Checkpoint' features
                   may take 2-3 seconds to initialize as we are working on
-                  optimizating performance
+                  optimizing performance.
                   <a
                     href="/teamsguide"
                     className="inline-flex items-center ml-2 border-b border-white/40 hover:border-white text-white hover:text-white transition-colors group"
@@ -2180,6 +2177,7 @@ export default function TeamsPage() {
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
+                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"
@@ -2204,6 +2202,7 @@ export default function TeamsPage() {
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -2223,24 +2222,6 @@ export default function TeamsPage() {
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
         </div>
       )}
-
-      {/* Add these animations to your globals.css */}
-      <style jsx global>{`
-        @keyframes gradient-slow {
-          0%,
-          100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-        }
-
-        .animate-gradient-slow {
-          background-size: 200% 100%;
-          animation: gradient-slow 15s ease infinite;
-        }
-      `}</style>
 
       <div className="min-h-screen flex bg-gray-100 relative">
         <ToastContainer />

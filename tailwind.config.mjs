@@ -8,6 +8,10 @@ export default {
   theme: {
     extend: {
       keyframes: {
+        "gradient-slow": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
         fadeIn: {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
@@ -24,6 +28,7 @@ export default {
         },
       },
       animation: {
+        "gradient-slow": "gradient-slow 15s ease infinite",
         fadeIn: "fadeIn 0.3s ease-out",
         slideUp: "slideUp 0.4s ease-out",
       },
