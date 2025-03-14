@@ -62,6 +62,8 @@ export default function Home() {
   // Track whether to show the announcement
   const [showAnnouncement, setShowAnnouncement] = useState(false);
 
+  const [navLoading, setnavLoading] = useState(false);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -210,7 +212,7 @@ export default function Home() {
   };
 
   const handleNavigation = async (path, api = null) => {
-    setLoadingCard(path);
+    setnavLoading(true); // Show global loading spinner
     try {
       if (api) {
         const token = localStorage.getItem("token");
@@ -222,14 +224,15 @@ export default function Home() {
           toast.info(
             "You have already applied for leave and it is under review."
           );
+          setnavLoading(false); // Hide spinner if navigation is not proceeding
           return;
         }
       }
       router.push(path);
+      // No need to explicitly set navLoading false here, as a route change unmounts the component.
     } catch (error) {
       toast.error("An error occurred while navigating.");
-    } finally {
-      setLoadingCard(null);
+      setnavLoading(false);
     }
   };
 
@@ -415,6 +418,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
+      {navLoading && (
+        <div className="fixed inset-0 flex flex-col items-center justify-center bg-white/80 z-50">
+          <FiLoader className="animate-spin w-12 h-12 text-indigo-600" />
+          <span className="mt-4 text-lg font-medium text-gray-600">
+            Loading...
+          </span>
+        </div>
+      )}
+
       {/* Announcement Banner */}
       {showAnnouncement && (
         <div className="relative overflow-hidden">

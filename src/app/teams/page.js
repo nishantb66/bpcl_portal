@@ -209,6 +209,10 @@ export default function TeamsPage() {
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
 
+  const [trackLoading, setTrackLoading] = useState(false);
+
+  const [checkLoading, setckeckLoading] = useState(false);
+
   // Scroll to bottom whenever messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -966,6 +970,7 @@ export default function TeamsPage() {
   const openCheckpoints = async () => {
     try {
       const token = localStorage.getItem("token");
+      setckeckLoading(true);
       // fetch the checkpoints
       const res = await fetch("/api/teams/checkpoints?myCheckpoints=1", {
         headers: { Authorization: `Bearer ${token}` },
@@ -973,6 +978,7 @@ export default function TeamsPage() {
       const data = await res.json();
       if (res.ok) {
         setCheckpoints(data.checkpoints || []);
+        setckeckLoading(false);
         setShowCheckpointsModal(true);
       } else {
         toast.error(data.message);
@@ -1671,6 +1677,8 @@ export default function TeamsPage() {
         return;
       }
     }
+
+    setTrackLoading(true);
     setTrackTask(task);
     setSelectedMember(null);
     try {
@@ -1704,6 +1712,7 @@ export default function TeamsPage() {
       });
       setTaskNotifications((prev) => ({ ...prev, [task._id]: false }));
     }
+    setTrackLoading(false);
     setShowTrackModal(true);
   };
 
@@ -2229,6 +2238,24 @@ export default function TeamsPage() {
 
       <div className="min-h-screen flex bg-gray-100 relative">
         <ToastContainer />
+
+        {trackLoading && (
+          <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-white/80">
+            <FiLoader className="animate-spin w-12 h-12 text-indigo-600" />
+            <span className="mt-4 text-lg font-medium text-gray-600">
+              Loading tracking data...
+            </span>
+          </div>
+        )}
+
+        {checkLoading && (
+          <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-white/80">
+            <FiLoader className="animate-spin w-12 h-12 text-indigo-600" />
+            <span className="mt-4 text-lg font-medium text-gray-600">
+              Loading Checkpoints..
+            </span>
+          </div>
+        )}
 
         {/* Top-right corner buttons */}
         <div className="absolute top-4 right-4 flex items-center gap-3">

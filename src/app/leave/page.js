@@ -5,6 +5,19 @@ import { useRouter } from "next/navigation";
 import { FiMenu, FiX } from "react-icons/fi";
 import Link from "next/link";
 
+function checkTokenExpiration(token) {
+  try {
+    const decoded = jwt.decode(token);
+    // If we cannot decode the token or it has no expiration (`exp`), treat it as expired
+    if (!decoded || !decoded.exp) return true;
+    const currentTime = Date.now() / 1000; // in seconds
+    // If the token’s `exp` is in the past, return true => expired
+    return decoded.exp < currentTime;
+  } catch (error) {
+    return true; // if any error, assume expired
+  }
+}
+
 export default function LeaveApplication() {
   const router = useRouter();
 
