@@ -213,6 +213,8 @@ export default function TeamsPage() {
 
   const [checkLoading, setckeckLoading] = useState(false);
 
+  const [pdfViewLoadingId, setPdfViewLoadingId] = useState(null);
+
   // Scroll to bottom whenever messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1923,6 +1925,7 @@ export default function TeamsPage() {
 
   // Viewing PDF in new tab
   const handleViewPdf = async (pdfId) => {
+    setPdfViewLoadingId(pdfId);
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`/api/teams/documents?pdfId=${pdfId}`, {
@@ -1944,6 +1947,9 @@ export default function TeamsPage() {
     } catch (err) {
       console.error(err);
       toast.error("Error viewing PDF");
+    } finally {
+      // Clear the loading state whether success or error
+      setPdfViewLoadingId(null);
     }
   };
 
@@ -6250,8 +6256,13 @@ export default function TeamsPage() {
                           onClick={() => handleViewPdf(pdf._id)}
                           className="text-indigo-600 text-sm hover:underline"
                         >
-                          View
+                          {pdfViewLoadingId === pdf._id ? (
+                            <FiLoader className="animate-spin w-4 h-4 inline-block" />
+                          ) : (
+                            "View"
+                          )}
                         </button>
+
                         {isLeader && (
                           <button
                             onClick={() => handleDeletePdf(pdf._id)}
