@@ -73,8 +73,12 @@ export async function POST(req) {
         teamId: leaderTeam._id,
         topic,
         description,
-        startDateTime: new Date(startDateTime),
-        endDateTime: new Date(endDateTime),
+        startDateTime: new Date(
+          new Date(startDateTime).getTime() - 5.5 * 60 * 60000
+        ),
+        endDateTime: new Date(
+          new Date(endDateTime).getTime() - 5.5 * 60 * 60000
+        ),
         createdAt: new Date(),
         updatedAt: new Date(),
         ideas: [], // array to hold ideas
@@ -113,8 +117,12 @@ export async function POST(req) {
           $set: {
             topic,
             description,
-            startDateTime: new Date(startDateTime),
-            endDateTime: new Date(endDateTime),
+            startDateTime: new Date(
+              new Date(startDateTime).getTime() - 5.5 * 60 * 60000
+            ),
+            endDateTime: new Date(
+              new Date(endDateTime).getTime() - 5.5 * 60 * 60000
+            ),
             updatedAt: new Date(),
           },
         }
