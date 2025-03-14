@@ -202,6 +202,12 @@ export default function TeamsPage() {
   // Announcement banner state for the Teams page.
   const [showAnnouncement, setShowAnnouncement] = useState(true);
 
+  // For PDFs feature
+  const [showPdfsModal, setShowPdfsModal] = useState(false);
+  const [pdfList, setPdfList] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null); // The PDF file from input
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+
   // Scroll to bottom whenever messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1825,6 +1831,144 @@ export default function TeamsPage() {
     }
   };
 
+  const fetchPdfs = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      const res = await fetch("/api/teams/documents", {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || "Failed to fetch PDFs");
+        return;
+      }
+      setPdfList(data.pdfs || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Error fetching PDFs");
+    }
+  };
+
+  const handleUploadPdf = async () => {
+    if (!selectedFile) return;
+    setUploadingPdf(true);
+    try {
+      // Convert PDF to base64
+      const base64String = await fileToBase64(selectedFile);
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/teams/documents", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: "upload-pdf",
+          filename: selectedFile.name,
+          contentType: selectedFile.type,
+          base64: base64String,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || "Failed to upload PDF");
+        return;
+      }
+      toast.success(data.message || "PDF uploaded!");
+      setSelectedFile(null);
+      // Refresh the PDF list
+      fetchPdfs();
+    } catch (error) {
+      console.error(error);
+      toast.error("Error uploading PDF");
+    } finally {
+      setUploadingPdf(false);
+    }
+  };
+
+  // Helper function to convert file to base64
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        // result is something like: "data:application/pdf;base64,JVBERi0xLjQK..."
+        // We only want the base64 portion after the comma
+        const base64 = result.split(",")[1];
+        resolve(base64);
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Viewing PDF in new tab
+  const handleViewPdf = async (pdfId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/teams/documents?pdfId=${pdfId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || "Failed to fetch PDF");
+        return;
+      }
+      // data.base64 is the PDF data, data.contentType is "application/pdf"
+      // Create a Blob and open in new tab
+      const pdfBlob = base64ToBlob(data.base64, data.contentType);
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      window.open(pdfUrl, "_blank");
+    } catch (err) {
+      console.error(err);
+      toast.error("Error viewing PDF");
+    }
+  };
+
+  function base64ToBlob(base64, contentType) {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: contentType });
+  }
+
+  // Delete PDF
+  const handleDeletePdf = async (pdfId) => {
+    if (!window.confirm("Are you sure you want to delete this PDF?")) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/teams/documents", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: "delete-pdf",
+          pdfId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || "Failed to delete PDF");
+        return;
+      }
+      toast.success(data.message || "PDF deleted!");
+      fetchPdfs(); // Refresh list
+    } catch (err) {
+      console.error(err);
+      toast.error("Error deleting PDF");
+    }
+  };
+
   // If loading, show spinner
   if (loading) {
     return (
@@ -2001,7 +2145,8 @@ export default function TeamsPage() {
                   </span>
                   . Explore our comprehensive collaboration features and connect
                   with colleagues. Note that 'Track' and 'Checkpoint' features
-                  may take 2-3 seconds to initialize as we are working on optimizating performance
+                  may take 2-3 seconds to initialize as we are working on
+                  optimizating performance
                   <a
                     href="/teamsguide"
                     className="inline-flex items-center ml-2 border-b border-white/40 hover:border-white text-white hover:text-white transition-colors group"
@@ -2300,6 +2445,16 @@ export default function TeamsPage() {
                   <span className="font-medium tracking-wide text-sm">
                     Book Conference Room
                   </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowPdfsModal(true);
+                    fetchPdfs();
+                  }}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  <span className="text-sm font-medium">PDFs</span>
                 </button>
 
                 <button
@@ -5970,6 +6125,94 @@ export default function TeamsPage() {
                     Save Changes
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showPdfsModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+            <div
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+              onClick={() => setShowPdfsModal(false)}
+            />
+            <div
+              className="relative w-full max-w-2xl bg-white rounded-lg shadow-xl p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Team PDFs
+                </h2>
+                <button
+                  onClick={() => setShowPdfsModal(false)}
+                  className="p-2 rounded-full hover:bg-gray-100"
+                >
+                  <FiX className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+
+              {/* Upload Section */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Attach PDF
+                </label>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      setSelectedFile(e.target.files[0]);
+                    }
+                  }}
+                  className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer focus:outline-none"
+                />
+                <button
+                  onClick={handleUploadPdf}
+                  disabled={!selectedFile || uploadingPdf}
+                  className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploadingPdf ? "Uploading..." : "Upload PDF"}
+                </button>
+              </div>
+
+              {/* List of PDFs */}
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {pdfList.length === 0 ? (
+                  <p className="text-sm text-gray-500">No PDFs attached yet.</p>
+                ) : (
+                  pdfList.map((pdf) => (
+                    <div
+                      key={pdf._id}
+                      className="flex items-center justify-between bg-gray-50 border border-gray-100 p-3 rounded-lg"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">
+                          {pdf.filename}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {new Date(pdf.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleViewPdf(pdf._id)}
+                          className="text-indigo-600 text-sm hover:underline"
+                        >
+                          View
+                        </button>
+                        {isLeader && (
+                          <button
+                            onClick={() => handleDeletePdf(pdf._id)}
+                            className="text-red-500 text-sm hover:underline"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
