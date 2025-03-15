@@ -26,7 +26,8 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentId, setCurrentId] = useState(null);
   const [plans, setPlans] = useState("");
-  const [time, setTime] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [importance, setImportance] = useState("Low");
   const [associatedPeople, setAssociatedPeople] = useState("");
 
@@ -196,13 +197,15 @@ export default function CalendarPage() {
     if (existingReminder) {
       setCurrentId(existingReminder._id);
       setPlans(existingReminder.plans);
-      setTime(existingReminder.time);
+      setStartTime(existingReminder.startTime || "");
+      setEndTime(existingReminder.endTime || "");
       setImportance(existingReminder.importance);
       setAssociatedPeople(existingReminder.associatedPeople);
     } else {
       setCurrentId(null);
       setPlans("");
-      setTime("");
+      setStartTime("");
+      setEndTime("");
       setImportance("Low");
       setAssociatedPeople("");
     }
@@ -216,7 +219,8 @@ export default function CalendarPage() {
     const newReminder = {
       date: selectedDate,
       plans,
-      time,
+      startTime,
+      endTime,
       importance,
       associatedPeople,
     };
@@ -246,7 +250,8 @@ export default function CalendarPage() {
       _id: currentId,
       date: selectedDate,
       plans,
-      time,
+      startTime,
+      endTime,
       importance,
       associatedPeople,
     };
@@ -540,18 +545,33 @@ export default function CalendarPage() {
                     onChange={(e) => setPlans(e.target.value)}
                   />
                 </div>
+
+                {/* Start Time */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Time
+                    Start Time
                   </label>
                   <input
-                    type="text"
+                    type="time"
                     className="w-full p-2 border border-gray-200 rounded focus:ring focus:ring-blue-100 focus:outline-none"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    placeholder="3:00 PM - 4:00 PM"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
                   />
                 </div>
+                
+                {/* End Time */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    className="w-full p-2 border border-gray-200 rounded focus:ring focus:ring-blue-100 focus:outline-none"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                  />
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Importance

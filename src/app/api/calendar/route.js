@@ -3,6 +3,9 @@ import { connectToDB } from "../middleware";
 import { verify } from "jsonwebtoken";
 import { ObjectId } from "mongodb";
 
+/**
+ * GET: Fetch all reminders for the logged-in user.
+ */
 export async function GET(req) {
   try {
     const db = await connectToDB();
@@ -19,7 +22,7 @@ export async function GET(req) {
     // Find reminders for that user
     const reminders = await calendarEvents
       .find({ email: decoded.email })
-      .sort({ date: 1 }) // optionally sort by date
+      .sort({ date: 1 })
       .toArray();
 
     return NextResponse.json({ reminders }, { status: 200 });
@@ -28,6 +31,9 @@ export async function GET(req) {
   }
 }
 
+/**
+ * POST: Create a new reminder with a single "time" field.
+ */
 export async function POST(req) {
   try {
     const db = await connectToDB();
@@ -43,22 +49,24 @@ export async function POST(req) {
 
     const body = await req.json();
     const { date, plans, time, importance, associatedPeople } = body;
-    if (!date) {
+
+    if (!date || !time) {
       return NextResponse.json(
-        { message: "Date is required" },
+        { message: "Date and time are required" },
         { status: 400 }
       );
     }
 
-    // Insert doc
+    // Insert doc, note emailed=false so we only send mail once
     await calendarEvents.insertOne({
       email: decoded.email,
       date,
       plans,
-      time,
+      time, // e.g. "13:30"
       importance,
       associatedPeople,
       createdAt: new Date(),
+      emailed: false,
     });
 
     return NextResponse.json({ message: "Reminder created" }, { status: 201 });
@@ -67,7 +75,9 @@ export async function POST(req) {
   }
 }
 
-// ========== PUT (EDIT A REMINDER) ==========
+/**
+ * PUT: Update an existing reminder (replace startTime/endTime with "time").
+ */
 export async function PUT(req) {
   try {
     const db = await connectToDB();
@@ -81,7 +91,6 @@ export async function PUT(req) {
     const token = authHeader.split(" ")[1];
     const decoded = verify(token, process.env.JWT_SECRET);
 
-    // Body will include _id of reminder + updated fields
     const body = await req.json();
     const { _id, date, plans, time, importance, associatedPeople } = body;
 
@@ -92,7 +101,7 @@ export async function PUT(req) {
       );
     }
 
-    // Make sure the doc belongs to the user
+    // If user changes the time or date, reset emailed=false to send again
     const filter = { _id: new ObjectId(_id), email: decoded.email };
     const updateDoc = {
       $set: {
@@ -101,11 +110,11 @@ export async function PUT(req) {
         time,
         importance,
         associatedPeople,
+        emailed: false, // so if user changes time, we can re-send
       },
     };
 
     const result = await calendarEvents.updateOne(filter, updateDoc);
-
     if (result.matchedCount === 0) {
       return NextResponse.json(
         { message: "No reminder found or you don’t own this reminder" },
@@ -119,7 +128,9 @@ export async function PUT(req) {
   }
 }
 
-// ========== DELETE (REMOVE A REMINDER) ==========
+/**
+ * DELETE: Remove a reminder by _id.
+ */
 export async function DELETE(req) {
   try {
     const db = await connectToDB();
